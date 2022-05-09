@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="CS224U 笔记第一部分 VSM">
+<meta property="og:type" content="article">
+<meta property="og:title" content="VSM">
+<meta property="og:url" content="https://github.com/CLearnerLee/LeeBlog/2022/05/04/VSM/index.html">
+<meta property="og:site_name" content="AI 自学笔记">
+<meta property="og:description" content="CS224U 笔记第一部分 VSM">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-2-1.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-1-1.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-1-2.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-1-3.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-1-4.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-2-2.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-2-4.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-2-9.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-2-10.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-2-11.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-5-1.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-5-2.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-5-3.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-6-1.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-6-3.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-6-4.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-6-5.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-6-6.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-7-1.png">
+<meta property="og:image" content="https://github.com/2022/05/04/VSM/1-7-2.png">
+<meta property="article:published_time" content="2022-05-04T06:23:08.000Z">
+<meta property="article:modified_time" content="2022-05-09T08:29:33.699Z">
+<meta property="article:author" content="Lee">
+<meta property="article:tag" content="markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2022/05/04/VSM/1-2-1.png">
+
+<link rel="canonical" href="https://github.com/CLearnerLee/LeeBlog/2022/05/04/VSM/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>VSM | AI 自学笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">AI 自学笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-标签">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags - markdown fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th - 我的第一篇博客 - CS224U 笔记 fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-归档">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/CLearnerLee/LeeBlog/2022/05/04/VSM/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="AI 自学笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          VSM
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-05-04 14:23:08" itemprop="dateCreated datePublished" datetime="2022-05-04T14:23:08+08:00">2022-05-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-05-09 16:29:33" itemprop="dateModified" datetime="2022-05-09T16:29:33+08:00">2022-05-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS224U-%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">CS224U 笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="lee-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">CS224U 笔记第一部分 VSM</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Distributed-word-representations-Vector-space-models"><a href="#Distributed-word-representations-Vector-space-models" class="headerlink" title="Distributed word representations (Vector-space models)"></a>Distributed word representations (Vector-space models)</h1><h1 id="High-level-goals-and-guiding-hypotheses"><a href="#High-level-goals-and-guiding-hypotheses" class="headerlink" title="High-level goals and guiding hypotheses"></a>High-level goals and guiding hypotheses</h1><h2 id="Meaning-latent-in-co-occurrence-patterns"><a href="#Meaning-latent-in-co-occurrence-patterns" class="headerlink" title="Meaning latent in co-occurrence patterns"></a>Meaning latent in co-occurrence patterns</h2><h2 id="High-level-goals"><a href="#High-level-goals" class="headerlink" title="High-level goals"></a>High-level goals</h2><ol>
+<li>如何用向量编码语言单位的含义</li>
+<li>矢量空间模型 (VSMs) 的基本概念</li>
+</ol>
+<h2 id="Guiding-hypotheses"><a href="#Guiding-hypotheses" class="headerlink" title="Guiding hypotheses"></a>Guiding hypotheses</h2><ol>
+<li><p>Firth (1957)</p>
+<p>“You shall know a word by the company it keeps.”</p>
+</li>
+<li><p>Harris (1954)</p>
+<p>“distributional statements can cover all of the material of a language without requiring support from other types of information.”</p>
+</li>
+<li><p>Wittgenstein (1953)</p>
+<p>“the meaning of a word is its use in the language”</p>
+</li>
+<li><p>Turney and Pantel (2010)</p>
+<p>“If units of text have similar vectors in a text frequency matrix, then they tend to have similar meanings.”</p>
+</li>
+</ol>
+<h2 id="Design-choices"><a href="#Design-choices" class="headerlink" title="Design choices"></a>Design choices</h2><ol>
+<li><p>要探索几乎所有的叉乘结果，只有很少一部分组合才能被排除在外</p>
+</li>
+<li><p>GloVe 和 word2vec 为设计/加权/降维提供打包的解决方案，并降低比较方法选择的重要性</p>
+</li>
+<li>上下文嵌入决定了许多预处理方法选择。</li>
+</ol>
+<h1 id="Matrix-designs"><a href="#Matrix-designs" class="headerlink" title="Matrix designs"></a>Matrix designs</h1><h2 id="Matrix-Design-Method"><a href="#Matrix-Design-Method" class="headerlink" title="Matrix Design Method"></a>Matrix Design Method</h2><ol>
+<li><p>word x word</p>
+</li>
+<li><p>word x document</p>
+</li>
+<li><p>word x discourse context</p>
+</li>
+<li><p>Other designs</p>
+<ul>
+<li>adj. <strong>×</strong> modified noun</li>
+<li>word <strong>×</strong> syntactic context</li>
+<li>word <strong>×</strong> search query</li>
+<li>person <strong>×</strong> product</li>
+<li>word <strong>×</strong> person</li>
+<li>word <strong>×</strong> word <strong>×</strong> pattern</li>
+<li>verb <strong>×</strong> subject <strong>×</strong> object</li>
+</ul>
+</li>
+</ol>
+<h2 id="Feature-representations-of-data"><a href="#Feature-representations-of-data" class="headerlink" title="Feature representations of data"></a>Feature representations of data</h2><ol>
+<li><p>情感表示，如 <em>the movie was horrible</em> becomes [4<em>,</em>0<em>,</em>1<em>/</em>4]. </p>
+</li>
+<li><p>一个实验对象对一个特定例子的复杂的、真实的反应可以表示为[0,1]或[118,1]。</p>
+</li>
+<li><p>构建人的向量表示，如 [24<em>,</em>140<em>,</em>5<em>,</em>12]</p>
+</li>
+<li>语音流表示</li>
+</ol>
+<h2 id="Windows-and-scaling"><a href="#Windows-and-scaling" class="headerlink" title="Windows and scaling"></a>Windows and scaling</h2><img src="/2022/05/04/VSM/1-2-1.png" class title="图片">
+<ul>
+<li><p>更大、更平坦的窗口能够捕捉更多语义信息。</p>
+</li>
+<li><p>更小、缩放的窗口能够捕获更多的句法（搭配）信息。</p>
+</li>
+<li>文本边界可以分开控制； 作为句子/段落/文件的核心单元将产生重大影响。</li>
+</ul>
+<h2 id="Code-snippets"><a href="#Code-snippets" class="headerlink" title="Code snippets"></a>Code snippets</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"></span><br><span class="line">DATA_HOME = os.path.join(<span class="string">&#x27;data&#x27;</span>, <span class="string">&#x27;vsmdata&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Yelp: Window size =5; scaling = 1/n</span></span><br><span class="line">yelp5 = pd.read_csv(os.path.join(DATA_HOME, <span class="string">&#x27;yelp_window5-scaled.csv.gz&#x27;</span>), index_col=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Yelp: Window size =20; scaling = flat</span></span><br><span class="line">yelp20 = pd.read_csv(os.path.join(DATA_HOME, <span class="string">&#x27;yelp_window20-flat.csv.gz&#x27;</span>), index_col=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Gigaword: Window size =5; scaling = 1/n</span></span><br><span class="line">giga5 = pd.read_csv(os.path.join(DATA_HOME, <span class="string">&#x27;giga_window5-scaled.csv.gz&#x27;</span>), index_col=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Gigaword: Window size =20; scaling =flat</span></span><br><span class="line">giga20 = pd.read_csv(os.path.join(DATA_HOME, <span class="string">&#x27;giga_window20-flat.csv.gz&#x27;</span>), index_col=<span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+<h1 id="Vector-comparison"><a href="#Vector-comparison" class="headerlink" title="Vector comparison"></a>Vector comparison</h1><h2 id="Vector-comparison-Method"><a href="#Vector-comparison-Method" class="headerlink" title="Vector comparison Method"></a>Vector comparison Method</h2><ol>
+<li><p><strong>Euclidean</strong>:</p>
+<p>Between vectors <em>u</em> and <em>v</em> of dimension <em>n</em>:</p>
+<script type="math/tex; mode=display">
+\begin{equation}
+\textbf { euclidean }(u, v)=\sqrt{\sum_{i=1}^{n}\left|u_{i}-v_{i}\right|^{2}}
+\end{equation}</script></li>
+<li><p><strong>Length normalization</strong></p>
+<p>Given a vector $u$ of dimension $n$, the L2-length of $u$ is</p>
+<script type="math/tex; mode=display">
+\|u\|_{2}=\sqrt{\sum_{i=1}^{n} u_{i}^{2}}</script><p>and the length normalization of $u$ is</p>
+<script type="math/tex; mode=display">
+\left[\frac{u_{1}}{\|u\|_{2}}, \frac{u_{2}}{\|u\|_{2}}, \cdots, \frac{u_{n}}{\|u\|_{2}}\right]</script></li>
+</ol>
+<p>​         then compare the distances</p>
+<ol>
+<li><p><strong>Cosine distance</strong></p>
+<p>Between vectors $u$ and $v$ of dimension $n$ :</p>
+<script type="math/tex; mode=display">
+\textbf{cosine}(u, v)=1-\frac{\sum_{i=1}^{n} u_{i} \times v_{i}}{\|u\|_{2} \times\|v\|_{2}}</script></li>
+<li><p><strong>Matching-based methods</strong></p>
+<ul>
+<li><strong>Matching coefficient</strong></li>
+</ul>
+<script type="math/tex; mode=display">
+\textbf{matching}(u, v)=\sum_{i=1}^{n} \min \left(u_{i}, v_{i}\right)</script><ul>
+<li><strong>Jaccard distance</strong></li>
+</ul>
+<script type="math/tex; mode=display">
+\textbf{jaccard}(u, v)=1-\frac{\operatorname{matching}(u, v)}{\sum_{i=1}^{n} \max \left(u_{i}, v_{i}\right)}</script><ul>
+<li><strong>Dice distance</strong></li>
+</ul>
+<script type="math/tex; mode=display">
+\textbf{dice}(u, v)=1-\frac{2 \times \text { matching }(u, v)}{\sum_{i=1}^{n} u_{i}+v_{i}}</script><ul>
+<li><strong>Overlap</strong></li>
+</ul>
+<script type="math/tex; mode=display">
+\textbf{overlap}(u, v)=1-\frac{\operatorname{matching}(u, v)}{\min \left(\sum_{i=1}^{n} u_{i}, \sum_{i=1}^{n} v_{i}\right)}</script></li>
+<li><p><strong>KL divergence and variants</strong></p>
+<ul>
+<li><p><strong>$\mathrm{KL}$ divergence</strong><br>Between probability distributions $p$ and $q$ :</p>
+<script type="math/tex; mode=display">
+D(p \| q)=\sum_{i=1}^{n} p_{i} \log \left(\frac{p_{i}}{q_{i}}\right)</script><p>$p$ is the reference distribution. Before calculation, smooth by adding $\epsilon$.</p>
+<blockquote>
+<p>规定当 $p_i=0$ 时，$p_i\log p_i=0$</p>
+</blockquote>
+</li>
+<li><p><strong>Symmetric KL</strong></p>
+<script type="math/tex; mode=display">
+D(p \| q)+D(q \| p)</script></li>
+<li><p><strong>Jensen-Shannon distance</strong></p>
+<script type="math/tex; mode=display">
+\sqrt{\frac{1}{2} D\left(p \| \frac{p+q}{2}\right)+\frac{1}{2} D\left(q \| \frac{p+q}{2}\right)}</script></li>
+</ul>
+</li>
+</ol>
+<h2 id="Proper-distance-metric"><a href="#Proper-distance-metric" class="headerlink" title="Proper distance metric"></a>Proper distance metric</h2><p>距离指标必须满足让向量比较方法 $d$ 满足以下条件：</p>
+<ul>
+<li><p><strong>对称性</strong>：</p>
+<script type="math/tex; mode=display">
+d(x,y)=d(y,x)</script></li>
+<li><p><strong>对相同向量取 0</strong></p>
+<script type="math/tex; mode=display">
+d(x,x)=0</script></li>
+<li><p><strong>三角不等式</strong></p>
+<script type="math/tex; mode=display">
+d(x,z)\le d(x,y)+d(y,z)</script><p>Cosine 距离就不满足这一条件</p>
+</li>
+</ul>
+<p>哪些是距离指标？<br><strong>Yes</strong>: Euclidean, Jaccard for binary vectors, Jensen-Shannon, cosine as</p>
+<script type="math/tex; mode=display">
+\frac{\cos ^{-1}\left(\frac{\sum_{i=1}^{n} u_{i} \times v_{i}}{\|u\|_{2} \times\|v\|_{2}}\right)}{\pi}</script><p><strong>No</strong>: Matching, Jaccard, Dice, Overlap, $\mathrm{KL}$ divergence, Symmetric KL</p>
+<h2 id="Relationships-and-generalizations"><a href="#Relationships-and-generalizations" class="headerlink" title="Relationships and generalizations"></a>Relationships and generalizations</h2><ol>
+<li><p>带有原始计数向量的 Euclidean、Jaccard 和 Dice 更倾向于原始频率而不是分布模式</p>
+</li>
+<li><p>L2范数向量的 Euclidean 距离在排序方面等价于 cosine</p>
+</li>
+<li><p>Jaccard 和 Dice 在排序方面等价</p>
+</li>
+<li>L2 范数和概率分布都可以掩盖数据数量/强度的差异，这反过来又会影响 cosine、normed-euclidean 和 KL divergence 的可靠性。 这些缺点可以通过加权方案来解决</li>
+</ol>
+<h2 id="Code-snippets-1"><a href="#Code-snippets-1" class="headerlink" title="Code snippets"></a>Code snippets</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># euclidean distance</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">euclidean</span>(<span class="params">u, v</span>):</span><br><span class="line">    <span class="keyword">return</span> scipy.spatial.distance.euclidean(u, v)</span><br><span class="line"></span><br><span class="line"><span class="comment"># L2-length</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">vector_length</span>(<span class="params">u</span>):</span><br><span class="line">    <span class="keyword">return</span> np.sqrt(u.dot(u))</span><br><span class="line"></span><br><span class="line"><span class="comment"># L2-norm</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">length_norm</span>(<span class="params">u</span>):</span><br><span class="line">    <span class="keyword">return</span> u / vector_length(u)</span><br><span class="line"></span><br><span class="line"><span class="comment"># cosine distance</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">cosine</span>(<span class="params">u, v</span>):</span><br><span class="line">    <span class="keyword">return</span> scipy.spatial.distance.cosine(u, v)</span><br><span class="line"></span><br><span class="line"><span class="comment"># proper cosine</span></span><br><span class="line"><span class="comment"># 这通常会产生与我们使用上面的 cosine 函数获得的值大致成正比的结果，但计算更加复杂，因此这种 cosine 函数不常用</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">proper_cosine</span>(<span class="params">u, v</span>):</span><br><span class="line">    num = (u * v).<span class="built_in">sum</span>()</span><br><span class="line">    den = vsm.vector_length(u) * vsm.vector_length(v)</span><br><span class="line">    sim = num / den</span><br><span class="line">    <span class="keyword">return</span> np.arccos(sim) / np.pi</span><br><span class="line"></span><br><span class="line"><span class="comment"># Matching coefficient</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">matching</span>(<span class="params">u, v</span>):</span><br><span class="line">    <span class="keyword">return</span> np.<span class="built_in">sum</span>(np.minimum(u, v))</span><br><span class="line"></span><br><span class="line"><span class="comment"># Jaccard distance</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">jaccard</span>(<span class="params">u, v</span>):</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1.0</span> - (matching(u, v) / np.<span class="built_in">sum</span>(np.maximum(u, v)))</span><br><span class="line"></span><br><span class="line"><span class="comment"># return the nearest neighbors of `word` in `df` according to `distfunc`. The comparisons are between row vectors.</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">neighbors</span>(<span class="params">word, df, distfunc=cosine</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    word : str</span></span><br><span class="line"><span class="string">        The anchor word. Assumed to be in `rownames`.</span></span><br><span class="line"><span class="string">    df : pd.DataFrame</span></span><br><span class="line"><span class="string">        The vector-space model.</span></span><br><span class="line"><span class="string">    distfunc : function mapping vector pairs to floats (default: `cosine`)</span></span><br><span class="line"><span class="string">        The measure of distance between vectors. Can also be `euclidean`,</span></span><br><span class="line"><span class="string">        `matching`, `jaccard`, as well as any other distance measure</span></span><br><span class="line"><span class="string">        between 1d vectors.</span></span><br><span class="line"><span class="string">    Raises</span></span><br><span class="line"><span class="string">    ------</span></span><br><span class="line"><span class="string">    ValueError</span></span><br><span class="line"><span class="string">        If word is not in `df.index`.</span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    pd.Series</span></span><br><span class="line"><span class="string">        Ordered by closeness to `word`.</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> word <span class="keyword">not</span> <span class="keyword">in</span> df.index:</span><br><span class="line">        <span class="keyword">raise</span> ValueError(<span class="string">&#x27;&#123;&#125; is not in this VSM&#x27;</span>.<span class="built_in">format</span>(word))</span><br><span class="line">    w = df.loc[word]</span><br><span class="line">    dists = df.apply(<span class="keyword">lambda</span> x: distfunc(w, x), axis=<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> dists.sort_values()</span><br></pre></td></tr></table></figure>
+<h1 id="Basic-reweighting"><a href="#Basic-reweighting" class="headerlink" title="Basic reweighting"></a>Basic reweighting</h1><h2 id="Goals-of-reweighting"><a href="#Goals-of-reweighting" class="headerlink" title="Goals of reweighting"></a>Goals of reweighting</h2><ol>
+<li>放大重要的、不寻常的数据； 淡化平凡的、常见的数据</li>
+<li>需要在定义目标函数之后才能确定</li>
+<li>直观上，远离原始计数是因为频率不能很好地表示上述值</li>
+<li>我们如何确定加权方案：如何与原始计数值比较？</li>
+<li>提供了怎么样的总体分布？</li>
+<li>我们希望在不依赖计数、停用词词典(stopword dictionaries)等进行特征选择。相反，我们希望我们的方法能够在没有这些临时干预的情况下揭示什么是重要的。</li>
+</ol>
+<h2 id="Basic-reweighting-Method"><a href="#Basic-reweighting-Method" class="headerlink" title="Basic reweighting Method"></a>Basic reweighting Method</h2><ol>
+<li><p><strong>Normalization</strong></p>
+<p><strong>L2 norming</strong><br>Given a vector $u$ of dimension $n$, the L2-length of $u$ is</p>
+<script type="math/tex; mode=display">
+\|u\|_{2}=\sqrt{\sum_{i=1}^{n} u_{i}^{2}}</script><p>and the length normalization of $u$ is</p>
+<script type="math/tex; mode=display">
+\left[\frac{u_{1}}{\|u\|_{2}}, \frac{u_{2}}{\|u\|_{2}}, \cdots, \frac{u_{n}}{\|u\|_{2}}\right]</script><p><strong>Probability distribution</strong><br>Given a vector $u$ of dimension $n$ containing all positive values, let</p>
+<script type="math/tex; mode=display">
+\textbf{sum}(u)=\sum_{i=1}^{n} u_{i}</script><p>and then the probability distribution of $u$ is</p>
+<script type="math/tex; mode=display">
+\left[\frac{u_{1}}{\operatorname{sum}(u)}, \frac{u_{2}}{\operatorname{sum}(u)}, \cdots, \frac{u_{n}}{\operatorname{sum}(u)}\right]</script></li>
+<li><p><strong>Observed/Expected</strong></p>
+<script type="math/tex; mode=display">
+ \begin{gathered}
+ \textbf{rowsum}(X, i)=\sum_{j=1}^{n} X_{i j}\quad \textbf{colsum}(X, j)=\sum_{i=1}^{m} X_{i j}\quad \textbf{sum}(X)=\sum_{i=1}^{m} \sum_{j=1}^{n} X_{i j} \\
+ \textbf{expected}(X, i, j)=\frac{\operatorname{rowsum}(X, i) \cdot \operatorname{colsum}(X, j)}{\operatorname{sum}(X)} \\
+ \textbf{oe}(X, i, j)=\frac{X_{i j}}{\operatorname{expected}(X, i, j)}
+ \end{gathered}</script></li>
+<li><p><strong>Pointwise Mutual Information</strong> (PMI)</p>
+<p> PMI is observed/expected in log-space (with $\left.\log _{e}(0)=0\right)$ :</p>
+<script type="math/tex; mode=display">
+ \textbf{pmi}(X, i, j)=\log _{e}\left(\frac{X_{i j}}{ \textbf{expected} (X, i, j)}\right)=\log _{e}\left(\frac{P\left(X_{i j}\right)}{P\left(X_{i *}\right) \cdot P\left(X_{* j}\right)}\right)</script><p> PMI的问题是：</p>
+<p> 当 $X_{ij}=0$ 时，PMI 没有被定义。一个常见的改进做法是：在这种情况下将 PMI 设置为 0。 然而，这这样做和 PMI 的作用是不连贯的</p>
+<ul>
+<li><p>大于期望的计数 $\Longrightarrow$ 大的 PMI</p>
+</li>
+<li><p>小于期望的计数 $\Longrightarrow$ 小的 PMI</p>
+</li>
+<li><p>计数为 0 $\Longrightarrow$ 放在中间？</p>
+</li>
+</ul>
+</li>
+<li><p>Positive PMI</p>
+<script type="math/tex; mode=display">
+ \textbf{ppmi}(X, i, j) = 
+ \begin{cases}
+ \textbf{pmi}(X, i, j) & \textrm{if } \textbf{pmi}(X, i, j) > 0 \\
+ 0 & \textrm{otherwise}
+ \end{cases}</script></li>
+<li><p>Other weighting/normalization schemes</p>
+<ul>
+<li><p><strong>t-test</strong>: $\frac{P(w, d)-P(w) P(d)}{\sqrt{P(w) P(d)}}$</p>
+</li>
+<li><p><strong>TF-IDF</strong>: For a corpus of documents $D$ :</p>
+<ul>
+<li><p>Term frequency (TF):</p>
+<script type="math/tex; mode=display">
+\textbf{TF}(X, i, j) = \frac{X_{ij}}{\textbf{colsum}(X, i, j)}</script></li>
+<li><p>Inverse document frequency (IDF):</p>
+</li>
+</ul>
+<script type="math/tex; mode=display">
+\textbf{IDF}(X, i, j) = \log\left(\frac{n}{|\{k : X_{ik} > 0\}|}\right) \quad \log _{e}(0)=0</script><ul>
+<li><p>TF-IDF:  TF · IDF</p>
+<script type="math/tex; mode=display">
+\textbf{TF-IDF}(X, i, j) = \textbf{TF}(X, i, j) \cdot \textbf{IDF}(X, i, j)</script><blockquote>
+<p>注意：<code>sklearn</code> 版本的 <a target="_blank" rel="noopener" href="http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfTransformer.html#sklearn.feature_extraction.text.TfidfTransformer"><code>TfidfTransformer</code></a> 假设 TF 是按行定义的，DF 是按列定义的。也就是说，他是假设 <code>sklearn</code> 的文档是按照 document $\times $ word 设计的</p>
+</blockquote>
+</li>
+<li><p>Let’s do a quick worked-out example. Suppose we have the count matrix $X$ = </p>
+ <img src="/2022/05/04/VSM/1-1-1.png" class title="图片">
+<p> Then we calculate like this:</p>
+<script type="math/tex; mode=display">
+ \textbf{oe}(X, 1, 0) = \frac{47}{\frac{54 \cdot 81}{99}} = 1.06</script><p> And the full table looks like this:</p>
+ <img src="/2022/05/04/VSM/1-1-2.png" class title="图片">
+</li>
+</ul>
+</li>
+<li><p><strong>Pairwise distance matrices</strong>:</p>
+<img src="/2022/05/04/VSM/1-1-3.png" class title="图片">
+<p>cosine $\Downarrow$:</p>
+<img src="/2022/05/04/VSM/1-1-4.png" class title="图片">
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Weighting-scheme-cell-value-distributions"><a href="#Weighting-scheme-cell-value-distributions" class="headerlink" title="Weighting scheme cell-value distributions"></a>Weighting scheme cell-value distributions</h2><img src="/2022/05/04/VSM/1-2-2.png" class title="图片">
+<img src="/2022/05/04/VSM/1-2-4.png" class title="图片">
+<h2 id="Relationships-and-generalizations-1"><a href="#Relationships-and-generalizations-1" class="headerlink" title="Relationships and generalizations"></a>Relationships and generalizations</h2><ol>
+<li>几乎这些方案的想法都是给定 $X_i$ 和 $X_j$，给 $X_{ij}$ 赋权</li>
+<li><p>计数的量级也很重要，[1,10] 和 [1000,10000] 可能表示不同的情况； 创建概率分布或长度归一化可以掩盖这一问题。</p>
+</li>
+<li><p>PMI 及其变体将放大相对于它们的行和列而言很小的计数值。 不过，对于语言数据，这些可能是噪音。</p>
+</li>
+<li>TF-IDF 惩罚出现在许多文档中的单词——它对于密集矩阵(其中可能包括单词 × 单词矩阵)的表现比较奇怪。</li>
+</ol>
+<h2 id="Code-snippets-2"><a href="#Code-snippets-2" class="headerlink" title="Code snippets"></a>Code snippets</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Observed/Expected value</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">observed_over_expected</span>(<span class="params">df</span>):</span><br><span class="line">    col_totals = df.<span class="built_in">sum</span>(axis=<span class="number">0</span>)</span><br><span class="line">    total = col_totals.<span class="built_in">sum</span>()</span><br><span class="line">    row_totals = df.<span class="built_in">sum</span>(axis=<span class="number">1</span>)</span><br><span class="line">    expected = np.outer(row_totals, col_totals) / total</span><br><span class="line">    oe = df / expected</span><br><span class="line">    <span class="keyword">return</span> oe</span><br><span class="line"></span><br><span class="line"><span class="comment"># PPMI</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">pmi</span>(<span class="params">df, positive=<span class="literal">True</span></span>):</span><br><span class="line">    df = observed_over_expected(df)</span><br><span class="line">    <span class="comment"># Silence distracting warnings about log(0):</span></span><br><span class="line">    <span class="keyword">with</span> np.errstate(divide=<span class="string">&#x27;ignore&#x27;</span>):</span><br><span class="line">        df = np.log(df)</span><br><span class="line">    df[np.isinf(df)] = <span class="number">0.0</span>  <span class="comment"># log(0) = 0</span></span><br><span class="line">    <span class="keyword">if</span> positive:</span><br><span class="line">        df[df &lt; <span class="number">0</span>] = <span class="number">0.0</span></span><br><span class="line">    <span class="keyword">return</span> </span><br><span class="line"></span><br><span class="line"><span class="comment"># TF-IDF</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">tfidf</span>(<span class="params">df</span>):</span><br><span class="line">    <span class="comment"># Inverse document frequencies:</span></span><br><span class="line">    doccount = <span class="built_in">float</span>(df.shape[<span class="number">1</span>])</span><br><span class="line">    freqs = df.astype(<span class="built_in">bool</span>).<span class="built_in">sum</span>(axis=<span class="number">1</span>)</span><br><span class="line">    idfs = np.log(doccount / freqs)</span><br><span class="line">    idfs[np.isinf(idfs)] = <span class="number">0.0</span>  <span class="comment"># log(0) = 0</span></span><br><span class="line">    <span class="comment"># Term frequencies:</span></span><br><span class="line">    col_totals = df.<span class="built_in">sum</span>(axis=<span class="number">0</span>)</span><br><span class="line">    tfs = df / col_totals</span><br><span class="line">    <span class="keyword">return</span> (tfs.T * idfs).T</span><br></pre></td></tr></table></figure>
+<h2 id="Subword-information"><a href="#Subword-information" class="headerlink" title="Subword information"></a>Subword information</h2><ul>
+<li><p><a target="_blank" rel="noopener" href="https://papers.nips.cc/paper/603-word-space">Schütze (1993)</a> 率先使用子词信息减少稀疏性，从而增加 VSM 中连接的密度来改善表示结果</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1607.04606">Bojanowski et al. (2016)</a> (the <a target="_blank" rel="noopener" href="https://fasttext.cc">fastText</a> team) 探索了一种特别简单的方法来实现这一点：将每个单词表示为它所包含的字符水平的 n-gram 表示总和</p>
+</li>
+<li><p>对于 n-gram 模型，我们考虑第 N 个词出现的概率只依赖于前 n-1 个词的概率，故该句子的概率分布：</p>
+<script type="math/tex; mode=display">
+P(s)=P\left(w_{1}, w_{2}, \ldots w_{n}\right)=P\left(w_{1} \mid c_{w_{-n+2}}^{w_{0}}\right) P\left(w_{2} \mid c_{w_{-n+3}}^{w_{1}}\right) \ldots P\left(w_{i} \mid c_{w_{i-n+1}}^{w_{i-1}}\right)</script><p>比如：<br>对于一元语法模型 unigram-model，句子的概率分布: </p>
+<script type="math/tex; mode=display">
+P(s)=P\left(w_{0}\right) P\left(w_{1}\right) P\left(w_{2}\right) \ldots P\left(w_{i}\right) P\left(w_{i+1}\right)</script><p>对于二元语法模型 bigram-model，句子的概率分布:</p>
+<script type="math/tex; mode=display">
+P(s)=P\left(w_{1} \mid w_{0}\right) P\left(w_{2} \mid w_{1}\right) \ldots P\left(w_{i} \mid w_{i-1}\right) P\left(w_{i+1} \mid w_{i}\right)</script><p>对于三元语法模型 trigram-model，句子的概率分布:</p>
+<script type="math/tex; mode=display">
+P(s)=P\left(w_{1} \mid w_{0}, w_{-1}\right) P\left(w_{2} \mid w_{1}, w_{0}\right) \ldots P\left(w_{i} \mid w_{i-1} w_{i-2}\right) P\left(w_{i+1} \mid w_{i}, w_{i-1}\right)</script></li>
+<li><p>表示方式如下：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">ngram_vsm</span>(<span class="params">df, n=<span class="number">2</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Create a character-level VSM from `df`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    df : pd.DataFrame</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    n : int</span></span><br><span class="line"><span class="string">        The n-gram size.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    pd.DataFrame</span></span><br><span class="line"><span class="string">        This will have the same column dimensionality as `df`, but the</span></span><br><span class="line"><span class="string">        rows will be expanded with representations giving the sum of</span></span><br><span class="line"><span class="string">        all the original rows in `df` that contain that row&#x27;s n-gram.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    unigram2vecs = defaultdict(<span class="built_in">list</span>)</span><br><span class="line">    <span class="keyword">for</span> w, x <span class="keyword">in</span> df.iterrows():</span><br><span class="line">        <span class="keyword">for</span> c <span class="keyword">in</span> get_character_ngrams(w, n):</span><br><span class="line">            unigram2vecs[c].append(x)</span><br><span class="line">    unigram2vecs = &#123;c: np.array(x).<span class="built_in">sum</span>(axis=<span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">for</span> c, x <span class="keyword">in</span> unigram2vecs.items()&#125;</span><br><span class="line">    cf = pd.DataFrame(unigram2vecs).T</span><br><span class="line">    cf.columns = df.columns</span><br><span class="line">    <span class="keyword">return</span> cf</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_character_ngrams</span>(<span class="params">w, n</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Map a word to its character-level n-grams, with boundary</span></span><br><span class="line"><span class="string">    symbols &#x27;&lt;w&gt;&#x27; and &#x27;&lt;/w&gt;&#x27;.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    w : str</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    n : int</span></span><br><span class="line"><span class="string">        The n-gram size.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    list of str</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> n &gt; <span class="number">1</span>:</span><br><span class="line">        w = [<span class="string">&quot;&lt;w&gt;&quot;</span>] + <span class="built_in">list</span>(w) + [<span class="string">&quot;&lt;/w&gt;&quot;</span>]</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        w = <span class="built_in">list</span>(w)</span><br><span class="line">    <span class="keyword">return</span> [<span class="string">&quot;&quot;</span>.join(w[i: i+n]) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(w)-n+<span class="number">1</span>)]</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">character_level_rep</span>(<span class="params">word, cf, n=<span class="number">4</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Get a representation for `word` as the sum of all the</span></span><br><span class="line"><span class="string">    representations of `n`grams that it contains, according to `cf`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    word : str</span></span><br><span class="line"><span class="string">        The word to represent.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    cf : pd.DataFrame</span></span><br><span class="line"><span class="string">        The character-level VSM (e.g, the output of `ngram_vsm`).</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    n : int</span></span><br><span class="line"><span class="string">        The n-gram size.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    np.array</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    ngrams = get_character_ngrams(word, n)</span><br><span class="line">    ngrams = [n <span class="keyword">for</span> n <span class="keyword">in</span> ngrams <span class="keyword">if</span> n <span class="keyword">in</span> cf.index]</span><br><span class="line">    reps = cf.loc[ngrams].values</span><br><span class="line">    <span class="keyword">return</span> reps.<span class="built_in">sum</span>(axis=<span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+<h1 id="Dimensionality-reduction"><a href="#Dimensionality-reduction" class="headerlink" title="Dimensionality reduction"></a>Dimensionality reduction</h1><p>为什么要降维？</p>
+<ul>
+<li>可以帮助捕获一些高阶的关联，从而改善整体的向量空间</li>
+<li>方便可视化</li>
+<li>简化模型训练和预测</li>
+</ul>
+<h2 id="Latent-Semantic-Analysis-LSA"><a href="#Latent-Semantic-Analysis-LSA" class="headerlink" title="Latent Semantic Analysis (LSA)"></a>Latent Semantic Analysis (LSA)</h2><ul>
+<li>最古老和最广泛使用的降维技术之一</li>
+<li><p>也被叫做<strong>截断奇异值分解</strong> (Truncated Singular Value Decomposition, <a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html#sklearn.decomposition.TruncatedSVD">TSVD</a>)</p>
+</li>
+<li><p><strong>Singular value decomposition</strong><br>For any matrix of real numbers $A$ of dimension $(m \times n)$ there exists a factorization into matrices $T, S, D$ such that</p>
+</li>
+</ul>
+<script type="math/tex; mode=display">
+A_{m \times n}=T_{m \times m} S_{m \times m} D_{n \times m}^{T}</script><script type="math/tex; mode=display">
+\left(\begin{array}{llll}. & \cdot & \cdot & \cdot \\ \cdot & \cdot & \cdot & \cdot \\ \cdot & \cdot & \cdot & \cdot\end{array}\right)=\left(\begin{array}{lll}. & \cdot & \cdot \\ \cdot & \cdot & \cdot \\ \cdot & \cdot & \cdot\end{array}\right)\left(\begin{array}{ll}\cdot & \\ & \cdot & \\ & & \cdot\end{array}\right)\left(\begin{array}{lll}\cdot & \cdot & \cdot \\ \cdot & \cdot & \cdot \\ \cdot & \cdot & \cdot \\ \cdot & \cdot & \cdot\end{array}\right)^{T}\\
+A_{3 \times 4}=T_{3 \times 3}\ \cdot \ S_{3 \times 3}\ \cdot \ D_{4 \times 3}^{T}</script><ul>
+<li><p>The <strong>truncation</strong> part means that we include only the top $k$ dimensions of $S$. Given our row-oriented perspective on these matrices, this means using</p>
+<script type="math/tex; mode=display">
+T[1{:}m, 1{:}k]S[1{:}k, 1{:}k]</script><p>which gives us a version of $T$ that includes only the top $k$ dimensions of variation. </p>
+</li>
+<li><p>单元格值比较 (<em>k</em> = 100)</p>
+</li>
+</ul>
+<img src="/2022/05/04/VSM/1-2-9.png" class title="图片">
+<ul>
+<li>选择 LSA 维度</li>
+</ul>
+<img src="/2022/05/04/VSM/1-2-10.png" class title="图片">
+<ul>
+<li><p>相关的降维技术</p>
+<ul>
+<li><strong>主成分分析法</strong> (Principal Components Analysis, <a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html#sklearn.decomposition.PCA">PCA</a>)</li>
+<li><strong>非负矩阵分解</strong> (Non-negative Matrix Factorization, <a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.NMF.html#sklearn.decomposition.NMF">NMF</a>)</li>
+<li><strong>概率潜在语义分析</strong> (Probabilistic LSA, PLSA)</li>
+<li><p><strong>潜在狄利克雷分配</strong> (Latent Dirichlet Allocation，LDA)</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/64664346"><strong>t-SNE</strong></a></p>
+</li>
+<li>See sklearn.decomposition and sklearn.manifold</li>
+</ul>
+</li>
+<li><p><strong>Code snippets</strong></p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">lsa</span>(<span class="params">df, k=<span class="number">100</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Latent Semantic Analysis using pure scipy.</span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    df : pd.DataFrame</span></span><br><span class="line"><span class="string">       The matrix to operate on.</span></span><br><span class="line"><span class="string">    k : int (default: 100)</span></span><br><span class="line"><span class="string">        Number of dimensions to truncate to.</span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    pd.DataFrame</span></span><br><span class="line"><span class="string">        The SVD-reduced version of `df` with dimension (m x k), where</span></span><br><span class="line"><span class="string">        m is the rowcount of mat and `k` is either the user-supplied</span></span><br><span class="line"><span class="string">        k or the column count of `mat`, whichever is smaller.</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    rowmat, singvals, colmat = np.linalg.svd(df, full_matrices=<span class="literal">False</span>)</span><br><span class="line">    singvals = np.diag(singvals)</span><br><span class="line">    trunc = np.dot(rowmat[:, <span class="number">0</span>:k], singvals[<span class="number">0</span>:k, <span class="number">0</span>:k])</span><br><span class="line">    <span class="keyword">return</span> pd.DataFrame(trunc, index=df.index)</span><br></pre></td></tr></table></figure>
+<h2 id="Autoencoders"><a href="#Autoencoders" class="headerlink" title="Autoencoders"></a>Autoencoders</h2><ul>
+<li>The basic autoencoder model</li>
+</ul>
+<blockquote>
+<p>Assume f = tanh and so $f^{\prime}(z) = 1.0 - z^2$ . Per example error is $∑_i 0.5 * (x_hat_i - x_i)^2$</p>
+</blockquote>
+<img src="/2022/05/04/VSM/1-2-11.png" class title="图片">
+<ul>
+<li><p>The module <code>torch_autoencoder</code> uses PyTorch to implement a simple one-layer autoencoder:</p>
+<script type="math/tex; mode=display">
+\begin{align}
+h &= \mathbf{f}(xW + b_{h}) \\
+\widehat{x} &= hW^{\top} + b_{x}
+\end{align}</script><blockquote>
+<p>we assume that the hidden representation $h$ has a low dimensionality like 100, and that $\mathbf{f}$ is a non-linear activation function (the default for <code>TorchAutoencoder</code> is <code>tanh</code>)</p>
+</blockquote>
+<p>The objective function for autoencoders will implement some kind of assessment of the distance between the inputs and their predicted outputs. For example, one could use the one-half mean squared error:</p>
+<script type="math/tex; mode=display">
+\frac{1}{m}\sum_{i=1}^{m} \frac{1}{2}(\widehat{X[i]} - X[i])^{2}</script><blockquote>
+<p>where $X$ is the input matrix of examples (dimension $m \times n$) and $X[i]$ corresponds to the $i$th example.</p>
+</blockquote>
+<p>When you call the <code>fit</code> method of <code>TorchAutoencoder</code>, it returns the matrix of hidden representations <em>ℎ</em>, which is the new embedding space: same row count as the input, but with the column count set by the <code>hidden_dim</code> parameter.</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">randmatrix</span>(<span class="params">m, n, sigma=<span class="number">0.1</span>, mu=<span class="number">0</span></span>):</span><br><span class="line">    <span class="keyword">return</span> sigma * np.random.randn(m, n) + mu</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">autoencoder_evaluation</span>(<span class="params">nrow=<span class="number">1000</span>, ncol=<span class="number">100</span>, rank=<span class="number">20</span>, max_iter=<span class="number">20000</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;This an evaluation in which `TorchAutoencoder` should be able</span></span><br><span class="line"><span class="string">    to perfectly reconstruct the input data, because the</span></span><br><span class="line"><span class="string">    hidden representations have the same dimensionality as</span></span><br><span class="line"><span class="string">    the rank of the input matrix.</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    X = randmatrix(nrow, rank).dot(randmatrix(rank, ncol))</span><br><span class="line">    ae = TorchAutoencoder(hidden_dim=rank, max_iter=max_iter)</span><br><span class="line">    ae.fit(X)</span><br><span class="line">    X_pred = ae.predict(X)</span><br><span class="line">    mse = (<span class="number">0.5</span> * (X_pred - X)**<span class="number">2</span>).mean()</span><br><span class="line">    <span class="keyword">return</span>(X, X_pred, mse)</span><br><span class="line"></span><br><span class="line">ae_max_iter = <span class="number">100</span></span><br><span class="line"></span><br><span class="line">_, _, ae = autoencoder_evaluation(max_iter=ae_max_iter)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Autoencoder evaluation MSE after &#123;0&#125; evaluations: &#123;1:0.04f&#125;&quot;</span>.<span class="built_in">format</span>(</span><br><span class="line">    ae_max_iter, ae))</span><br><span class="line"><span class="comment"># Finished epoch 100 of 100; error is 0.001447509159334004</span></span><br><span class="line"><span class="comment"># Autoencoder evaluation MSE after 100 evaluations: 0.0007</span></span><br></pre></td></tr></table></figure>
+<p><strong>Applying autoencoders to real VSMs</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> np_autoender <span class="keyword">import</span> Autoencoder</span><br><span class="line"><span class="keyword">from</span> torch_autoencoder <span class="keyword">import</span> TorchAutoencoder</span><br><span class="line"></span><br><span class="line"><span class="comment"># np_autoender</span></span><br><span class="line"><span class="comment"># You&#x27;ll likely need a larger network, trained longer, for good results.</span></span><br><span class="line">ae = Autoencoder(max_iter=<span class="number">10</span>, hidden_dim=<span class="number">50</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Scaling the values first will help the network learn:</span></span><br><span class="line"><span class="comment"># giga5: Gigaword: Window size =5; scaling = 1/n</span></span><br><span class="line">giga5_12 = giga5.apply(length_norm, axis=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># The &#x27;fit&#x27; method returns the hidden reps:</span></span><br><span class="line">giga5_ae = ae.fit(giga5_12)</span><br><span class="line"></span><br><span class="line"><span class="comment"># torch_autoencoder</span></span><br><span class="line">torch_ae = TorchAutoencoder(max_iter=<span class="number">10</span>, hidden_dim=<span class="number">50</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># A potentially interesting pipeline:</span></span><br><span class="line">giga5_ppmi_lsa100 = lsa(pmi(giga5), k=<span class="number">100</span>)</span><br><span class="line"></span><br><span class="line">giga5_ppmi_lsa100_ae = torch_ae.fit(giga5_ppmi_lsa100)</span><br></pre></td></tr></table></figure>
+<h2 id="GloVe"><a href="#GloVe" class="headerlink" title="GloVe"></a>GloVe</h2><ul>
+<li><p>粗略地讲，目的是学习单词的向量，使它们的点积与它们共现的对数概率成正比。</p>
+</li>
+<li><p>对于大的单词量，可以使用 <a target="_blank" rel="noopener" href="https://nlp.stanford.edu/projects/glove/">Cimplementation</a></p>
+</li>
+<li><p><strong>GloVe 的目标</strong>：</p>
+<p>Equation (6):</p>
+<script type="math/tex; mode=display">
+w_{i}^{\top}\widetilde{w}_{k} = \log(P_{ik}) = \log(X_{ik}) - \log(X_{i})</script><p>允许使用不同的行和列:</p>
+<script type="math/tex; mode=display">
+w_{i}^{\top}\widetilde{w}_{k} = \log(P_{ik}) = \log(X_{ik}) - \log(X_{i} \cdot X_{*k})</script><blockquote>
+<p> $X_{i}$ is the sum of the values in row $i$, and $X_{*k}$ is the sum of the values in column $k$</p>
+</blockquote>
+<p>PMI:</p>
+<script type="math/tex; mode=display">
+\operatorname{pmi}(X, i, j)=\log \left(\frac{X_{i j}}{\operatorname{expected}(X, i, j)}\right)=\log \left(\frac{P\left(X_{i j}\right)}{P\left(X_{i *}\right) \cdot P\left(X_{* j}\right)}\right)</script><p>By the equivalence $\log \left(\frac{x}{y}\right)=\log (x)-\log (y)$</p>
+</li>
+<li><p><strong>加权 GloVe 的目标</strong>:</p>
+<p>原始：</p>
+<script type="math/tex; mode=display">
+w_{i}^{\top} \widetilde{w}_{k}+b_{i}+\widetilde{b}_{k}=\log \left(X_{i k}\right)</script><p>加权：</p>
+<script type="math/tex; mode=display">
+\sum_{i, j=1}^{|V|} f\left(X_{i j}\right)\left(w_{i}^{\top} \widetilde{w}_{j}+b_{i}+\widetilde{b}_{j}-\log X_{i j}\right)^{2}</script><p>where $V$ is the vocabulary and $f$ is</p>
+<script type="math/tex; mode=display">
+f(x) 
+\begin{cases}
+(x/x_{\max})^{\alpha} & \textrm{if } x < x_{\max} \\
+1 & \textrm{otherwise}
+\end{cases}</script><p>通常，$\alpha$ 设为 $0.75$， $x_{\max }$ 设为 100 .</p>
+</li>
+<li><p><strong>GloVe 的超参数</strong></p>
+<ul>
+<li><p>学习到的维度表示</p>
+</li>
+<li><p>$x_{\max }$, 使所有的大的计数值都展平</p>
+</li>
+<li><p>$\alpha$, 用来放缩 $\left(x / x_{\max }\right)^{\alpha}$.</p>
+<script type="math/tex; mode=display">
+f(x) \begin{cases}\left(x / x_{\max }\right)^{\alpha} & \text { if } x<x_{\max } \\ 1 & \text { otherwise }\end{cases}</script><p>$f\left(\left[\begin{array}{lllll}100 &amp; 99 &amp; 75 &amp; 10 &amp; 1\end{array}\right]\right)=$</p>
+</li>
+</ul>
+</li>
+<li><p><strong>GloVe 学习</strong></p>
+</li>
+</ul>
+<img src="/2022/05/04/VSM/1-5-1.png" class title="图片">
+<img src="/2022/05/04/VSM/1-5-2.png" class title="图片">
+<ul>
+<li>GloVe 单元格值比较 (<em>k</em> = 50)</li>
+</ul>
+<img src="/2022/05/04/VSM/1-5-3.png" class title="图片">
+<ul>
+<li>GloVe code snippets</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> np_glove <span class="keyword">import</span> GloVe</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line">glove_test_count_df = pd.DataFrame(</span><br><span class="line">    np.array([</span><br><span class="line">        [<span class="number">10.0</span>,  <span class="number">2.0</span>,  <span class="number">3.0</span>,  <span class="number">4.0</span>],</span><br><span class="line">        [ <span class="number">2.0</span>, <span class="number">10.0</span>,  <span class="number">4.0</span>,  <span class="number">1.0</span>],</span><br><span class="line">        [ <span class="number">3.0</span>,  <span class="number">4.0</span>, <span class="number">10.0</span>,  <span class="number">2.0</span>],</span><br><span class="line">        [ <span class="number">4.0</span>,  <span class="number">1.0</span>,  <span class="number">2.0</span>, <span class="number">10.0</span>]]),</span><br><span class="line">    index=[<span class="string">&#x27;A&#x27;</span>, <span class="string">&#x27;B&#x27;</span>, <span class="string">&#x27;C&#x27;</span>, <span class="string">&#x27;D&#x27;</span>],</span><br><span class="line">    columns=[<span class="string">&#x27;A&#x27;</span>, <span class="string">&#x27;B&#x27;</span>, <span class="string">&#x27;C&#x27;</span>, <span class="string">&#x27;D&#x27;</span>])</span><br><span class="line"></span><br><span class="line">glove_test_mod = GloVe(n=<span class="number">4</span>, max_iter=<span class="number">1000</span>)</span><br><span class="line"></span><br><span class="line">glove_test_df = glove_test_mod.fit(glove_test_count_df)</span><br><span class="line"><span class="comment"># Finished epoch 999 of 1000; error is 7.633385001520849e-052</span></span><br><span class="line"></span><br><span class="line">glove_test_mod.score(glove_test_count_df)</span><br><span class="line"><span class="comment"># 0.9566649559987249</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> torch_glove <span class="keyword">import</span> TorchGloVe</span><br><span class="line"><span class="keyword">import</span> os </span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"></span><br><span class="line">DATA_HOME = os.path.join(<span class="string">&#x27;data&#x27;</span>, <span class="string">&#x27;vsmdata&#x27;</span>)</span><br><span class="line">yelp5 = pd.read_csv(os.path.join(DATA_HOME, <span class="string">&#x27;yelp_window5-scaled.csv.gz&#x27;</span>), index_col=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># What percentage of the non-zero values are being mapped to 1 by f ?</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">percentage_nonzero_vals_above</span>(<span class="params">df, n=<span class="number">100</span></span>):</span><br><span class="line">	v = df.values.reshape(<span class="number">1</span>, -<span class="number">1</span>).squeeze()</span><br><span class="line">	v = v[v&gt;<span class="number">0</span>]</span><br><span class="line">	above = v[v &gt; n]</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">len</span>(above) / <span class="built_in">len</span>(v)</span><br><span class="line"></span><br><span class="line">percentage_nonzero_vals_above(yelp5)</span><br><span class="line"></span><br><span class="line">glv = TorchGloVe(max_iter=<span class="number">100</span>, embed_dim=<span class="number">50</span>)</span><br><span class="line"></span><br><span class="line">yelp5_glv = glv.fit(yelp5)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Are dot products of learned vectors proportional</span></span><br><span class="line"><span class="comment"># to the log co-occurrence probabilities?</span></span><br><span class="line">glv.score(yelp5)</span><br></pre></td></tr></table></figure>
+<h2 id="Visualization"><a href="#Visualization" class="headerlink" title="Visualization"></a>Visualization</h2><ul>
+<li><p>我们的目标是在二维或三维空间中可视化更高维的空间</p>
+</li>
+<li><p>在 <a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/modules/manifold.html">sklearn.manifold</a> 中实现了许多可视化技术</p>
+</li>
+<li><p>Code snippets</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA</span><br><span class="line"><span class="keyword">from</span> sklearn.manifold <span class="keyword">import</span> TSNE</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">tsne_viz</span>(<span class="params">df, colors=<span class="literal">None</span>, output_filename=<span class="literal">None</span>, figsize=(<span class="params"><span class="number">40</span>, <span class="number">50</span></span>), random_state=<span class="literal">None</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    2d plot of `df` using t-SNE, with the points labeled by `df.index`,</span></span><br><span class="line"><span class="string">    aligned with `colors` (defaults to all black).</span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    df : pd.DataFrame</span></span><br><span class="line"><span class="string">        The matrix to visualize.</span></span><br><span class="line"><span class="string">    colors : list of colornames or None (default: None)</span></span><br><span class="line"><span class="string">        Optional list of colors for the vocab. The color names just</span></span><br><span class="line"><span class="string">        need to be interpretable by matplotlib. If they are supplied,</span></span><br><span class="line"><span class="string">        they need to have the same length as `df.index`. If `colors=None`,</span></span><br><span class="line"><span class="string">        then all the words are displayed in black.</span></span><br><span class="line"><span class="string">    output_filename : str (default: None)</span></span><br><span class="line"><span class="string">        If not None, then the output image is written to this location.</span></span><br><span class="line"><span class="string">        The filename suffix determines the image type. If `None`, then</span></span><br><span class="line"><span class="string">        `plt.plot()` is called, with the behavior determined by the</span></span><br><span class="line"><span class="string">        environment.</span></span><br><span class="line"><span class="string">    figsize : (int, int) (default: (40, 50))</span></span><br><span class="line"><span class="string">        Default size of the output in display units.</span></span><br><span class="line"><span class="string">    random_state : int or None</span></span><br><span class="line"><span class="string">        Optionally set the `random_seed` passed to `PCA` and `TSNE`.</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="comment"># Colors:</span></span><br><span class="line">    vocab = df.index</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> colors:</span><br><span class="line">        colors = [<span class="string">&#x27;black&#x27;</span> <span class="keyword">for</span> i <span class="keyword">in</span> vocab]</span><br><span class="line">    <span class="comment"># Recommended reduction via PCA or similar:</span></span><br><span class="line">    n_components = <span class="number">50</span> <span class="keyword">if</span> df.shape[<span class="number">1</span>] &gt;= <span class="number">50</span> <span class="keyword">else</span> df.shape[<span class="number">1</span>]</span><br><span class="line">    dimreduce = PCA(n_components=n_components, random_state=random_state)</span><br><span class="line">    X = dimreduce.fit_transform(df)</span><br><span class="line">    <span class="comment"># t-SNE:</span></span><br><span class="line">    tsne = TSNE(n_components=<span class="number">2</span>, random_state=random_state)</span><br><span class="line">    tsnemat = tsne.fit_transform(X)</span><br><span class="line">    <span class="comment"># Plot values:</span></span><br><span class="line">    xvals = tsnemat[: , <span class="number">0</span>]</span><br><span class="line">    yvals = tsnemat[: , <span class="number">1</span>]</span><br><span class="line">    <span class="comment"># Plotting:</span></span><br><span class="line">    fig, ax = plt.subplots(nrows=<span class="number">1</span>, ncols=<span class="number">1</span>, figsize=figsize)</span><br><span class="line">    ax.plot(xvals, yvals, marker=<span class="string">&#x27;&#x27;</span>, linestyle=<span class="string">&#x27;&#x27;</span>)</span><br><span class="line">    <span class="comment"># Text labels:</span></span><br><span class="line">    <span class="keyword">for</span> word, x, y, color <span class="keyword">in</span> <span class="built_in">zip</span>(vocab, xvals, yvals, colors):</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            ax.annotate(word, (x, y), fontsize=<span class="number">8</span>, color=color)</span><br><span class="line">        <span class="keyword">except</span> UnicodeDecodeError:  <span class="comment">## Python 2 won&#x27;t cooperate!</span></span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line">    <span class="comment"># Output:</span></span><br><span class="line">    <span class="keyword">if</span> output_filename:</span><br><span class="line">        plt.savefig(output_filename, bbox_inches=<span class="string">&#x27;tight&#x27;</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        plt.show()</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> nltk.corpus <span class="keyword">import</span> opinion_lexicon</span><br><span class="line"><span class="keyword">import</span> os </span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"></span><br><span class="line">DATA_HOME = os.path.join(<span class="string">&#x27;data&#x27;</span>, <span class="string">&#x27;vsmdata&#x27;</span>)</span><br><span class="line">yelp5 = pd.read_csv(os.path.join(DATA_HOME, <span class="string">&#x27;yelp_window5-scaled.csv.gz&#x27;</span>), index_col=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">yelp5_ppmi = pmi(yelp5)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Supply a str filename to write the output to a file:</span></span><br><span class="line">tsne_viz(yelp5_ppmi, output_filename=<span class="literal">None</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># To display words in different colors based on external criteria:</span></span><br><span class="line">position = <span class="built_in">set</span>(opinion_lexicon.position())</span><br><span class="line">negative = <span class="built_in">set</span>(opinion_lexicon.negative())</span><br><span class="line"></span><br><span class="line">colors = []</span><br><span class="line"><span class="keyword">for</span> w <span class="keyword">in</span> yelp5_ppmi.index:</span><br><span class="line">    <span class="keyword">if</span> w <span class="keyword">in</span> positive:</span><br><span class="line">        color = <span class="string">&#x27;red&#x27;</span></span><br><span class="line">    <span class="keyword">elif</span> w <span class="keyword">in</span> negative:</span><br><span class="line">        color = <span class="string">&#x27;blue&#x27;</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        color = <span class="string">&#x27;gray&#x27;</span></span><br><span class="line">    colors.append(color)</span><br><span class="line"></span><br><span class="line">tsne_viz(yelp5_ppmi, colors=colors)</span><br></pre></td></tr></table></figure>
+<h1 id="Retrofitting"><a href="#Retrofitting" class="headerlink" title="Retrofitting"></a>Retrofitting</h1><h2 id="Central-goals"><a href="#Central-goals" class="headerlink" title="Central goals"></a>Central goals</h2><ul>
+<li>分布表征功能固然强大且容易得到，但它们往往只反映了相似性（同义词，含义）</li>
+<li>结构化的资源虽然稀疏且难以获得，但它们支持学习丰富、多样的语义区别</li>
+<li>改造表示方式，使得两个优点都能实现</li>
+</ul>
+<h2 id="The-retrofitting-model"><a href="#The-retrofitting-model" class="headerlink" title="The retrofitting model"></a>The retrofitting model</h2><script type="math/tex; mode=display">
+\sum_{i=1}^{m} \left[ 
+\alpha_{i}\|q_{i} - \widehat{q}_{i}\|_{2}^{2}
++
+\sum_{j : (i,j) \in E}\beta_{ij}\|q_{i} - q_{j}\|_{2}^{2}
+\right]</script><ul>
+<li>The left term encodes a pressure to stay like the original vector. </li>
+<li>The  right term encodes a pressure to be more like one’s neighbors.</li>
+<li><p>In minimizing this objective, we should be able to strike a balance between old and new, VSM and graph.</p>
+</li>
+<li><p><strong>定义</strong>:</p>
+<ul>
+<li><p>$|u - v|_{2}^{2}$ gives the <strong>squared euclidean distance</strong> from $u$ to $v$.</p>
+</li>
+<li><p>$\alpha$ and $\beta$ are weights we set by hand, controlling the relative strength of the two pressures. In the paper, they use $\alpha = 1$ and $\beta = \frac{1}{ \{j : (i, j) \in E\} }$.</p>
+</li>
+</ul>
+</li>
+</ul>
+<img src="/2022/05/04/VSM/1-6-1.png" class title="图片">
+<ul>
+<li><p><strong>延伸</strong></p>
+<p>放弃每条边都意味着“相似”的假设</p>
+</li>
+</ul>
+<h2 id="Examples"><a href="#Examples" class="headerlink" title="Examples"></a>Examples</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">from</span> retrofitting <span class="keyword">import</span> Retrofitter</span><br><span class="line"></span><br><span class="line">Q_hat = pd.DataFrame(</span><br><span class="line">	[[<span class="number">0.0</span>, <span class="number">0.0</span>],</span><br><span class="line">    [<span class="number">0.0</span>,,<span class="number">0.5</span>],</span><br><span class="line">    [<span class="number">0.5</span>, <span class="number">0.0</span>]],</span><br><span class="line">	columns=[<span class="string">&#x27;x&#x27;</span>, <span class="string">&#x27;y&#x27;</span>])</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Only node 0 has outgoing edges</span></span><br><span class="line">edges_0 = &#123;<span class="number">0</span>: &#123;<span class="number">1</span>, <span class="number">2</span>&#125;, <span class="number">1</span>: <span class="built_in">set</span>(), <span class="number">2</span>: <span class="built_in">set</span>()&#125;</span><br><span class="line"></span><br><span class="line">_ = retrofitting.plot_retro_path(Q_hat, edges_0)</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/04/VSM/1-6-3.png" class title="图片">
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># All nodes connected to all others</span></span><br><span class="line">edges_all = &#123;<span class="number">0</span>: &#123;<span class="number">1</span>, <span class="number">2</span>&#125;, <span class="number">1</span>: &#123;<span class="number">0</span>, <span class="number">2</span>&#125;, <span class="number">2</span>: &#123;<span class="number">0</span>, <span class="number">1</span>&#125;&#125;</span><br><span class="line"></span><br><span class="line">_ = retrofitting.plot_retro_path(Q_hat, edges_all)</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/04/VSM/1-6-4.png" class title="图片">
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 2 has no outgoing edges</span></span><br><span class="line">edges_isolated = &#123;<span class="number">0</span>: &#123;<span class="number">1</span>, <span class="number">2</span>&#125;, <span class="number">1</span>: &#123;<span class="number">0</span>, <span class="number">2</span>&#125;, <span class="number">2</span>: <span class="built_in">set</span>()&#125;</span><br><span class="line"></span><br><span class="line">_ = retrofitting.plot_retro_path(Q_hat, edges_isolated)</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/04/VSM/1-6-5.png" class title="图片">
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># alpha=0</span></span><br><span class="line">_ = retrofitting.plot_retro_path(</span><br><span class="line">    Q_hat, edges_all,</span><br><span class="line">    retrofitter=Retrofitter(alpha=<span class="keyword">lambda</span> x: <span class="number">0</span>))</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/04/VSM/1-6-6.png" class title="图片">
+<h2 id="WordNet"><a href="#WordNet" class="headerlink" title="WordNet"></a>WordNet</h2><p>WordNet is an incredible, hand-built lexical resource capturing a wealth of information about English words and their inter-relationships. (<a target="_blank" rel="noopener" href="http://globalwordnet.org">Here is a collection of WordNets in other languages.</a>) For a detailed overview using NLTK, see <a target="_blank" rel="noopener" href="http://compprag.christopherpotts.net/wordnet.html">this tutorial</a>.</p>
+<p>核心概念：</p>
+<ul>
+<li><strong>Lemma</strong>: 类似于我们通常见到的单词概念，引理是高度消除语义歧义的</li>
+<li><strong>synset</strong>: 是 WordNet 上的同义词引理的集合 (这是特定于 WordNet 的；直观上具有不同含义的单词可能仍然被组合成 synset)</li>
+</ul>
+<p>WordNet 是 Lemma 和 synset 之间关系的图，捕获诸如<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E4%B8%8A%E4%B8%8B%E4%BD%8D%E5%85%B3%E7%B3%BB/5947743?fr=aladdin">下位词</a> (特定性较强的单词叫做概括性较强的单词的下位词，例如， 猩红色、鲜红色、胭脂红、绯红色都是“红色 ”的下位词)，反义词和许多其他内容</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> nltk.corpus <span class="keyword">import</span> wordnet <span class="keyword">as</span> wn</span><br><span class="line"></span><br><span class="line">lems = wn.lemmas(<span class="string">&#x27;crane&#x27;</span>, pos=<span class="literal">None</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> lem <span class="keyword">in</span> lems:</span><br><span class="line">    ss = lem.synset()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;=&quot;</span>*<span class="number">70</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Lemma name: &#123;&#125;&quot;</span>.<span class="built_in">format</span>(lem.name()))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Lemma Synset: &#123;&#125;&quot;</span>.<span class="built_in">format</span>(ss))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Synset definition: &#123;&#125;&quot;</span>.<span class="built_in">format</span>(ss.definition()))</span><br><span class="line"><span class="comment"># out(for example):</span></span><br><span class="line"><span class="comment"># ======================================================================</span></span><br><span class="line"><span class="comment"># Lemma name: Crane</span></span><br><span class="line"><span class="comment"># Lemma Synset: Synset(&#x27;crane.n.01&#x27;)</span></span><br><span class="line"><span class="comment"># Synset definition: United States writer (1871-1900)</span></span><br></pre></td></tr></table></figure>
+<h3 id="WordNet-and-VSMs"><a href="#WordNet-and-VSMs" class="headerlink" title="WordNet and VSMs"></a>WordNet and VSMs</h3><p>For our experiments with VSMs, we simply collapse together all the senses that a given string can have.</p>
+<p>It might also be a good choice linguistically: senses are flexible and thus hard to individuate, and we might hope that our vectors can model multiple senses at the same time. </p>
+<p>The following code uses the NLTK WordNet API to create the edge dictionary we need for using the <code>Retrofitter</code> class:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">get_wordnet_edges</span>():</span><br><span class="line">    edges = defaultdict(<span class="built_in">set</span>)</span><br><span class="line">    <span class="keyword">for</span> ss <span class="keyword">in</span> wn.all_synsets():</span><br><span class="line">        lem_names = &#123;lem.name() <span class="keyword">for</span> lem <span class="keyword">in</span> ss.lemmas()&#125;</span><br><span class="line">        <span class="keyword">for</span> lem <span class="keyword">in</span> lem_names:</span><br><span class="line">            edges[lem] |= lem_names</span><br><span class="line">    <span class="keyword">return</span> edges</span><br><span class="line"></span><br><span class="line">wn_edges = get_wordnet_edges()</span><br></pre></td></tr></table></figure>
+<h3 id="Reproducing-the-WordNet-synonym-graph-experiment"><a href="#Reproducing-the-WordNet-synonym-graph-experiment" class="headerlink" title="Reproducing the WordNet synonym graph experiment"></a>Reproducing the WordNet synonym graph experiment</h3><p>For our VSM, let’s use the 300d file included in this distribution from the GloVe team, as it is close to or identical to the one used in the paper:</p>
+<p><a target="_blank" rel="noopener" href="http://nlp.stanford.edu/data/glove.6B.zip">http://nlp.stanford.edu/data/glove.6B.zip</a></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">glove2dict</span>(<span class="params">src_filename</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    GloVe vectors file reader.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    src_filename : str</span></span><br><span class="line"><span class="string">        Full path to the GloVe file to be processed.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    dict</span></span><br><span class="line"><span class="string">        Mapping words to their GloVe vectors as `np.array`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="comment"># This distribution has some words with spaces, so we have to</span></span><br><span class="line">    <span class="comment"># assume its dimensionality and parse out the lines specially:</span></span><br><span class="line">    <span class="keyword">if</span> <span class="string">&#x27;840B.300d&#x27;</span> <span class="keyword">in</span> src_filename:</span><br><span class="line">        line_parser = <span class="keyword">lambda</span> line: line.rsplit(<span class="string">&quot; &quot;</span>, <span class="number">300</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        line_parser = <span class="keyword">lambda</span> line: line.strip().split()</span><br><span class="line">    data = &#123;&#125;</span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(src_filename, encoding=<span class="string">&#x27;utf8&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                line = <span class="built_in">next</span>(f)</span><br><span class="line">                line = line_parser(line)</span><br><span class="line">                data[line[<span class="number">0</span>]] = np.array(line[<span class="number">1</span>: ], dtype=np.float64)</span><br><span class="line">            <span class="keyword">except</span> StopIteration:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            <span class="keyword">except</span> UnicodeDecodeError:</span><br><span class="line">                <span class="keyword">pass</span></span><br><span class="line">    <span class="keyword">return</span> data</span><br><span class="line"></span><br><span class="line">glove_dict = glove2dict(</span><br><span class="line">    os.path.join(data_home, <span class="string">&#x27;glove.6B&#x27;</span>, <span class="string">&#x27;glove.6B.300d.txt&#x27;</span>))</span><br><span class="line"></span><br><span class="line">X_glove = pd.DataFrame(glove_dict).T</span><br><span class="line"><span class="built_in">print</span>(X_glove.T.shape)</span><br><span class="line"><span class="comment"># out: (300, 400000)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Now we just need to replace all of the strings in edges with indices into X_glove</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">convert_edges_to_indices</span>(<span class="params">edges, Q</span>):</span><br><span class="line">    lookup = <span class="built_in">dict</span>(<span class="built_in">zip</span>(Q.index, <span class="built_in">range</span>(Q.shape[<span class="number">0</span>])))</span><br><span class="line">    index_edges = defaultdict(<span class="built_in">set</span>)</span><br><span class="line">    <span class="keyword">for</span> start, finish_nodes <span class="keyword">in</span> edges.items():</span><br><span class="line">        s = lookup.get(start)</span><br><span class="line">        <span class="keyword">if</span> s:</span><br><span class="line">            f = &#123;lookup[n] <span class="keyword">for</span> n <span class="keyword">in</span> finish_nodes <span class="keyword">if</span> n <span class="keyword">in</span> lookup&#125;</span><br><span class="line">            <span class="keyword">if</span> f:</span><br><span class="line">                index_edges[s] = f</span><br><span class="line">    <span class="keyword">return</span> index_edges</span><br><span class="line"></span><br><span class="line">wn_index_edges = convert_edges_to_indices(wn_edges, X_glove)</span><br><span class="line"></span><br><span class="line"><span class="comment"># And now we can retrofit:</span></span><br><span class="line">wn_retro = Retrofitter(verbose=<span class="literal">True</span>)</span><br><span class="line">X_retro = wn_retro.fit(X_glove, wn_index_edges)</span><br><span class="line"><span class="comment"># out: Converged at iteration 10; change was 0.0043 </span></span><br></pre></td></tr></table></figure>
+<h1 id="Static-representations-from-contextual-models"><a href="#Static-representations-from-contextual-models" class="headerlink" title="Static representations from contextual models"></a>Static representations from contextual models</h1><p><strong>目标</strong>：从仅提供上下文表示的模型（如BERT）中获得良好的单词静态表示</p>
+<ul>
+<li>一方面，上下文模型在广泛的任务中表现非常成功，这在很大程度上是因为它们在大量数据上进行了长时间的训练，这对 VSM 来说应该是一个重大好处</li>
+<li>另一方面，具有静态表示的目标似乎与这些模型处理示例和表示示例的方式不一致。上下文模型主要是根据单词出现的上下文获得单词的不同表示形式，因此在训练过程中它要处理的是一个序列而不是单个单词</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://www.aclweb.org/anthology/2020.acl-main.431">Bommasani et al. (2020)</a> 探索了实现这一目标的两种策略</p>
+<ol>
+<li><strong>The decontextualized approach</strong>: 只需处理单个单词。如果一个单词由模型中的多个标记组成，就使用平均值或最大值等函数将它们合并</li>
+<li><strong>The aggregrated approach</strong>: 处理包含感兴趣的单词的大量文本。与之前一样，池化子字标记，并对所有池化表示形式结果进行总体池化</li>
+</ol>
+<h2 id="The-structure-of-BERT"><a href="#The-structure-of-BERT" class="headerlink" title="The structure of BERT"></a>The structure of BERT</h2><ul>
+<li><p>矩形是向量：网络的每一层的输出</p>
+</li>
+<li><p>即使在位置不同的嵌入层中，不同的序列为相同的标记提供不同的向量</p>
+</li>
+</ul>
+<img src="/2022/05/04/VSM/1-7-1.png" class title="图片">
+<h2 id="Loading-Transformer-models"><a href="#Loading-Transformer-models" class="headerlink" title="Loading Transformer models"></a>Loading Transformer models</h2><p>To start, let’s get a feel for the basic API that <code>transformers</code> provides. </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> BertModel, BertTokenizer</span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> RobertaModel, RobertaTokenizer</span><br><span class="line"></span><br><span class="line"><span class="comment"># The first step is specifying the pretrained parameters we&#x27;ll be using:</span></span><br><span class="line">bert_weights_name = <span class="string">&#x27;bert-base-cased&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Next, we specify a tokenizer and a model that match both each other and our choice of pretrained weights:</span></span><br><span class="line"></span><br><span class="line">bert_tokenizer = BertTokenizer.from_pretrained(bert_weights_name)</span><br><span class="line">bert_model = BertModel.from_pretrained(bert_weights_name)</span><br></pre></td></tr></table></figure>
+<h2 id="Tokenization"><a href="#Tokenization" class="headerlink" title="Tokenization"></a>Tokenization</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">example_text = <span class="string">&quot;Bert knows Snuffleupagus&quot;</span></span><br><span class="line"></span><br><span class="line">bert_tokenizer.tokenize(example_text)</span><br><span class="line"><span class="comment"># [&#x27;Bert&#x27;, &#x27;knows&#x27;, &#x27;S&#x27;, &#x27;##nu&#x27;, &#x27;##ffle&#x27;, &#x27;##up&#x27;, &#x27;##agu&#x27;, &#x27;##s&#x27;]</span></span><br><span class="line"></span><br><span class="line">ex_ids = bert_tokenizer.encode(example_text, add_special_tokens=<span class="literal">True</span>)</span><br><span class="line"><span class="comment"># ex_ids:[101, 15035, 3520, 156, 14787, 13327, 4455, 28026, 1116, 102]</span></span><br><span class="line"></span><br><span class="line">bert_tokenizer.convert_ids_to_tokens(ex_ids)</span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">[&#x27;[CLS]&#x27;,</span></span><br><span class="line"><span class="string"> &#x27;Bert&#x27;,</span></span><br><span class="line"><span class="string"> &#x27;knows&#x27;,</span></span><br><span class="line"><span class="string"> &#x27;S&#x27;,</span></span><br><span class="line"><span class="string"> &#x27;##nu&#x27;,</span></span><br><span class="line"><span class="string"> &#x27;##ffle&#x27;,</span></span><br><span class="line"><span class="string"> &#x27;##up&#x27;,</span></span><br><span class="line"><span class="string"> &#x27;##agu&#x27;,</span></span><br><span class="line"><span class="string"> &#x27;##s&#x27;,</span></span><br><span class="line"><span class="string"> &#x27;[SEP]&#x27;]</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+<p>another example:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> BertTokenizer</span><br><span class="line"></span><br><span class="line">tokenizer = BertTokenizer.from_pretrained(<span class="string">&#x27;bert-base-cased&#x27;</span>)</span><br><span class="line"></span><br><span class="line">tokenizer.tokenize(<span class="string">&quot;This isn&#x27;t too surprising.&quot;</span>)</span><br><span class="line"><span class="comment"># [&#x27;This&#x27;, &#x27;isn, &quot;&#x27;&quot;, &#x27;t&#x27;, &#x27;too&#x27;, &#x27;surprising&#x27;, &#x27;.&#x27;]</span></span><br><span class="line"></span><br><span class="line">tokenizer.tokenize(<span class="string">&quot;Encode me!&quot;</span>)</span><br><span class="line"><span class="comment"># [&#x27;En&#x27;, &#x27;##code&#x27;, &#x27;me&#x27;, &#x27;!&#x27;]</span></span><br><span class="line"></span><br><span class="line">tokenizer.tokenize(<span class="string">&quot;Snuffleupagus?&quot;</span>)</span><br><span class="line"><span class="comment"># [&#x27;S&#x27;, &#x27;##nu&#x27;, &#x27;##ffle&#x27;, &#x27;##up&#x27;, &#x27;##agu&#x27;, &#x27;##s&#x27;, &#x27;?&#x27;]</span></span><br><span class="line"></span><br><span class="line">tokenizer.vocab_size</span><br><span class="line"><span class="comment"># 28996</span></span><br></pre></td></tr></table></figure>
+<h2 id="The-basics-of-representations"><a href="#The-basics-of-representations" class="headerlink" title="The basics of representations"></a>The basics of representations</h2><p><strong>Basic Hugging Face interfaces</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> BertModel, BertTokenizer</span><br><span class="line"></span><br><span class="line">bert_weights_name = <span class="string">&#x27;bert-base-cased&#x27;</span></span><br><span class="line">tokenizer = BertTokenizer.from_pretrained(bert_weights_name)</span><br><span class="line">model = BertModel.from_pretrained(bert_weights_name)</span><br><span class="line"></span><br><span class="line">ex = tokenizer.encode(</span><br><span class="line">	<span class="string">&quot;the day broke&quot;</span>,</span><br><span class="line">	add_special_tokens=<span class="literal">True</span>,</span><br><span class="line">	return_tensors = <span class="string">&#x27;pt&#x27;</span>)</span><br><span class="line">ex</span><br><span class="line"><span class="comment"># tensor([[101,1103,1285,2795,102]])</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># To obtain the representations for a batch of examples, we use the forward method of the model, as follows:</span></span><br><span class="line"><span class="keyword">with</span> torch.no_grad():</span><br><span class="line">	reps = model(ex, output_hidden_states=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># The return value reps is a special transformers class that holds a lot of representations. If we want just the final output representations for each token, we use last_hidden_state:</span></span><br><span class="line">reps.last_hidden_state.shape</span><br><span class="line"><span class="comment"># torch.Size([1, 5, 768])   </span></span><br><span class="line">    </span><br><span class="line"><span class="comment"># Embedding and then 12 layers:</span></span><br><span class="line"><span class="built_in">len</span>(reps. hidden_states)</span><br><span class="line"><span class="comment"># 13</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Embedding: batch of 1 example, 5 tokens, each represented</span></span><br><span class="line"><span class="comment"># by a vector of dimension 768:</span></span><br><span class="line">reps.hidden_states[<span class="number">0</span>].shape</span><br><span class="line"><span class="comment"># torch.Size([1, 5, 768])  </span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Final output layer:</span></span><br><span class="line">reps.hidden_states[-<span class="number">1</span>].shape</span><br><span class="line"><span class="comment"># torch.Size([1, 5, 768])  </span></span><br></pre></td></tr></table></figure>
+<h2 id="The-Decontextualized-approach"><a href="#The-Decontextualized-approach" class="headerlink" title="The Decontextualized approach"></a>The Decontextualized approach</h2><img src="/2022/05/04/VSM/1-7-2.png" class title="图片">
+<p>正如上面所说：一个简单的获得单词静态表示的策略就是涉及处理单个单词，并且当它们对应于多个标记时，使用诸如 mean 之类的操作将这些标记表示形式池化为单个向量</p>
+<h3 id="Basic-example"><a href="#Basic-example" class="headerlink" title="Basic example"></a>Basic example</h3><p>第一步：将文本映射到它们的 id</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">hf_encode</span>(<span class="params">text, tokenizer, add_special_tokens=<span class="literal">False</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Get the indices for the tokens in `text` according to `tokenizer`.</span></span><br><span class="line"><span class="string">    If no tokens can be obtained from `text`, then the tokenizer.unk_token`</span></span><br><span class="line"><span class="string">    is used as the only token.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    text: str</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    tokenizer: Hugging Face tokenizer</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    add_special_tokens : bool</span></span><br><span class="line"><span class="string">        A Hugging Face parameter to the tokenizer.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    torch.Tensor of shape `(1, m)`</span></span><br><span class="line"><span class="string">        A batch of 1 example of `m` tokens`, where `m` is determined</span></span><br><span class="line"><span class="string">        by `text` and the nature of `tokenizer`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    encoding = tokenizer.encode(</span><br><span class="line">        text,</span><br><span class="line">        add_special_tokens=add_special_tokens,</span><br><span class="line">        return_tensors=<span class="string">&#x27;pt&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> encoding.shape[<span class="number">1</span>] == <span class="number">0</span>:</span><br><span class="line">        text = tokenizer.unk_token</span><br><span class="line">        encoding = torch.tensor([[tokenizer.vocab[text]]])</span><br><span class="line">    <span class="keyword">return</span> encoding</span><br><span class="line"></span><br><span class="line"><span class="comment"># Where a word corresponds to just one token in the vocabulary, it will get mapped to a single id:</span></span><br><span class="line">bert_tokenizer.tokenize(<span class="string">&#x27;puppy&#x27;</span>)</span><br><span class="line"><span class="comment"># [&#x27;puppy&#x27;]</span></span><br><span class="line"></span><br><span class="line">hf_encode(<span class="string">&quot;puppy&quot;</span>, bert_tokenizer)</span><br><span class="line"><span class="comment"># tensor([[21566]])</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># As we saw above, some words map to multiple tokens:</span></span><br><span class="line">bert_tokenizer.tokenize(<span class="string">&#x27;snuffleupagus&#x27;</span>)</span><br><span class="line"><span class="comment"># [&#x27;s&#x27;, &#x27;##nu&#x27;, &#x27;##ffle&#x27;, &#x27;##up&#x27;, &#x27;##agu&#x27;, &#x27;##s&#x27;]</span></span><br><span class="line"></span><br><span class="line">subtok_ids = hf_encode(<span class="string">&quot;snuffleupagus&quot;</span>, bert_tokenizer)</span><br><span class="line"><span class="comment"># tensor([[  188, 14787, 13327,  4455, 28026,  1116]])</span></span><br></pre></td></tr></table></figure>
+<p>第二步：将在用户提供的模型中，在该模型的指定层处将一批 ID 映射到它们的表示形式</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">hf_represent</span>(<span class="params">batch_ids, model, layer=-<span class="number">1</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Encode a batch of sequences of ids using a Hugging Face</span></span><br><span class="line"><span class="string">    Transformer-based model `model`. The model&#x27;s `forward` method is</span></span><br><span class="line"><span class="string">    `output_hidden_states=True`, and we get the hidden states from</span></span><br><span class="line"><span class="string">    `layer`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    batch_ids : iterable, shape (n_examples, n_tokens)</span></span><br><span class="line"><span class="string">        Sequences of indices into the model vocabulary.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    model : Hugging Face transformer model</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    layer : int</span></span><br><span class="line"><span class="string">        The layer to return. This will get all the hidden states at</span></span><br><span class="line"><span class="string">        this layer. `layer=0` gives the embedding, and `layer=-1`</span></span><br><span class="line"><span class="string">        gives the final output states.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    Tensor of shape `(n_examples, n_tokens, n_dimensions)`</span></span><br><span class="line"><span class="string">       where `n_dimensions` is the dimensionality of the</span></span><br><span class="line"><span class="string">       Transformer model</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">with</span> torch.no_grad():</span><br><span class="line">        reps = model(batch_ids, output_hidden_states=<span class="literal">True</span>)</span><br><span class="line">        <span class="keyword">return</span> reps.hidden_states[layer]</span><br><span class="line">    </span><br><span class="line">subtok_reps = hf_represent(subtok_ids, bert_model, layer=-<span class="number">1</span>)</span><br><span class="line">subtok_reps.shape</span><br><span class="line"><span class="comment"># torch.Size([1, 6, 768])</span></span><br><span class="line"><span class="comment"># 此处的形状：1 个示例，其中包含 6 个（子字）标记，每个标记的维度为 768。</span></span><br><span class="line"><span class="comment"># 使用 layer=-1，我们从整个模型中获得最终的输出表示</span></span><br></pre></td></tr></table></figure>
+<p>最后一步：将 6 个标记 (token) 汇集在一起</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">mean_pooling</span>(<span class="params">hidden_states</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Get the mean along `axis=1` of a Tensor.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    hidden_states : torch.Tensor, shape `(k, m, n)`</span></span><br><span class="line"><span class="string">        Where `k` is the number of examples, `m` is the number of vectors</span></span><br><span class="line"><span class="string">        for each example, and `n` is dimensionality of each vector.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    torch.Tensor of dimension `(k, n)`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    _check_pooling_dimensionality(hidden_states)</span><br><span class="line">    <span class="keyword">return</span> torch.mean(hidden_states, axis=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">subtok_pooled = mean_pooling(subtok_reps)</span><br><span class="line">subtok_pooled.shape</span><br><span class="line"><span class="comment"># torch.Size([1, 768])</span></span><br></pre></td></tr></table></figure>
+<p>There are also predefined functions <code>max_pooling</code>, <code>min_pooling</code>, and <code>last_pooling</code> (representation for the final token).</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">max_pooling</span>(<span class="params">hidden_states</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Get the max values along `axis=1` of a Tensor.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    hidden_states : torch.Tensor, shape `(k, m, n)`</span></span><br><span class="line"><span class="string">        Where `k` is the number of examples, `m` is the number of vectors</span></span><br><span class="line"><span class="string">        for each example, and `n` is dimensionality of each vector.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Raises</span></span><br><span class="line"><span class="string">    ------</span></span><br><span class="line"><span class="string">    ValueError</span></span><br><span class="line"><span class="string">        If `hidden_states` does not have 3 dimensions.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    torch.Tensor of dimension `(k, n)`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    _check_pooling_dimensionality(hidden_states)</span><br><span class="line">    <span class="keyword">return</span> torch.amax(hidden_states, axis=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">min_pooling</span>(<span class="params">hidden_states</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Get the min values along `axis=1` of a Tensor.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    hidden_states : torch.Tensor, shape `(k, m, n)`</span></span><br><span class="line"><span class="string">        Where `k` is the number of examples, `m` is the number of vectors</span></span><br><span class="line"><span class="string">        for each example, and `n` is dimensionality of each vector.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Raises</span></span><br><span class="line"><span class="string">    ------</span></span><br><span class="line"><span class="string">    ValueError</span></span><br><span class="line"><span class="string">        If `hidden_states` does not have 3 dimensions.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    torch.Tensor of dimension `(k, n)`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    _check_pooling_dimensionality(hidden_states)</span><br><span class="line">    <span class="keyword">return</span> torch.amin(hidden_states, axis=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">last_pooling</span>(<span class="params">hidden_states</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Get the final vector in second dimension (`axis=1`) of a Tensor.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters</span></span><br><span class="line"><span class="string">    ----------</span></span><br><span class="line"><span class="string">    hidden_states : torch.Tensor, shape (b, m, n)</span></span><br><span class="line"><span class="string">       Where b is the number of examples, m is the number of vectors</span></span><br><span class="line"><span class="string">       for each example, and `n` is dimensionality of each vector.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Raises</span></span><br><span class="line"><span class="string">    ------</span></span><br><span class="line"><span class="string">    ValueError</span></span><br><span class="line"><span class="string">        If `hidden_states` does not have 3 dimensions.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Returns</span></span><br><span class="line"><span class="string">    -------</span></span><br><span class="line"><span class="string">    torch.Tensor of dimension `(k, n)`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    _check_pooling_dimensionality(hidden_states)</span><br><span class="line">    <span class="keyword">return</span> hidden_states[:, -<span class="number">1</span>]</span><br></pre></td></tr></table></figure>
+<h3 id="Creating-a-full-VSM"><a href="#Creating-a-full-VSM" class="headerlink" title="Creating a full VSM"></a>Creating a full VSM</h3><p>现在，我们希望将上述过程扩展到一个大的词汇表，以便我们可以创建一个完整的 VSM。</p>
+<p>首先，我们从一个计数 VSM（所有 VSM 都具有相同的词汇表）中获取词汇表：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">vsm_index = pd.read_csv(</span><br><span class="line">    os.path.join(DATA_HOME, <span class="string">&#x27;yelp_window5-scaled.csv.gz&#x27;</span>),</span><br><span class="line">    usecols=[<span class="number">0</span>], index_col=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">vocab = <span class="built_in">list</span>(vsm_index.index)</span><br><span class="line">vocab[: <span class="number">5</span>]</span><br><span class="line"><span class="comment"># [&#x27;):&#x27;, &#x27;);&#x27;, &#x27;..&#x27;, &#x27;...&#x27;, &#x27;:(&#x27;]</span></span><br></pre></td></tr></table></figure>
+<p>然后，使用 <code>create_subword_pooling_vsm</code>函数 (即将<a href="#Basic-Example">上述过程</a>用函数流程化实现)：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">create_subword_pooling_vsm</span>(<span class="params">vocab, tokenizer, model, layer=<span class="number">1</span>, pool_func=mean_pooling</span>):</span><br><span class="line">    vocab_ids = [hf_encode(w, tokenizer) <span class="keyword">for</span> w <span class="keyword">in</span> vocab]</span><br><span class="line">    vocab_hiddens = [hf_represent(w, model, layer=layer) <span class="keyword">for</span> w <span class="keyword">in</span> vocab_ids]</span><br><span class="line">    pooled = [pool_func(h) <span class="keyword">for</span> h <span class="keyword">in</span> vocab_hiddens]</span><br><span class="line">    pooled = [p.squeeze().cpu().numpy() <span class="keyword">for</span> p <span class="keyword">in</span> pooled]</span><br><span class="line">    <span class="keyword">return</span> pd.DataFrame(pooled, index=vocab)</span><br><span class="line"></span><br><span class="line">%%time</span><br><span class="line">pooled_df = vsm.create_subword_pooling_vsm(</span><br><span class="line">    vocab, bert_tokenizer, bert_model, layer=<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+<p><code>pooled_df</code>，是一个由 <code>vocab</code> 给定索引的 <code>pd.DataFrame</code>，可以直接用于相关性评估</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">pooled_df.shape</span><br><span class="line"><span class="comment"># (6000, 768)</span></span><br><span class="line"></span><br><span class="line">pooled_df.iloc[: <span class="number">5</span>, :<span class="number">5</span>]</span><br></pre></td></tr></table></figure>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>):</td>
+<td>-0.125594</td>
+<td>0.592184</td>
+<td>0.248018</td>
+<td>0.195743</td>
+<td>0.284454</td>
+</tr>
+<tr>
+<td>);</td>
+<td>-0.396890</td>
+<td>-0.001702</td>
+<td>0.027441</td>
+<td>0.144946</td>
+<td>0.943918</td>
+</tr>
+<tr>
+<td>..</td>
+<td>-0.247551</td>
+<td>0.435480</td>
+<td>0.195532</td>
+<td>0.283153</td>
+<td>-0.496592</td>
+</tr>
+<tr>
+<td>…</td>
+<td>-0.238037</td>
+<td>0.506108</td>
+<td>0.245705</td>
+<td>0.388796</td>
+<td>-0.772245</td>
+</tr>
+<tr>
+<td>:(</td>
+<td>-0.710794</td>
+<td>0.723624</td>
+<td>0.444736</td>
+<td>0.670010</td>
+<td>0.604062</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="The-Aggregated-approach"><a href="#The-Aggregated-approach" class="headerlink" title="The Aggregated approach"></a>The Aggregated approach</h2><p>处理大量包含目标词的语料库示例：</p>
+<ol>
+<li>The kit ##ten yawned.</li>
+<li>Where is my kit ##ten ?</li>
+<li>A kit ##ten is a young cat.</li>
+<li>The puppy and the kit ##ten are playing.</li>
+<li>. . .</li>
+</ol>
+<p>汇集子词标记并汇集不同的上下文表示</p>
+<p><strong>过程如下</strong>：</p>
+<p>首先，我们可以创建一个从词汇项目到它们 id 序列的映射：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vocab_ids = &#123;w: hf_encode(w, bert_tokenizer)[<span class="number">0</span>] <span class="keyword">for</span> w <span class="keyword">in</span> vocab&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来，让我们假设我们有一个包含感兴趣的单词的文本语料库：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">corpus = [</span><br><span class="line">    <span class="string">&quot;This is a sailing example&quot;</span>,</span><br><span class="line">    <span class="string">&quot;It&#x27;s fun to go sailing!&quot;</span>,</span><br><span class="line">    <span class="string">&quot;We should go sailing.&quot;</span>,</span><br><span class="line">    <span class="string">&quot;I&#x27;d like to go sailing and sailing&quot;</span>,</span><br><span class="line">    <span class="string">&quot;This is merely an example&quot;</span>]</span><br></pre></td></tr></table></figure>
+<p>下面嵌入了每个语料库示例，保留了 <code>layer=1</code> 表示形式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">corpus_ids = [hf_encode(text, bert_tokenizer)</span><br><span class="line">              <span class="keyword">for</span> text <span class="keyword">in</span> corpus]</span><br><span class="line"></span><br><span class="line">corpus_reps = [hf_represent(ids, bert_model, layer=<span class="number">1</span>)</span><br><span class="line">               <span class="keyword">for</span> ids <span class="keyword">in</span> corpus_ids]</span><br></pre></td></tr></table></figure>
+<p>最后，我们定义一个函数，用于在更大的列表中查找子列表的所有匹配项：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">find_sublist_indices</span>(<span class="params">sublist, mainlist</span>):</span><br><span class="line">    indices = []</span><br><span class="line">    length = <span class="built_in">len</span>(sublist)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, <span class="built_in">len</span>(mainlist)-length+<span class="number">1</span>):</span><br><span class="line">        <span class="keyword">if</span> mainlist[i: i+length] == sublist:</span><br><span class="line">            indices.append((i, i+length))</span><br><span class="line">    <span class="keyword">return</span> indices</span><br></pre></td></tr></table></figure>
+<p>例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">find_sublist_indices([<span class="number">1</span>,<span class="number">2</span>], [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])</span><br><span class="line"><span class="comment"># [(0, 2), (4, 6)]</span></span><br><span class="line"></span><br><span class="line">sailing = vocab_ids[<span class="string">&#x27;sailing&#x27;</span>]</span><br><span class="line">sailing_reps = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> ids, reps <span class="keyword">in</span> <span class="built_in">zip</span>(corpus_ids, corpus_reps):</span><br><span class="line">    offsets = find_sublist_indices(sailing, ids.squeeze(<span class="number">0</span>))</span><br><span class="line">    <span class="keyword">for</span> (start, end) <span class="keyword">in</span> offsets:</span><br><span class="line">        pooled = mean_pooling(reps[:, start: end])</span><br><span class="line">        sailing_reps.append(pooled)</span><br><span class="line"></span><br><span class="line">sailing_rep = torch.mean(torch.cat(sailing_reps), axis=<span class="number">0</span>).squeeze(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">sailing_rep.shape</span><br><span class="line"><span class="comment"># torch.Size([768])</span></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/markdown/" rel="tag"># markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/04/%E7%AE%80%E4%BB%8B/" rel="prev" title="简介">
+      <i class="fa fa-chevron-left"></i> 简介
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/05/06/%E5%A5%BD%E7%9A%84%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" rel="next" title="好的推荐系统">
+      好的推荐系统 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Distributed-word-representations-Vector-space-models"><span class="nav-number">1.</span> <span class="nav-text">Distributed word representations (Vector-space models)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#High-level-goals-and-guiding-hypotheses"><span class="nav-number">2.</span> <span class="nav-text">High-level goals and guiding hypotheses</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Meaning-latent-in-co-occurrence-patterns"><span class="nav-number">2.1.</span> <span class="nav-text">Meaning latent in co-occurrence patterns</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#High-level-goals"><span class="nav-number">2.2.</span> <span class="nav-text">High-level goals</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Guiding-hypotheses"><span class="nav-number">2.3.</span> <span class="nav-text">Guiding hypotheses</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Design-choices"><span class="nav-number">2.4.</span> <span class="nav-text">Design choices</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Matrix-designs"><span class="nav-number">3.</span> <span class="nav-text">Matrix designs</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Matrix-Design-Method"><span class="nav-number">3.1.</span> <span class="nav-text">Matrix Design Method</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Feature-representations-of-data"><span class="nav-number">3.2.</span> <span class="nav-text">Feature representations of data</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Windows-and-scaling"><span class="nav-number">3.3.</span> <span class="nav-text">Windows and scaling</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Code-snippets"><span class="nav-number">3.4.</span> <span class="nav-text">Code snippets</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Vector-comparison"><span class="nav-number">4.</span> <span class="nav-text">Vector comparison</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Vector-comparison-Method"><span class="nav-number">4.1.</span> <span class="nav-text">Vector comparison Method</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Proper-distance-metric"><span class="nav-number">4.2.</span> <span class="nav-text">Proper distance metric</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Relationships-and-generalizations"><span class="nav-number">4.3.</span> <span class="nav-text">Relationships and generalizations</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Code-snippets-1"><span class="nav-number">4.4.</span> <span class="nav-text">Code snippets</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Basic-reweighting"><span class="nav-number">5.</span> <span class="nav-text">Basic reweighting</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Goals-of-reweighting"><span class="nav-number">5.1.</span> <span class="nav-text">Goals of reweighting</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Basic-reweighting-Method"><span class="nav-number">5.2.</span> <span class="nav-text">Basic reweighting Method</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Weighting-scheme-cell-value-distributions"><span class="nav-number">5.3.</span> <span class="nav-text">Weighting scheme cell-value distributions</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Relationships-and-generalizations-1"><span class="nav-number">5.4.</span> <span class="nav-text">Relationships and generalizations</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Code-snippets-2"><span class="nav-number">5.5.</span> <span class="nav-text">Code snippets</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Subword-information"><span class="nav-number">5.6.</span> <span class="nav-text">Subword information</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Dimensionality-reduction"><span class="nav-number">6.</span> <span class="nav-text">Dimensionality reduction</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Latent-Semantic-Analysis-LSA"><span class="nav-number">6.1.</span> <span class="nav-text">Latent Semantic Analysis (LSA)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Autoencoders"><span class="nav-number">6.2.</span> <span class="nav-text">Autoencoders</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GloVe"><span class="nav-number">6.3.</span> <span class="nav-text">GloVe</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Visualization"><span class="nav-number">6.4.</span> <span class="nav-text">Visualization</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Retrofitting"><span class="nav-number">7.</span> <span class="nav-text">Retrofitting</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Central-goals"><span class="nav-number">7.1.</span> <span class="nav-text">Central goals</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-retrofitting-model"><span class="nav-number">7.2.</span> <span class="nav-text">The retrofitting model</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Examples"><span class="nav-number">7.3.</span> <span class="nav-text">Examples</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#WordNet"><span class="nav-number">7.4.</span> <span class="nav-text">WordNet</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#WordNet-and-VSMs"><span class="nav-number">7.4.1.</span> <span class="nav-text">WordNet and VSMs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reproducing-the-WordNet-synonym-graph-experiment"><span class="nav-number">7.4.2.</span> <span class="nav-text">Reproducing the WordNet synonym graph experiment</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Static-representations-from-contextual-models"><span class="nav-number">8.</span> <span class="nav-text">Static representations from contextual models</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#The-structure-of-BERT"><span class="nav-number">8.1.</span> <span class="nav-text">The structure of BERT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Loading-Transformer-models"><span class="nav-number">8.2.</span> <span class="nav-text">Loading Transformer models</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tokenization"><span class="nav-number">8.3.</span> <span class="nav-text">Tokenization</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-basics-of-representations"><span class="nav-number">8.4.</span> <span class="nav-text">The basics of representations</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-Decontextualized-approach"><span class="nav-number">8.5.</span> <span class="nav-text">The Decontextualized approach</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Basic-example"><span class="nav-number">8.5.1.</span> <span class="nav-text">Basic example</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Creating-a-full-VSM"><span class="nav-number">8.5.2.</span> <span class="nav-text">Creating a full VSM</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-Aggregated-approach"><span class="nav-number">8.6.</span> <span class="nav-text">The Aggregated approach</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/853784202@qq.com" title="E-Mail → 853784202@qq.com"><i class="lee-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+
+
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="lee"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Lee</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

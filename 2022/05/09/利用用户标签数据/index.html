@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="《推荐系统实践》(作者：项亮) 读书笔记第四章：利用用户标签数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用用户标签数据">
+<meta property="og:url" content="https://github.com/CLearnerLee/LeeBlog/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/index.html">
+<meta property="og:site_name" content="AI 自学笔记">
+<meta property="og:description" content="《推荐系统实践》(作者：项亮) 读书笔记第四章：利用用户标签数据">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509081917012.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509082529035.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509082718503.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509082957278.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509083220249.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509083337667.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509090432875.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509091520566.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509091536854.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509101126087.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509101932427.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509102023409.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509103750757.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509103756732.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509104041213.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509104932015.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509105859380.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509110234956.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509112552377.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509115838136.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509115931423.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509115936857.png">
+<meta property="og:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509120051814.png">
+<meta property="article:published_time" content="2022-05-09T04:06:50.000Z">
+<meta property="article:modified_time" content="2022-05-09T04:11:25.033Z">
+<meta property="article:author" content="Lee">
+<meta property="article:tag" content="markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509081917012.png">
+
+<link rel="canonical" href="https://github.com/CLearnerLee/LeeBlog/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>利用用户标签数据 | AI 自学笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">AI 自学笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-标签">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags - markdown fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th - 我的第一篇博客 - CS224U 笔记 fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-归档">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/CLearnerLee/LeeBlog/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="AI 自学笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          利用用户标签数据
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-09 12:06:50 / 修改时间：12:11:25" itemprop="dateCreated datePublished" datetime="2022-05-09T12:06:50+08:00">2022-05-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8A%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%AE%9E%E8%B7%B5%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">《推荐系统实践》读书笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="lee-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">《推荐系统实践》(作者：项亮) 读书笔记第四章：利用用户标签数据</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="利用用户标签数据"><a href="#利用用户标签数据" class="headerlink" title="利用用户标签数据"></a>利用用户标签数据</h1><p>目前流行的推荐系统基本上通过3种方式联系用户兴趣和物品。</p>
+<ol>
+<li>利用用户喜欢过的物品，给用户推荐与他喜欢过的物品相似的物品</li>
+<li>利用和用户兴趣相似的其他用户，给用户推荐那些和他们兴趣爱好相似的其他用户喜欢的物品</li>
+<li>通过一些特征（feature）联系用户和物品，给用户推荐那些具有用户喜欢的特征的物品。</li>
+</ol>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509081917012.png" class title="图片">
+<p><a target="_blank" rel="noopener" href="http://cn.wikipedia.org/wiki/Tag_(metadata">标签</a>)是一种无层次化结构的、用来描述信息的关键词，它可以用来描述物品的语义。</p>
+<p><strong>标签应用一般分为两种</strong>：</p>
+<ol>
+<li>让作者或专家给物品打标签</li>
+<li>让普通用户给物品打标签，也就使UGC ( User Generated Content )的标签应用</li>
+</ol>
+<h2 id="UGC-标签系统的代表应用"><a href="#UGC-标签系统的代表应用" class="headerlink" title="UGC 标签系统的代表应用"></a>UGC 标签系统的代表应用</h2><h3 id="Delicious"><a href="#Delicious" class="headerlink" title="Delicious"></a>Delicious</h3><p>Delicous可算是标签系统里的开山鼻祖，它允许用户给互联网上的每个网页打标签，从而通过标签重新组织整个互联网。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509082529035.png" class title="图片">
+<h3 id="CiteULike"><a href="#CiteULike" class="headerlink" title="CiteULike"></a>CiteULike</h3><p>CiteULike是一个著名的论文书签网站，它允许研究人员提交或者收藏自己感兴趣的论文并且给论文打标签，从而帮助用户更好地发现和自己研究领域相关的优秀论文。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509082718503.png" class title="图片">
+<h3 id="Last-fm"><a href="#Last-fm" class="headerlink" title="Last.fm"></a>Last.fm</h3><p>Last.fm是一家著名的音乐网站，它通过分析用户的听歌行为预测用户对音乐的兴趣，从而给用户推荐个性化的音乐。为了在不进行复杂音频分析的情况下获得音乐的内容信息，Last.fn引入了UGC标签系统，让用户用标签标记音乐和歌手。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509082957278.png" class title="图片">
+<h3 id="豆瓣"><a href="#豆瓣" class="headerlink" title="豆瓣"></a>豆瓣</h3><p>豆瓣允许用户对图书和电影打标签，借此获得图书和电影的内容信息和语义，并用这种信息改善推荐效果。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509083220249.png" class title="图片">
+<h3 id="Hulu"><a href="#Hulu" class="headerlink" title="Hulu"></a>Hulu</h3><p>Hulu引入了用户标签系统来让用户对电视剧和电影进行标记。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509083337667.png" class title="图片">
+<p>标签系统的<strong>最大优势</strong>在于可以发挥群体的智能，获得对物品内容信息比较准确的关键词描述。</p>
+<p>关于标签系统的作用，GroupLens的Shilads Wieland Sen在MoveLens电影推荐系统上做了更为深入的、基于问卷调查的研究。他探讨了标签系统的不同作用，以及每种作用能够影响多大的人群。</p>
+<ul>
+<li><strong>表达</strong> 标签系统帮助我表达对物品的看法。（30%的用户同意。）</li>
+<li><strong>组织</strong> 打标签帮助我组织我喜欢的电影。（23%的用户同意。）</li>
+<li><strong>学习</strong> 打标签帮助我增加对电影的了解。（27%的用户同意。）</li>
+<li><strong>发现</strong> 标签系统使我更容易发现喜欢的电影。（19%的用户同意。）</li>
+<li><strong>决策</strong> 标签系统帮助我判定是否看某一部电影。（14%的用户同意。）</li>
+</ul>
+<h2 id="标签系统中的推荐问题"><a href="#标签系统中的推荐问题" class="headerlink" title="标签系统中的推荐问题"></a>标签系统中的推荐问题</h2><p>打标签作为一种重要的用户行为，蕴含了很多用户兴趣信息。同时，标签的表示形式非常简单，便于很多算法处理。</p>
+<p><strong>标签系统中的推荐问题</strong>主要有以下两个。</p>
+<ul>
+<li>如何利用用户打标签的行为为其推荐物品（基于标签的推荐）?</li>
+<li>如何在用户给物品打标签时为其推荐适合该物品的标签（标签推荐）?</li>
+</ul>
+<p>为了研究上面的两个问题，我们首先需要解答下面3个问题。</p>
+<ul>
+<li>用户为什么要打标签?</li>
+<li>用户怎么打标签?</li>
+<li>用户打什么样的标签?</li>
+</ul>
+<h3 id="用户为什么进行标注"><a href="#用户为什么进行标注" class="headerlink" title="用户为什么进行标注"></a>用户为什么进行标注</h3><p>Morgan Ames研究图片分享网站中<strong>用户标注的动机问题</strong>，并从两个维度进行探讨。</p>
+<ol>
+<li>社会维度，有些用户标注是给内容上传者使用的（便于上传者组织自己的信息）、而有些用户标注是给广大用户使用的（便于帮助其他用户找到信息）。</li>
+<li>功能维度，有些标注用于更好地组织内容，方便用户将来的查找，而另一些标注用于传达某种信息，比如照片的拍摄时间和地点等。</li>
+</ol>
+<h3 id="用户如何打标签"><a href="#用户如何打标签" class="headerlink" title="用户如何打标签"></a>用户如何打标签</h3><p>我们首先看一下标签流行度的分布，我们定义的一个标签被一个用户使用在一个物品上，它的流行度就加一。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">def TagPopularity(records):</span><br><span class="line">	tagfreq = dict()</span><br><span class="line">	for user, item, tag in records:</span><br><span class="line">		if tag not in tagfreq:</span><br><span class="line">			tagfreq[tag] = 1</span><br><span class="line">		else:</span><br><span class="line">			tagfreq[tag] += 1</span><br><span class="line">	return tagfreq</span><br></pre></td></tr></table></figure>
+<p>如图4-8所示, 横坐标是流行度 $k$，纵坐标是数据集中流行度为 $k$ 的标签总数 $n(k)$ 。标签的流行度分布呈现非常典型的长尾分布，它的双对数曲线几乎是一条直线。</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+&\log n(k)=\alpha \log k+\beta=\log k^{\alpha} \cdot e^{\beta} \\
+&n(k)=e^{\beta} \cdot k^{\alpha}=\gamma \cdot k^{\alpha}
+\end{aligned}</script><img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509090432875.png" class title="图片">
+<h3 id="用户打什么样的标签"><a href="#用户打什么样的标签" class="headerlink" title="用户打什么样的标签"></a>用户打什么样的标签</h3><p>ScottA.Golder总结了Delicious上的标签，将它们分为如下几类。</p>
+<ul>
+<li><strong>表明物品是什么</strong> 比如是一只鸟，就会有”鸟”这个词的标签；是豆瓣的首页，就有一个标签叫”豆瓣”；是乔布斯的首页，就会有个标签叫”乔布斯”。</li>
+<li><strong>表明物品的种类</strong> 比如在Delicious的书签中，表示一个网页类别的标签包括 article（文章）、blog（博客）、book（图书）等。</li>
+<li><strong>表明谁拥有物品</strong> 比如很多博客的标签中会包括博客的作者等信息。</li>
+<li><strong>表达用户的观点</strong> 比如用户认为网页很有趣，就会打上标签funny（有趣），认为很无聊，就会打上标签boring（无聊）。</li>
+<li><strong>用户相关的标签</strong> 比如 my favorite（我最喜欢的）、my comment（我的评论）等。</li>
+<li><strong>用户的任务</strong> 比如 to read（（即将阅读）、job search（找工作）等。</li>
+</ul>
+<p>Hulu将电视剧的标签分成了以下几类：</p>
+<ul>
+<li>类型（Genre）</li>
+<li>时间（Time）</li>
+<li>人物（People）</li>
+<li>地点（Place）</li>
+<li>语言（Language）</li>
+<li>奖项（Prize）</li>
+<li>其他（Details）</li>
+</ul>
+<h2 id="基于标签的推荐系统"><a href="#基于标签的推荐系统" class="headerlink" title="基于标签的推荐系统"></a>基于标签的推荐系统</h2><p>一个用户标签行为的数据集一般由一个三元组的集合表示，其中记录 (u, i, b) 表示用户u给物品i打上了标签b。</p>
+<p>本章将采用两个不同的数据集评测基于标签的物品推荐算法。一个是Delicious数据集，另一个是CiteULike数据集。Delicious数据集中包含用户对网页的标签记录。它每一行由4部分组成，即时间、用户ID、网页URL、标签。本章只抽取了其中用户对一些著名博客网站网页（Wordpress、BlogSpot、TechCrunch）的标签记录。CiteULike数据集包含用户对论文的标签记录，它每行也由4部分组成，即物品ID、用户ID、时间、标签，本章选取了其中稠密的部分。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509091520566.png" class title="图片">
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509091536854.png" class title="图片">
+<h3 id="实验设置"><a href="#实验设置" class="headerlink" title="实验设置"></a>实验设置</h3><p>将数据集随机分成10份，分割的键值是用户和物品，不包括标签，也就是说，用户对物品的多个标签记录要么都被分进训练集，要么都被分进测试集。</p>
+<p>然后，我们挑选1份作为测试集，剩下的9份作为训练集，通过学习训练集中的用户标签数据预测测试集上用户会给什么物品打标签。</p>
+<p>对于用户 $\mathrm{u}$，令 $R(u)$ 为给用户 $\mathrm{u}$ 的长度为 $N$ 的推荐列表，里面包含我们认为用户会打标签的物品。令 $T(u)$ 是测试集中用户u实际上打过标签的物品集合。然后，我们利用<strong>准确率</strong> ( precision) 和<strong>召回率</strong> ( recall ) 评测个性化推荐算法的精度。</p>
+<script type="math/tex; mode=display">
+\begin{gathered}
+\text { Precision }=\frac{|R(u) \cap T(u)|}{|R(u)|} \\
+\text { Recall }=\frac{|R(u) \cap T(u)|}{|T(u)|}
+\end{gathered}</script><p>将上面的实验进行 10 次，每次选择不同的测试集，然后将每次实验的准确率和召回率的平均值作为最终的评测结果。<br>为了全面评测个性化推荐的性能，我们同时评测了推荐结果的覆盖率 ( coverage )、多样性 ( diversity ) 和新颖度。<br><strong>覆盖率</strong>的计算公式如下:</p>
+<script type="math/tex; mode=display">
+\text { Coverage }=\frac{\left|\bigcup_{u \in U} R(u)\right|}{|I|}</script><p>关于多样性，由于多样性的定义取决于相似度的定义，我们需要首先定义一下相似度。用物品标签向量的余弦相似度度量物品之间的相似度。对于每个物品i，<code>item_tags[i]</code>存储了物品i的标签向量，其中<code>item_tags[i][b]</code>是对物品i打标签b的次数，那么物品i和j的余弦相似度可以通过如下程序计算。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">def Cosinesim(item_tags, i, j):</span><br><span class="line">	ret = 0</span><br><span class="line">	for b, wib in item_tags[i].items():</span><br><span class="line">		if b in item_tags[j].item():</span><br><span class="line">			ret += wib * item_tags[j][b]</span><br><span class="line">	ni = 0</span><br><span class="line">	nj = 0</span><br><span class="line">	for b, w in item_tags[i].items():</span><br><span class="line">		ni += w * w</span><br><span class="line">	for b, w in item_tags[j].items():</span><br><span class="line">		nj += w * w</span><br><span class="line">	if ret == 0:</span><br><span class="line">		return 0</span><br><span class="line">	return ret / math.sqrt(ni * nj)</span><br></pre></td></tr></table></figure>
+<p>在得到物品之间的相似度度量后，我们通过如下公式计算一个推荐列表的<strong>多样性</strong>。</p>
+<script type="math/tex; mode=display">
+\text { Diversity }=1-\frac{\sum\limits_{i\in R(u)} \sum\limits_{j\in R(u), j\neq i} \text {Sim}(\text {item\_tags}[i],\text {item\_tags}[j] ) }{\begin{pmatrix}
+        |\text {R}(u)| \\
+        2
+    \end{pmatrix}}</script><p>如果用程序实现，代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">def Diversity(item_tags, recommend_items):</span><br><span class="line">	ret = 0</span><br><span class="line">	n = 0</span><br><span class="line">	for i in recommend_items.keys():</span><br><span class="line">		for j in recommend_items.keys():</span><br><span class="line">			if i == j:</span><br><span class="line">				continue</span><br><span class="line">			ret += CosineSim(item_tags, i, j)</span><br><span class="line">			n += 1</span><br><span class="line">	return ret / (n * 1.0)</span><br></pre></td></tr></table></figure>
+<p>推荐系统的多样性为所有用户推荐列表多样性的平均值。</p>
+<p>至于推荐结果的<strong>新颖性</strong>，我们用推荐结果的平均热门程度（AveragePopularity）度量。对于物品i，定义它的流行度 <code>item_pop(i)</code> 为给这个物品打过标签的用户数。而对推荐系统，我们定义它的平均热门度如下：</p>
+<script type="math/tex; mode=display">
+\text { AveragePopularity }=\frac{\sum\limits_{u} \sum\limits_{i \in R(u)} \log (1+\text {item\_pop} (i))}{\sum\limits_{u} \sum\limits_{i \in R(u)} 1}</script><h3 id="一个最简单的算法"><a href="#一个最简单的算法" class="headerlink" title="一个最简单的算法"></a>一个最简单的算法</h3><p>接下来我们讲一个最简单的个性化推荐算法SimpleTagBased，这个算法的描述如下所示。</p>
+<ul>
+<li>统计每个用户最常用的标签。</li>
+<li><p>对于每个标签，统计被打过这个标签次数最多的物品。</p>
+</li>
+<li><p>对于一个用户，首先找到他常用的标签，然后找到具有这些标签的最热门物品推荐给这个用户。</p>
+</li>
+</ul>
+<p>对于上面的算法，用户 $u$ 对物品的兴趣公式如下:</p>
+<script type="math/tex; mode=display">
+p(u, i)=\sum_{b} n_{u, b} n_{b, i}</script><p>这里，$B(u)$ 是用户 $\mathrm{u}$ 打过的标签集合，$B(i)$ 是物品i被打过的标签集合，$n_{u, b}$ 是用户 $\mathrm{u}$ 打过标签 $\mathrm{b}$ 的次数，$n_{b,i}$是物品 i 被打过标签 b 的次数。<br>在Python中，我们遵循如下约定:</p>
+<ul>
+<li>用 <code>records</code> 存储标签数据的三元组，其中records [i] = [user，item，tag]；</li>
+<li>用 <code>user_tags</code> 存储 $n_{u, b}$，其中user_tags [u] [b] $=n_{u, b}$；</li>
+<li>用 <code>tag_items</code>存储 $n_{b, i}$，其中tag_items [b] [i] $=n_{b, i}$ 。</li>
+</ul>
+<p>如下程序可以从records中统计出 user_tags 和 tag_items：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">def InitStat(records):</span><br><span class="line">	user_tags = dict()</span><br><span class="line">	tag_items = dict()</span><br><span class="line">	user_items = dict()</span><br><span class="line">	for user, item, tag in records.items ():</span><br><span class="line">		addValueToMat(user_tags, user, tag, 1)</span><br><span class="line">		addValueToMat(tag_items, tag, item, 1)</span><br><span class="line">		addValueToMat(user_items, user, item, 1)</span><br></pre></td></tr></table></figure>
+<p>统计出user_tags和tag_items之后，我们可以通过如下程序对用户进行个性化推荐：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">def Recommend(user):</span><br><span class="line">	recommend__items = dict()</span><br><span class="line">	tagged_items = user_items[user]</span><br><span class="line">	for tag, wut in user_tags[user].items ():</span><br><span class="line">		for item, wti in tag_items[tag].items():</span><br><span class="line">			# if items have been tagged, do not recommend them</span><br><span class="line">			if item in tagged_items:</span><br><span class="line">				continue</span><br><span class="line">			if item not in recommend_items:</span><br><span class="line">				recommend_items[item] = wut * wti</span><br><span class="line">			else:</span><br><span class="line">				recommend_items[item] += wut * wti</span><br><span class="line">	return recommend_items</span><br></pre></td></tr></table></figure>
+<p>我们在Delicious和CiteULike数据集上对上面的算法进行评测，结果如下表所示。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509101126087.png" class title="图片">
+<h3 id="算法的改进"><a href="#算法的改进" class="headerlink" title="算法的改进"></a>算法的改进</h3><p>该算法通过如下公式预测用户 $u$ 对物品 $i$ 的兴趣公式:</p>
+<script type="math/tex; mode=display">
+p(u, i)=\sum_{b} n_{u, b} n_{b, i}</script><p>仔细研究上面的公式可以发现很多缺点，下面我们逐条分析该算法的缺点并提出改进意见</p>
+<h4 id="TF-IDF"><a href="#TF-IDF" class="headerlink" title="TF-IDF"></a>TF-IDF</h4><p>前面这个公式倾向于给热门标签对应的热门物品很大的权重，因此会造成推荐热门的物品给用户，从而降低推荐结果的新颖性。</p>
+<p>另外，这个公式利用用户的标签向量对用户兴趣建模，其中每个标签都是用户使用过的标签，而标签的权重是用户使用该标签的次数。这种建模方法的缺点是给热门标签过大的权重，从而不能反应用户个性化的兴趣。</p>
+<p>这里我们可以借鉴TE-IDE的思想对这一公式进行改进∶</p>
+<script type="math/tex; mode=display">
+p(u, i)=\sum_{b} \frac{n_{u, b}}{\log \left(1+n_{b}^{(u)}\right)} n_{b, i}</script><p>这里， $n_{b}^{(u)}$ 记录了标签 b 被多少个不同的用户使用过，这个算法记为 TagBasedTFIDF。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509101932427.png" class title="图片">
+<p>同理，我们也可以借鉴TF-IDF的思想对热门物品进行惩罚，从而得到如下公式:</p>
+<script type="math/tex; mode=display">
+p(u, i)=\sum_{b} \frac{n_{u, b}}{\log \left(1+n_{b}^{(u)}\right)} \frac{n_{b, i}}{\log \left(1+n_{i}^{(u)}\right)}</script><p>其中，$n_{i}^{(u)}$ 记录了物品 $\mathrm{i}$ 被多少个不同的用户打过标签，这个算法记为TagBasedTFIDF++。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509102023409.png" class title="图片">
+<h4 id="数据稀疏性"><a href="#数据稀疏性" class="headerlink" title="数据稀疏性"></a>数据稀疏性</h4><p>对于新用户或者新物品，集合 $(B(u) \cap B(i))$ 中的标签数量会很少。为了提高推荐的准确率，我们可以将标签的相似标签也加人到用户标签集合中。<br>进行标签扩展有很多方法，其中常用的有话题模型 ( topic model )，不过这里介绍一种基于邻域的方法。<br><strong>标签扩展的本质</strong>是对每个标签找到和它相似的标签，也就是计算标签之间的相似度。<strong>最简单的相似度可以是同义词</strong>。如果有一个同义词词典，就可以根据这个词典进行标签扩展。如果没有这个词典，我们可以从数据中统计出标签的相似度。<br>如果认为同一个物品上的不同标签具有某种相似度，那么当两个标签同时出现在很多物品的标签集合中时，我们就可以认为这两个标签具有较大的相似度。对于标签b，令 $N(b)$ 为有标签 $\mathrm{b}$ 的物品的集合，$n_{b,i}$ 为给物品 $i$ 打上标签 $b$ 的用户数，我们可以通过如下余弦相似度公式计算<strong>标签 $\mathrm{b}$ 和标签 $\mathrm{b}^{\prime}$ 的相似度</strong>:</p>
+<script type="math/tex; mode=display">
+\operatorname{sim}\left(b, b^{\prime}\right)=\frac{\sum_{i \in N(b) \cap N\left(b^{\prime}\right)} n_{b, i} n_{b^{\prime}, i}}{\sqrt{\sum_{i \in N(b)} n_{b, i}^{2} \sum_{i \in N\left(b^{\prime}\right)} n_{b^{\prime}, i}^{2}}}</script><img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509103750757.png" class title="图片">
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509103756732.png" class title="图片">
+<p>为了验证进行标签扩展是否能够提高推荐系统的性能，本节进行了实验。对于曾经打过的标签数少于20的用户，我们找到其所打标签的相关标签，然后将这些标签聚合排序，将排序结果中前20个标签作为用户相关的标签。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509104041213.png" class title="图片">
+<h4 id="标签清理"><a href="#标签清理" class="headerlink" title="标签清理"></a>标签清理</h4><p><strong>不是所有标签都能反应用户的兴趣</strong>。比如，在一个视频网站中，用户可能对一个视频打了一个表示情绪的标签，比如”不好笑”，但我们不能因此认为用户对”不好笑”有兴趣，并且给用户推存其他具有”不好笑”这个标签的视额。</p>
+<p>同时，标签系统里经常出现<strong>词形不同、词义相同的标签</strong>，比如recommender system和recommendation engine就是两个同义词。</p>
+<p>标签清理的<strong>另一个重要意义在于将标签作为推荐解释</strong>。如果我们要把标签呈现给用户，将其作为给用户推花某一个物品的解释，对标签的质量要求就很高。首先。这些标签不能句含没有音义的停止词或者表示情绪的词，其次这些推荐解释里不能包含很多意义相同的词语。</p>
+<p>一般来说有如下<strong>标签清理方法</strong>：</p>
+<ul>
+<li><p>去除词频很高的停止词；</p>
+</li>
+<li><p>去除因词根不同造成的同义词，比如 recommender system和recommendation system；</p>
+</li>
+<li>去除因分隔符造成的同义词，比如 collaborative filtering和collaborative-filtering。</li>
+</ul>
+<p>为了控制标签的质量，很多网站也采用了让用户进行反馈的思想，即让用户告诉系统某个标签是否合适。</p>
+<h3 id="基于图的推荐算法"><a href="#基于图的推荐算法" class="headerlink" title="基于图的推荐算法"></a>基于图的推荐算法</h3><p>前面讨论的简单算法很容易懂，也容易实现，但缺点是不够系统化和理论化。因此，我们讨论一下基于图的推荐算法：</p>
+<ol>
+<li><p>首先，我们需要将用户打标签的行为表示到一张图上。我们需要定义 3 种不同的顶点，即用户顶点、物品顶点和标签顶点。</p>
+</li>
+<li><p>然后，如果我们得到一个表示用户u给物品i打了标签b的用户标签行为 $(u, i, b)$，首先需要在用户 $\mathrm{u}$ 对应的顶点 $v(u)$ 和物品 $i$ 对应的顶点 $v(i)$ 之间增加一条边（如果这两个顶点已经有边相连, 那么就应该将边的权重加 1 )，同理，在 $v(u)$ 和 $v(b)$ 之间需要增加一条边，$v(i)$ 和 $v(b)$ 之间也需要边相连接。</p>
+</li>
+<li><p>在定义出用户-物品-标签图后，我们可以用PersonaRank算法计算所有物品节点相对于当前用户节点在图上的相关性，然后按照相关性从大到小的排序，给用户推荐排名最高的N个物品。</p>
+</li>
+</ol>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509104932015.png" class title="图片">
+<h4 id="用图模型解释前面的简单算法"><a href="#用图模型解释前面的简单算法" class="headerlink" title="用图模型解释前面的简单算法"></a>用图模型解释前面的简单算法</h4><p>在介绍了图模型后，我们可以基于图模型重新思考前面提到的简单算法。在那个算法中，<strong>用户对物品的兴趣公式</strong>如下:</p>
+<script type="math/tex; mode=display">
+P(i \mid u)=\sum_{b} P(i \mid b) P(b \mid u)</script><p>这个公式<strong>假定</strong>用户对物品的兴趣通过标签传递，因此这个公式可以通过一个比本节前面介绍的图更简单的图建模（记为SimpleTagGraph)。给定用户标签行为记录，SimpleTagGraph会增加两条有向边，一条由用户节点 $v(u)$ 指向标签节点 $v(b)$，另一条由标签节点 $v(b)$ 指向物品节点 $v(i)$ 。从这个定义可以看到，SimpleTagGraph相对于前面提到用户–物品-标签图少了用户节点和物品节点之间的边。<br>图 4-12就是一个简单的 SimpleTagGraph例子。在构建了 SimpleTagGraph后，利用前面的 PersonalRank算法，令 $K=1$，并给出不同边权重的定义，就等价于前面提出的简单推荐算法。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509105859380.png" class title="图片">
+<h3 id="基于标签的理论解释"><a href="#基于标签的理论解释" class="headerlink" title="基于标签的理论解释"></a>基于标签的理论解释</h3><p>基于标签的推荐其<strong>最大好处</strong>是可以利用标签做推荐解释，这方面的代表性应用是豆瓣的个性化推荐系统。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509110234956.png" class title="图片">
+<p>如图所示，<strong>豆瓣读书推荐结果</strong>包括两部分。</p>
+<ol>
+<li>标签云，表示用户的兴趣分布，标签的尺寸越大，表示用户对这个标签相关的图书越感兴趣。</li>
+<li>单击标签云中的每一个标签，都可以在标签云下方得到和这个标签相关的图书推荐。</li>
+</ol>
+<p>豆瓣这样组织推荐结果页面有很多<strong>好处</strong></p>
+<ol>
+<li>提高了推荐结果的多样性。豆瓣通过标签云，展示了用户的所有兴趣，然后让用户自己根据他今天的兴趣选择相关的标签，得到推荐结果，从而极大地提高了推荐结果的多样性，使得推荐结果更容易满足用户多样的兴趣。</li>
+<li>提供了推荐解释功能。用户通过这个界面可以知道豆瓣给自己推荐的每一本书都是基于它认为自己对某个标签感兴趣。而对于每个标签，用户总能通过回忆自己之前的行为知道自己是否真的对这个标签感兴趣。</li>
+</ol>
+<p>豆瓣将推荐结果的可解释性拆分成了两部分：首先让用户觉得标签云是有道理的，然后让用户觉得从某个标签推荐出某本书也是有道理的。</p>
+<p>GroupLens的研究人员Jesse Vig对基于标签的解释进行了深入研究。</p>
+<blockquote>
+<p>参见 Jesse Vig、Shilad Wieland Sen 和 John Riedl 的 “Tagsplanations: Explaining Recommendation Using Tags” (ACM 2009 Article, 2009)</p>
+</blockquote>
+<p>总结问卷调查的结果，作者得出了以下<strong>结论</strong>∶</p>
+<ul>
+<li>用户对标签的兴趣对帮助用户理解为什么给他推荐某个物品更有帮助;</li>
+<li><p>用户对标签的兴趣和物品标签相关度对于帮助用户判定自己是否喜欢被推荐物品具有同样的作用;</p>
+</li>
+<li><p>物品标签相关度对于帮助用户判定被推荐物品是否符合他当前的兴趣更有帮助;</p>
+</li>
+<li>客观事实类标签相比主观感受类标签对用户更有作用。</li>
+</ul>
+<h2 id="给用户推荐标签"><a href="#给用户推荐标签" class="headerlink" title="给用户推荐标签"></a>给用户推荐标签</h2><p>当用户浏览某个物品时，标签系统非常希望用户能够给这个物品打上高质量的标签，这样才能促进标签系统的良性循环。因此，很多标签系统都设计了标签推荐模块给用户推荐标签。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509112552377.png" class title="图片">
+<h3 id="为什么要给用户推荐标签"><a href="#为什么要给用户推荐标签" class="headerlink" title="为什么要给用户推荐标签"></a>为什么要给用户推荐标签</h3><p>一般认为，给用户推荐标签有以下<strong>好处</strong>。</p>
+<ul>
+<li><p><strong>方便用户输入标签</strong> 让用户从键盘输入标签无疑会增加用户打标签的难度，这样很多用户不愿意给物品打标签，因此我们需要一个辅助工具来减小用户打标签的难度，从而提高用户打标签的参与度。</p>
+</li>
+<li><p><strong>提高标签质量</strong> 同一个语义不同的用户可能用不同的词语来表示。这些同义词会使标签的词表变得很庞大，而且会使计算相似度不太准确。而使用推荐标签时，我们可以对词表进行选择，首先保证词表不出现太多的同义词，同时保证出现的词都是一些比较热门的、有代表性的词。</p>
+</li>
+</ul>
+<h3 id="如何给用户推荐标签"><a href="#如何给用户推荐标签" class="headerlink" title="如何给用户推荐标签"></a>如何给用户推荐标签</h3><p>用户u给物品i打标签时，我们有很多方法可以给用户推荐和物品i相关的标签。比较简单的方法有4种。</p>
+<p>第0种方法就是给用户u推荐整个系统里最热门的标签 ( 这里将这个算法称为PopularTags )，令<code>tags[b]</code>为标签b的热门程度，那么这个算法的实现如下∶</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def RecommendPopularTags(user, item, tags, N):</span><br><span class="line">	return sorted(tags.items(), key=itemgetter(1), reverse=True)[0:N]</span><br></pre></td></tr></table></figure>
+<p>第1种方法就是给用户u推荐物品i上最热门的标签（这里将这个算法称为ItemPopularTags）。令<code>item_tags[i][b]</code>为物品i被打上标签b的次数，那么这个算法的实现很简单，具体如下所示∶</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def RecommendPopularTags(user, item, item_tags, N):</span><br><span class="line">	return sorted(item_tags[item].items(), key=itemgetter(1), reverse=True)[0:N]</span><br></pre></td></tr></table></figure>
+<p>第2种方法是给用户u推荐他自己经常使用的标签（这里将这个算法称为UserPopularTags）。令<code>user_tags[u][b]</code>为用户u使用标签b的次数，那么这个算法的实现如下所示∶</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def RecommendUserPopularTags(user, item, user_tags, N):</span><br><span class="line">	return sorted(user_tags[user].items(),key=itemgetter(1),reverse=True)[0:N]</span><br></pre></td></tr></table></figure>
+<p>第3种算法是前面两种的融合（这里记为HybridPopularTags），该方法通过一个系数将上面的推荐结果线性加权，然后生成最终的推荐结果。这个算法的实现代码如下∶</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">def RecommendHlybridPopularTags(user, item, user_tags, item_tags, alpha, N):</span><br><span class="line">	max_user_tag_weight = max(user_tags[user].values())</span><br><span class="line">	for tag, weight in user_tags[user].items ():</span><br><span class="line">		ret[tag] = (1 - alpha)* weight / max_user_tag_weight</span><br><span class="line"></span><br><span class="line">	max_item_tag_weight = max(item_tags[item].values ())</span><br><span class="line">	for tag, weight in item_tags[item].items ():</span><br><span class="line">		if tag not in ret:</span><br><span class="line">			ret[tag] = alpha * weight / max_item_tag_weight</span><br><span class="line">		else:</span><br><span class="line">			ret[tag] += alpha * weight/ max__item_tag_weight</span><br><span class="line">	return sorted(ret[user].items(), key=itemgetter(1), reverse=True)[0:N]</span><br></pre></td></tr></table></figure>
+<p>注意在上面的实现中，我们在将两个列表线性相加时都将两个列表按最大值做了归一化。这样的好处是便于控制两个列表对最终结果的影响，而不至于因为物品非常热门而淹没用户对推荐结果的影响，或者因为用户非常活跃而淹没物品对推荐结果的影响。</p>
+<h3 id="实验设置-1"><a href="#实验设置-1" class="headerlink" title="实验设置"></a>实验设置</h3><p>我们用同样的方法将数据集按照9∶1分成训练集和测试集，然后通过训练集学习用户标注的模型。需要注意的是，这里切分数据集不再是以user、item为主键，而是以user、item、tag为主键。为了更好的理解如何切分数据集，请参考下面的Python代码;</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">def SplitData(records, train, test):</span><br><span class="line">	for user, item, tag in records:</span><br><span class="line">	if random.randint(1, 10) == 1:</span><br><span class="line">		test.append([user, item, tag])</span><br><span class="line">	else:</span><br><span class="line">		train.append([user,item, tag])</span><br><span class="line">	return [train,test]</span><br></pre></td></tr></table></figure>
+<p>对于测试集中的每一个用户物品对 $(u, i)$，我们都会推荐 $N$ 个标签给用户 $\mathrm{u}$ 作参考。令 $R(u, i)$ 为我们给用户 $\mathrm{u}$ 推荐的应该在物品i上打的标签集合，令 $\mathrm{T}(u, i)$ 为用户u实际给物品打的标签的集合, 我们可以利用准确率和召回率评测标签推荐的精度：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+&\text { Precision }=\frac{\sum_{(u, i) \in \text { Test }}|R(u, i) \cap T(u, i)|}{\sum_{(u, i) \in \text { Test }}|R(u, i)|} \\
+&\text { Recall }=\frac{\sum_{(u, i) \in \text { Test }}|R(u, i) \cap T(u, i)|}{\sum_{(u, i) \in \text { Test }}|T(u, i)|}
+\end{aligned}</script><img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509115838136.png" class title="图片">
+<p>如表中结果所示，ItemPopularTags具有最好的准确率和召回率，这一点和直观想法是符合的。因为用户的兴趣是广泛的，假设用户对编程和武侠小说有兴趣，那么用户在给一本武侠小说打标签时，肯定不会参考自己对编程书打的标签，而会更多地参考关于武侠小说的常用标签。因此ItemPopularTags肯定比UserPopularTags的精度要高。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509115931423.png" class title="图片">
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509115936857.png" class title="图片">
+<p>如表所示，在α=0.8的时候，HybridPopularTags取得了最好的准确度（准确率=25.15%，召回率=68.30%）。而且这个精度超过了单独的ItemPopularTags和UserPopularTags算法的精度。考虑到近70%的精度已经很高了，因此很多应用在给用户推荐标签时会直接给出用户最常用的标签，以及物品最经常被打的标签。</p>
+<img src="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/image-20220509120051814.png" class title="图片">
+<p>前面提到的基于统计用户常用标签和物品常用标签的算法有一个缺点，就是对新用户或者不热门的物品很难有推荐结果。</p>
+<p>解决这一问题有两个思路。</p>
+<ol>
+<li>第一个思路是从物品的内容数据中抽取关键词作为标签。</li>
+<li>第二个思路是针对有结果，但结果不太多的情况。比如《MongoDB权威指南》一书只有一个用户曾经给它打过一个标签nosql，这个时刻可以做一些关键词扩展，加入一些和nosql相关的标签，比如数据库、编程等。</li>
+</ol>
+<h3 id="基于图的标签推荐算法"><a href="#基于图的标签推荐算法" class="headerlink" title="基于图的标签推荐算法"></a>基于图的标签推荐算法</h3><p>但这次遇到的问题和之前不同。这次的问题是，当用户u遇到物品i时，会给物品i打什么样的标签。因此，我们可以重新定义顶点的启动概率，如下所示∶</p>
+<script type="math/tex; mode=display">
+r_{v(k)}=\left\{\begin{array}{l}
+\alpha(v(k)=v(u)) \\
+1-\alpha(v(k)=v(i)) \\
+0 \quad(\text {其他})
+\end{array}\right.</script><p>也就是说，只有用户 $\mathrm{u}$ 和物品 $\mathrm{i}$ 对应的顶点有非 0 的启动概率，而其他顶点的启动概率都为 0 。 在上面的定义中，$v(u)$ 和 $v(i)$ 的启动概率并不相同，$v(u)$ 的启动概率是 $a$，而 $v(i)$ 的启动概率是 $1-a$ ，参数 $\alpha$ 可以通过离线实验选择。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/markdown/" rel="tag"># markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/" rel="prev" title="推荐系统冷启动问题">
+      <i class="fa fa-chevron-left"></i> 推荐系统冷启动问题
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE"><span class="nav-number">1.</span> <span class="nav-text">利用用户标签数据</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#UGC-%E6%A0%87%E7%AD%BE%E7%B3%BB%E7%BB%9F%E7%9A%84%E4%BB%A3%E8%A1%A8%E5%BA%94%E7%94%A8"><span class="nav-number">1.1.</span> <span class="nav-text">UGC 标签系统的代表应用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Delicious"><span class="nav-number">1.1.1.</span> <span class="nav-text">Delicious</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CiteULike"><span class="nav-number">1.1.2.</span> <span class="nav-text">CiteULike</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Last-fm"><span class="nav-number">1.1.3.</span> <span class="nav-text">Last.fm</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B1%86%E7%93%A3"><span class="nav-number">1.1.4.</span> <span class="nav-text">豆瓣</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hulu"><span class="nav-number">1.1.5.</span> <span class="nav-text">Hulu</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%87%E7%AD%BE%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E6%8E%A8%E8%8D%90%E9%97%AE%E9%A2%98"><span class="nav-number">1.2.</span> <span class="nav-text">标签系统中的推荐问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%9B%E8%A1%8C%E6%A0%87%E6%B3%A8"><span class="nav-number">1.2.1.</span> <span class="nav-text">用户为什么进行标注</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E5%A6%82%E4%BD%95%E6%89%93%E6%A0%87%E7%AD%BE"><span class="nav-number">1.2.2.</span> <span class="nav-text">用户如何打标签</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%89%93%E4%BB%80%E4%B9%88%E6%A0%B7%E7%9A%84%E6%A0%87%E7%AD%BE"><span class="nav-number">1.2.3.</span> <span class="nav-text">用户打什么样的标签</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E6%A0%87%E7%AD%BE%E7%9A%84%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.3.</span> <span class="nav-text">基于标签的推荐系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E7%BD%AE"><span class="nav-number">1.3.1.</span> <span class="nav-text">实验设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%9C%80%E7%AE%80%E5%8D%95%E7%9A%84%E7%AE%97%E6%B3%95"><span class="nav-number">1.3.2.</span> <span class="nav-text">一个最简单的算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%97%E6%B3%95%E7%9A%84%E6%94%B9%E8%BF%9B"><span class="nav-number">1.3.3.</span> <span class="nav-text">算法的改进</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TF-IDF"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">TF-IDF</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%A8%80%E7%96%8F%E6%80%A7"><span class="nav-number">1.3.3.2.</span> <span class="nav-text">数据稀疏性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%87%E7%AD%BE%E6%B8%85%E7%90%86"><span class="nav-number">1.3.3.3.</span> <span class="nav-text">标签清理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%9A%84%E6%8E%A8%E8%8D%90%E7%AE%97%E6%B3%95"><span class="nav-number">1.3.4.</span> <span class="nav-text">基于图的推荐算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E5%9B%BE%E6%A8%A1%E5%9E%8B%E8%A7%A3%E9%87%8A%E5%89%8D%E9%9D%A2%E7%9A%84%E7%AE%80%E5%8D%95%E7%AE%97%E6%B3%95"><span class="nav-number">1.3.4.1.</span> <span class="nav-text">用图模型解释前面的简单算法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E6%A0%87%E7%AD%BE%E7%9A%84%E7%90%86%E8%AE%BA%E8%A7%A3%E9%87%8A"><span class="nav-number">1.3.5.</span> <span class="nav-text">基于标签的理论解释</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%99%E7%94%A8%E6%88%B7%E6%8E%A8%E8%8D%90%E6%A0%87%E7%AD%BE"><span class="nav-number">1.4.</span> <span class="nav-text">给用户推荐标签</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%BB%99%E7%94%A8%E6%88%B7%E6%8E%A8%E8%8D%90%E6%A0%87%E7%AD%BE"><span class="nav-number">1.4.1.</span> <span class="nav-text">为什么要给用户推荐标签</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%BB%99%E7%94%A8%E6%88%B7%E6%8E%A8%E8%8D%90%E6%A0%87%E7%AD%BE"><span class="nav-number">1.4.2.</span> <span class="nav-text">如何给用户推荐标签</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E7%BD%AE-1"><span class="nav-number">1.4.3.</span> <span class="nav-text">实验设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%9A%84%E6%A0%87%E7%AD%BE%E6%8E%A8%E8%8D%90%E7%AE%97%E6%B3%95"><span class="nav-number">1.4.4.</span> <span class="nav-text">基于图的标签推荐算法</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/853784202@qq.com" title="E-Mail → 853784202@qq.com"><i class="lee-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+
+
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="lee"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Lee</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

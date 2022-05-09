@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="《推荐系统实践》(作者：项亮) 读书笔记第一章：好的推荐系统">
+<meta property="og:type" content="article">
+<meta property="og:title" content="好的推荐系统">
+<meta property="og:url" content="https://github.com/CLearnerLee/LeeBlog/2022/05/06/%E5%A5%BD%E7%9A%84%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="AI 自学笔记">
+<meta property="og:description" content="《推荐系统实践》(作者：项亮) 读书笔记第一章：好的推荐系统">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-05-06T05:01:16.000Z">
+<meta property="article:modified_time" content="2022-05-06T05:16:26.438Z">
+<meta property="article:author" content="Lee">
+<meta property="article:tag" content="markdown">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/CLearnerLee/LeeBlog/2022/05/06/%E5%A5%BD%E7%9A%84%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>好的推荐系统 | AI 自学笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">AI 自学笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-标签">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags - markdown fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th - 我的第一篇博客 - CS224U 笔记 fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-归档">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/CLearnerLee/LeeBlog/2022/05/06/%E5%A5%BD%E7%9A%84%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="AI 自学笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          好的推荐系统
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-06 13:01:16 / 修改时间：13:16:26" itemprop="dateCreated datePublished" datetime="2022-05-06T13:01:16+08:00">2022-05-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8A%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%AE%9E%E8%B7%B5%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">《推荐系统实践》读书笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="lee-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">《推荐系统实践》(作者：项亮) 读书笔记第一章：好的推荐系统</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="好的推荐系统"><a href="#好的推荐系统" class="headerlink" title="好的推荐系统"></a>好的推荐系统</h1><h2 id="什么是推荐系统"><a href="#什么是推荐系统" class="headerlink" title="什么是推荐系统"></a>什么是推荐系统</h2><p>推荐系统的<strong>任务</strong>就是联系用户和信息，一方面帮助用户发现对自己有价值的信息，另一方面让信息能够展现在对它感兴趣的用户面前，从而实现信息消费者和信息生产者的双赢。</p>
+<p>搜索引擎和推荐系统的<strong>区别</strong>：搜索引擎满足了用户有明确目的时的主动查找需求，而推荐系统能够在用户没有明确目的的时候帮助他们发现感兴趣的新内容。</p>
+<h2 id="个性化推荐系统的应用"><a href="#个性化推荐系统的应用" class="headerlink" title="个性化推荐系统的应用"></a>个性化推荐系统的应用</h2><p>尽管不同的网站使用不同的推荐系统技术，但总地来说，几乎所有的推荐系统应用都是由前台的展示页面、后台的日志系统以及推荐算法三部分构成的。</p>
+<ol>
+<li><strong>电子商务</strong>：亚马逊个性化推荐列表包含推荐结果的标题、缩略图以及其他内容属性，推荐结果的平均分，推荐理由（基于物品的推荐）；亚马逊的相关推荐列表，打包销售</li>
+<li><strong>电影和视频网站</strong>：Netflix 推荐结果展示页面包括电影的标题和海报，用户反馈模块，推荐理由（基于物品的推荐）</li>
+<li><strong>个性化音乐网络电台</strong>：音乐推荐的特点，物品空间大、消费每首歌的代价很小、物品种类丰富、听一首歌耗时很少、物品重用率很高、用户充满激情、上下文相关、次序很重要、很多播放列表资源、不需要用户全神贯注、高度社会化</li>
+<li><strong>社交网络</strong></li>
+<li><strong>个性化阅读</strong></li>
+<li><strong>基于位置的服务</strong></li>
+<li><strong>个性化邮件</strong></li>
+<li><strong>个性化广告</strong>：主要包括上下文广告、搜索广告、个性化展示广告</li>
+</ol>
+<h2 id="推荐系统评测"><a href="#推荐系统评测" class="headerlink" title="推荐系统评测"></a>推荐系统评测</h2><p>一个<strong>完整</strong>的推荐系统一般存在3个参与方：用户、物品提供者和提供推荐系统的网站。</p>
+<p>一个<strong>好的推荐系统</strong>不仅仅能够准确预测用户的行为，而且能够扩展用户的视野，帮助用户发现那些他们可能会感兴趣，但却不那么容易发现的东西。同时，推荐系统还要能够帮助商家将那些被埋没在长尾中的好商品介绍给可能会对它们感兴趣的用户。</p>
+<h3 id="推荐系统实验方法"><a href="#推荐系统实验方法" class="headerlink" title="推荐系统实验方法"></a>推荐系统实验方法</h3><h4 id="离线实验"><a href="#离线实验" class="headerlink" title="离线实验"></a><strong>离线实验</strong></h4><p>一般包含如下几个<strong>步骤</strong>：</p>
+<p>（1）通过日志系统获得用户行为数据，并按照一定格式生成一个标准的数据集；</p>
+<p>（2）将数据集按照一定的规则分成训练集和测试集；</p>
+<p>（3）在训练集上训练用户兴趣模型，在测试集上进行预测；</p>
+<p>（4）通过事先定义的离线指标评测算法在测试集上的预测结果。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>不需要有对实际系统的控制权</td>
+<td>无法计算商业上关心的指标</td>
+</tr>
+<tr>
+<td>不需要用户参与实验</td>
+<td>离线实验的指标和商业指标存在差距</td>
+</tr>
+<tr>
+<td>速度快，可以测试大量算法</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h4 id="用户调查"><a href="#用户调查" class="headerlink" title="用户调查"></a><strong>用户调查</strong></h4><p>在对算法会不会降低用户满意度不太有把握的情况下，上线测试具有较高的风险，所以在上线测试前一般需要做一次称为用户调查的测试。</p>
+<p>用户调查需要有一些真实用户，让他们在需要测试的推荐系统上完成一些任务。在他们完成任务时，我们需要观察和记录他们的行为，并让他们回答一些问题。最后，我们需要通过分析他们的行为和答案了解测试系统的性能。</p>
+<p>用户调查的优缺点很明显。</p>
+<p>它的<strong>优点</strong>是可以获得很多体现用户主观感受的指标，相对在线实验风险很低，出现错误后很容易弥补。</p>
+<p><strong>缺点</strong>是招募测试用户代价较大，很难组织大规模的测试用户，因此会使测试结果的统计意义不足。此外，在很多时候设计双盲实验非常困难，而且用户在测试环境下的行为和真实环境下的行为可能有所不同，因而在测试环境下收集的测试指标可能在真实环境下无法重现。</p>
+<h4 id="在线实验"><a href="#在线实验" class="headerlink" title="在线实验"></a><strong>在线实验</strong></h4><p>在完成离线实验和必要的用户调查后，可以将推荐系统上线做AB测试，将它和旧的算法进行比较。</p>
+<p><a target="_blank" rel="noopener" href="http://www.abtests.com/">AB测试</a>是一种很常用的在线评测算法的实验方法。它通过一定的规则将用户随机分成几组，并对不同组的用户采用不同的算法，然后通过统计不同组用户的各种不同的评测指标比较不同算法，比如可以统计不同组用户的点击率，通过点击率比较不同算法的性能。</p>
+<p>AB测试的<strong>优点</strong>是可以公平获得不同算法实际在线时的性能指标，包括商业上关注的指标。</p>
+<p>AB测试的<strong>缺点</strong>主要是周期比较长，必须进行长期的实验才能得到可靠的结果。因此一般不会用AB测试测试所有的算法，而只是用它测试那些在离线实验和用户调查中表现很好的算法。其次，一个大型网站的AB测试系统的设计也是一项复杂的工程。一个大型网站的架构分前端和后端，从前端展示给用户的界面到最后端的算法，中间往往经过了很多层，这些层往往由不同的团队控制，而且都有可能做AB测试。因此，<strong>切分流量</strong>是AB测试中的<strong>关键</strong>，不同的层以及控制这些层的团队需要从一个统一的地方获得自己AB测试的流量，而不同层之间的流量应该是正交的。</p>
+<p>一般来说，一个新的推荐算法最终上线，需要完成上面所说的3个实验。</p>
+<ul>
+<li>首先，需要通过离线实验证明它在很多离线指标上优于现有的算法。</li>
+<li>然后，需要通过用户调查确定它的用户满意度不低于现有的算法。</li>
+<li>最后，通过在线的AB测试确定它在我们关心的指标上优于现有的算法。</li>
+</ul>
+<h3 id="评测指标"><a href="#评测指标" class="headerlink" title="评测指标"></a>评测指标</h3><h4 id="用户满意度"><a href="#用户满意度" class="headerlink" title="用户满意度"></a><strong>用户满意度</strong></h4><p>用户满意度没有办法离线计，.只能通过用户调查或者在线实验获得，主要是通过调查问卷的方式。</p>
+<p>调查问卷不是简单地询问用户对结果是否满意，而是从不同的<strong>侧面询问</strong>用户对结果的不同感受。比如，如果仅仅问用户是否满意，用户可能心里认为大体满意、但是对某个方面还有点不满，因而可能很难回答这个问题。因此在设计何卷时需要考虑到用户<strong>各方面的感受</strong>。</p>
+<p>在在线系统中，用户满意度主要通过一些对<strong>用户行为的统计</strong>得到。比如通过购买率、反馈按钮、点击率、用户停留时间和转化率等<strong>指标度量</strong>用户的满意度。</p>
+<h4 id="预测准确度"><a href="#预测准确度" class="headerlink" title="预测准确度"></a><strong>预测准确度</strong></h4><p>预测准确度是最重要的推荐系统离线评测指标</p>
+<p>包括如下几个不同的研究方向：</p>
+<ul>
+<li><strong>评分预测</strong></li>
+</ul>
+<p>评分预测的预测准确度一般通过均方根误差（RMSE）和平均绝对误差 (MAE) 计算。对于 测试集中的一个用户 u 和物品 i, 令 $r_{u j}$ 是用户对物品i的实际评分, 而 $\hat{r}_{w w}$ 是推荐算法椧出的预测评 分, 那么RMSE的定义为:</p>
+<script type="math/tex; mode=display">
+\operatorname{RMSE}=\sqrt{\frac{\sum_{u, i \in T}\left(r_{w i}-\hat{r}_{u i}\right)^{2}}{|T|}}</script><p>MAE采用绝对值计算预测误差, 它的定义为:</p>
+<script type="math/tex; mode=display">
+\mathrm{MAE}=\frac{\sum_{w, t \in T}\left|r_{w f}-\hat{r}_{w w}\right|}{|T|}</script><p>假设我们用一个列表 records 存放用户评分数据, 令 records [i]=[u, i，rui，pui], 其中 rui 是用户 u 对物品 i 的实际评分，pui 是算法预测出来的用户 u 对物品 i 的评分。<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">def RMSE (records):</span><br><span class="line">	return math.sqrt (\</span><br><span class="line">		sum([(rui-pui) * (rui-pui) for u, i, rui, pui in records])\</span><br><span class="line">		/ float(len(records))</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">def MAE (records):</span><br><span class="line">	return sum([abs (rui-pui) for u, i, rui, pui in records])\</span><br><span class="line">		/ float(len(records))</span><br></pre></td></tr></table></figure>
+<p>RMSE加大了对预测不准的用户物品评分的惩罚（平方项的惩罚），因而对系统的评测更加苛刻。</p>
+<p>研究表明，如果评分系统是基于整数建立的（即用户给的评分都是整数），那么对预测结果取整会降低MAE的误差。</p>
+<ul>
+<li><strong>TopN</strong>推荐</li>
+</ul>
+<p>网站在提供推荐服务时, 一般是椧用户一个个性化的推荐列表, 这种推荐叫做TopN推荐。 TopN推荐的预测准确率一般通过准确率/召回率度量。<br>令 $R(u)$ 是根据用户在训练集上的行为给用户作出的推荐列表, 而 $T(u)$ 是用户在测试集上的行为列表。那么, 推荐结果的<strong>召回率</strong>定义为:</p>
+<script type="math/tex; mode=display">
+\text { Recall }=\frac{\sum_{w \in U}|R(u) \cap T(u)|}{\sum_{u \in U}|T(u)|}</script><p>推䓔结果的<strong>准确率</strong>定义为:</p>
+<script type="math/tex; mode=display">
+\text { Precision }=\frac{\sum_{w c d}|R(u) \cap T(u)|}{\sum_{u U}|R(u)|}</script><p>代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">def PrecisionRecall(test, N) :</span><br><span class="line">	hit = 0</span><br><span class="line">	n_recall = 0</span><br><span class="line">	n_precision = 0</span><br><span class="line">	for user, items in test.items():</span><br><span class="line">		rank = Recommend (user, N)</span><br><span class="line">		hit += len (rank &amp; items)</span><br><span class="line">		n_recall += len (items)</span><br><span class="line">		n_precision += N</span><br><span class="line">	return [hit / (1.0 * n_recall), hit / (1.0 * n_precision)]</span><br></pre></td></tr></table></figure>
+<p>有的时候, 为了全面评测 TopN推荐的准确率和召回率, 一般会选取不同的推䓔列表长度 $N$, 计算出一组准确率/召回率，然后画出准确率/召回率曲线。</p>
+<h4 id="覆盖率"><a href="#覆盖率" class="headerlink" title="覆盖率"></a><strong>覆盖率</strong></h4><p>覆盖率描述一个推荐系统对物品长尾的发掘能力。</p>
+<p>覆盖率有不同的定义方法, 最简单的定义为推荐系统能够推荐出来的物品占总物品集合的比例。假设系统的用户集合为 $U$, 推荐系统给每个用户推苃一个长度为 $N$ 的物品列表 $R(u)$ 。那么推荐系统的<strong>覆盖率</strong>可以通过下面的公式计算：</p>
+<script type="math/tex; mode=display">
+\text { Coverage }=\frac{\left|\mathrm{U}_{u \in \mathrm{U}} R(u)\right|}{|I|}</script><p>一个好的推荐系统不仅需要有比较高的用户满意度, 也要有较高的覆盖率。<br>可以通过研究物品在推荐列表中出现次数的分布描述推荐系统挖掘长尾的能力。如果这个分布比较平，那么说明推荐系统的覆盖率较高，而如果这个分布较陡峭，说明推荐系统的覆盖率较低。</p>
+<p>第一个指标<strong>信息熵</strong>：</p>
+<script type="math/tex; mode=display">
+H=-\sum_{i=1}^{n} p(i) \log p(i)</script><p>这里 $p(i)$ 是物品 $i$ 的流行度除以所有物品流行度之和。<br>第二个指标是<strong>基尼系数</strong> ( Gini Index )：</p>
+<script type="math/tex; mode=display">
+G=\frac{1}{n-1} \sum_{j=1}^{n}(2 j-n-1) p\left(i_{j}\right)</script><p>这里, $i$ 是按照物品流行度 $p$ 从小到大排序的物品列表中第 $j$ 个物品。</p>
+<p>下面的代码可以用来计算给定物品流行度分布后的基尼系数:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">def Ginilndex(p):</span><br><span class="line">	j = 1</span><br><span class="line">	n = len(p)</span><br><span class="line">	G = 0</span><br><span class="line">	for item, weight in sorted(p.items(), key=itemgetter(1)):</span><br><span class="line">		G += (2 * j - n - 1) * weight</span><br><span class="line">	return G / float(n-1)</span><br></pre></td></tr></table></figure>
+<p>评测推荐系统是否具有马太效应的简单办法就是使用基尼系数。如果G1是从初始用户行为中计算出的物品流行度的基尼系数，G2是从推荐列表中计算出的物品流行度的基尼系数，那么如果G2&gt;G1，就说明推荐算法具有马太效应。</p>
+<h4 id="多样性"><a href="#多样性" class="headerlink" title="多样性"></a><strong>多样性</strong></h4><p>多样性描述了推荐列表中物品两两之间的不相似性。</p>
+<p>假设 $s(i, j) \in[0,1]$ 定义了物品 $i$ 和 $j$ 之间的相似度, 那么用户 $u$ 的推荐列表 $R(u)$ 的多样性定义如下:</p>
+<script type="math/tex; mode=display">
+\operatorname{Diversity}(R(u))=1-\frac{\sum_{t, j \in R(u), i \neq j} s(i, j)}{\left.\frac{1}{2}|R(u)|(| R(u) |-1\right)}</script><p>而推荐系统的整体多样性可以定义为所有用户推荐列表多样性的平均值:</p>
+<script type="math/tex; mode=display">
+\text { Diversity }=\frac{1}{|U|} \sum_{u \in U} \operatorname{Diversity}(R(u))</script><h4 id="新颖性"><a href="#新颖性" class="headerlink" title="新颖性"></a><strong>新颖性</strong></h4><p>新颖的推荐是指给用户推荐那些他们以前没有听说过的物品。</p>
+<p>在一个网站种实现新颖性的最简单方法是，把那些用户之前在网站中对其有过行为的物品从推荐列表中过滤掉。</p>
+<p>也有人提出利用推荐结果的平均流行度</p>
+<h4 id="惊喜度"><a href="#惊喜度" class="headerlink" title="惊喜度"></a><strong>惊喜度</strong></h4><p>惊喜度和新颖性的区别：如果推荐结果和用户的历史兴趣不相似，但却让用户觉得满意，那么就可以说推荐结果的惊喜度很高，而推荐的新颖性仅仅取决于用户是否听说过这个推荐结果。</p>
+<p>定义惊喜度需要首先定义推荐结果和用户历史上喜欢的物品的相似度，其次需要定义用户对推荐结果的满意度。</p>
+<p>提高推荐惊喜度需要提高推荐结果的用户满意度，同时降低推荐结果和用户历史兴趣的相似度。</p>
+<h4 id="信任度"><a href="#信任度" class="headerlink" title="信任度"></a><strong>信任度</strong></h4><p>同样的推荐结果。以让用户信任的方式推花给用户就事能让用户产生购买欲，而以类似广告形式的方法推荐给用户就可能很难让用户产生购买的意愿。</p>
+<p>度量推荐系统的信任度只能通过问卷调查的方式、询问用户是否信任推荐系统的推荐结果。</p>
+<p>提高推荐系统的信任度主要有两种方法。首先需要<strong>增加</strong>推荐系统的<strong>透明度</strong>，而增加推荐系统透明度的主要办法是提供推荐解释。只有让用户了解推荐系统的运行机制，让用户认同推荐系统的运行机制，才会提高用户对推荐系统的信任度。其次是<strong>考虑</strong>用户的<strong>社交网络信息</strong>，利用用户的好友信息给用户做推荐、并且用好友进行推荐解释。</p>
+<h4 id="实时性"><a href="#实时性" class="headerlink" title="实时性"></a><strong>实时性</strong></h4><p>推荐系统的实时性包括两个方面。</p>
+<p>首先，推荐系统需要实时地更新推荐列表来满足用户新的行为变化。与用户行为相应的实时性，可以通过推荐列表的变化速率来评测。如果推荐列表在用户有行为后变化不大，或者没有变化，说明推荐系统的实时性不高。</p>
+<p>实时性的第二个方面是推荐系统需要能够将新加入系统的物品推荐给用户。这主要考验了推荐系统处理物品冷启动的能力。</p>
+<h4 id="健壮性"><a href="#健壮性" class="headerlink" title="健壮性"></a><strong>健壮性</strong></h4><p>健壮性（即robust，鲁棒性）指标衡量了一个推荐系统抗击作弊的能力。</p>
+<p>最著名的<strong>作弊方法</strong>就是行为注入攻击（profile injection attack）。还有一种攻击主要针对评分系统比如豆源的电影评分。</p>
+<p>算法健壮性的<strong>评测</strong>主要利用模拟攻击。</p>
+<p>提高系统的健壮性，有以下方法：</p>
+<ul>
+<li>选择健壮性高的算法</li>
+<li>尽量使用代价比较高的用户行为</li>
+<li>在使用数据前，进行攻击检测，从而对数据进行清理。</li>
+</ul>
+<h4 id="商业目标"><a href="#商业目标" class="headerlink" title="商业目标"></a>商业目标</h4><p>一般来说，最本质的商业目标就是平均一个用户给公司带来的盈利</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>获取各种评测指标的途径：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>离线实验</th>
+<th>问卷调查</th>
+<th>在线实验</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户满意度</td>
+<td>×</td>
+<td>√</td>
+<td>●</td>
+</tr>
+<tr>
+<td>预测准确度</td>
+<td>√</td>
+<td>√</td>
+<td>×</td>
+</tr>
+<tr>
+<td>覆盖率</td>
+<td>√</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>多样性</td>
+<td>●</td>
+<td>√</td>
+<td>●</td>
+</tr>
+<tr>
+<td>新颖性</td>
+<td>●</td>
+<td>√</td>
+<td>●</td>
+</tr>
+<tr>
+<td>惊喜度</td>
+<td>×</td>
+<td>√</td>
+<td>×</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>对于可以离线优化的指标，应该在给定覆盖率、多样性、新颖性等限制条件下, 尽量优化预测准确度。用一个数学公式表达，离线实验的优化目标是：</p>
+<script type="math/tex; mode=display">
+\text{最大化预测准确度}\\
+\text{使得 覆盖率} >A\\
+\text{多样性}> B\\
+\text{新颖性} > C</script><p>其中, $A 、 B 、 C$ 的取值应该视不同的应用而定。</p>
+<h3 id="评测维度"><a href="#评测维度" class="headerlink" title="评测维度"></a>评测维度</h3><p>增加评测维度的目的就是知道一个算法在什么情况下性能最好</p>
+<p>评测维度分为如下3种：</p>
+<ul>
+<li>用户维度</li>
+<li>物品维度</li>
+<li>时间维度</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/markdown/" rel="tag"># markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/04/VSM/" rel="prev" title="VSM">
+      <i class="fa fa-chevron-left"></i> VSM
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/" rel="next" title="利用用户行为数据">
+      利用用户行为数据 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A5%BD%E7%9A%84%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.</span> <span class="nav-text">好的推荐系统</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.1.</span> <span class="nav-text">什么是推荐系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%BA%94%E7%94%A8"><span class="nav-number">1.2.</span> <span class="nav-text">个性化推荐系统的应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E8%AF%84%E6%B5%8B"><span class="nav-number">1.3.</span> <span class="nav-text">推荐系统评测</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C%E6%96%B9%E6%B3%95"><span class="nav-number">1.3.1.</span> <span class="nav-text">推荐系统实验方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A6%BB%E7%BA%BF%E5%AE%9E%E9%AA%8C"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">离线实验</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E8%B0%83%E6%9F%A5"><span class="nav-number">1.3.1.2.</span> <span class="nav-text">用户调查</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9C%A8%E7%BA%BF%E5%AE%9E%E9%AA%8C"><span class="nav-number">1.3.1.3.</span> <span class="nav-text">在线实验</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%84%E6%B5%8B%E6%8C%87%E6%A0%87"><span class="nav-number">1.3.2.</span> <span class="nav-text">评测指标</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%BB%A1%E6%84%8F%E5%BA%A6"><span class="nav-number">1.3.2.1.</span> <span class="nav-text">用户满意度</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A2%84%E6%B5%8B%E5%87%86%E7%A1%AE%E5%BA%A6"><span class="nav-number">1.3.2.2.</span> <span class="nav-text">预测准确度</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A6%86%E7%9B%96%E7%8E%87"><span class="nav-number">1.3.2.3.</span> <span class="nav-text">覆盖率</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%9A%E6%A0%B7%E6%80%A7"><span class="nav-number">1.3.2.4.</span> <span class="nav-text">多样性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B0%E9%A2%96%E6%80%A7"><span class="nav-number">1.3.2.5.</span> <span class="nav-text">新颖性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%83%8A%E5%96%9C%E5%BA%A6"><span class="nav-number">1.3.2.6.</span> <span class="nav-text">惊喜度</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BF%A1%E4%BB%BB%E5%BA%A6"><span class="nav-number">1.3.2.7.</span> <span class="nav-text">信任度</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E6%97%B6%E6%80%A7"><span class="nav-number">1.3.2.8.</span> <span class="nav-text">实时性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%81%A5%E5%A3%AE%E6%80%A7"><span class="nav-number">1.3.2.9.</span> <span class="nav-text">健壮性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%95%86%E4%B8%9A%E7%9B%AE%E6%A0%87"><span class="nav-number">1.3.2.10.</span> <span class="nav-text">商业目标</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.3.2.11.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%84%E6%B5%8B%E7%BB%B4%E5%BA%A6"><span class="nav-number">1.3.3.</span> <span class="nav-text">评测维度</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/853784202@qq.com" title="E-Mail → 853784202@qq.com"><i class="lee-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+
+
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="lee"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Lee</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

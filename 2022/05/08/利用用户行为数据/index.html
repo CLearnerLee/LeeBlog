@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="《推荐系统实践》(作者：项亮) 读书笔记第二章：利用用户行为数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用用户行为数据">
+<meta property="og:url" content="https://github.com/CLearnerLee/LeeBlog/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/index.html">
+<meta property="og:site_name" content="AI 自学笔记">
+<meta property="og:description" content="《推荐系统实践》(作者：项亮) 读书笔记第二章：利用用户行为数据">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507151720930.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507151807265.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507151934438.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507171030196.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507171750930.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507172556581.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507172621188.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507173449949.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507174741264.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507175356801.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507175645874.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507183642549.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507183922505.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507185029433.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220508132203806.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220508134238442.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220508135303325.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220508135346536.png">
+<meta property="article:published_time" content="2022-05-08T05:58:55.000Z">
+<meta property="article:modified_time" content="2022-05-08T06:26:53.974Z">
+<meta property="article:author" content="Lee">
+<meta property="article:tag" content="markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507151720930.png">
+
+<link rel="canonical" href="https://github.com/CLearnerLee/LeeBlog/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>利用用户行为数据 | AI 自学笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">AI 自学笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-标签">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags - markdown fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th - 我的第一篇博客 - CS224U 笔记 fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-归档">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/CLearnerLee/LeeBlog/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="AI 自学笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          利用用户行为数据
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-08 13:58:55 / 修改时间：14:26:53" itemprop="dateCreated datePublished" datetime="2022-05-08T13:58:55+08:00">2022-05-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8A%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%AE%9E%E8%B7%B5%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">《推荐系统实践》读书笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="lee-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">《推荐系统实践》(作者：项亮) 读书笔记第二章：利用用户行为数据</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="利用用户行为数据"><a href="#利用用户行为数据" class="headerlink" title="利用用户行为数据"></a>利用用户行为数据</h1><p>实现个性化推荐的<strong>最理想情况</strong>是用户能在注册的时候主动告诉我们他喜欢什么。</p>
+<p>但这种方法有3个<strong>缺点</strong>∶首先，现在的自然语言理解技术很难理解用户用来描述兴趣的自然语言；其次，用户的兴趣是不断变化的，但用户不会不停地更新兴趣描述；最后，很多时候用户并不知道自己喜欢什么，或者很难用语言描述自己喜欢什么。</p>
+<p>用户行为数据中蕴涵着很多不是那么显而易见的规律，而个性化推荐算法的任务就是通过计算机去发现这些规律，从而为产品的设计提供指导，提高用户体验。</p>
+<h2 id="用户行为数据简介"><a href="#用户行为数据简介" class="headerlink" title="用户行为数据简介"></a>用户行为数据简介</h2><p>用户行为数据在网站上最简单的存在形式就是<strong>日志</strong>，网站在运行过程中都产生大量原始日志（raw log）。</p>
+<p>很多互联网业务会把多种原始日志按照用户行为汇总成会话日志（session log），其中每个会话表示一次用户行为和对应的服务，比如，展示日志、点击日志等等。</p>
+<p>用户行为在个性化推荐系统中一般分两种——显性反馈行为（explicit feedback）和隐性反馈行为（implicit feedback）。</p>
+<ul>
+<li><p><strong>显性反馈行为</strong>包括用户明确表示对物品喜好的行为，主要方式就是评分和喜欢/不喜欢。</p>
+</li>
+<li><p><strong>隐性反馈行为</strong>指的是那些不能明确反应用户喜好的行为。最具代表性的隐性反馈行为就是页面浏览行为。相比显性反馈，隐性反馈虽然不明确，但数据量更大。</p>
+</li>
+</ul>
+<p>显示反馈数据和隐式反馈数据的比较：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th style="text-align:left"></th>
+<th style="text-align:left">显性反馈数据</th>
+<th>隐性反馈数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">用户兴趣</td>
+<td style="text-align:left">明确</td>
+<td>不明确</td>
+</tr>
+<tr>
+<td style="text-align:left">数量</td>
+<td style="text-align:left">较少</td>
+<td>庞大</td>
+</tr>
+<tr>
+<td style="text-align:left">存储</td>
+<td style="text-align:left">数据库</td>
+<td>分布式文件系统</td>
+</tr>
+<tr>
+<td style="text-align:left">实时读取</td>
+<td style="text-align:left">实时</td>
+<td>有延迟</td>
+</tr>
+<tr>
+<td style="text-align:left">正负反馈</td>
+<td style="text-align:left">都有</td>
+<td>只有正反馈</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>按照反馈的明确性分，用户行为数据可以分为<strong>显性反馈</strong>和<strong>隐性反馈</strong>，但按照反馈的方向分，又可以分为正反馈和负反馈。<strong>正反馈</strong>指用户的行为倾向于指用户喜欢该物品，而<strong>负反馈</strong>指用户的行为倾向于指用户不喜欢该物品。</p>
+<p>各代表网站中显性反馈数据和隐性反馈数据的例子</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>显性反馈</th>
+<th>隐性反馈</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>视频网站</td>
+<td>用户对视频的评分</td>
+<td>用户观看视频的日志、浏览视频页面的日志</td>
+</tr>
+<tr>
+<td>电子商务网站</td>
+<td>用户对商品的评分</td>
+<td>购买日志、浏览日志</td>
+</tr>
+<tr>
+<td>门户网站</td>
+<td>用户对新闻的评分</td>
+<td>阅读新闻的日志</td>
+</tr>
+<tr>
+<td>音乐网站</td>
+<td>用户对音乐/歌手/专辑的评分</td>
+<td>听歌的日志</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>用户行为的统一表示</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>表示</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user id</td>
+<td>产生行为的用户的唯一标识</td>
+</tr>
+<tr>
+<td>item id</td>
+<td>产生行为的对象的唯一标识</td>
+</tr>
+<tr>
+<td>behavior type</td>
+<td>行为的种类（比如是购买还是浏览）</td>
+</tr>
+<tr>
+<td>context</td>
+<td>产生行为的上下文，包括时间和地点等</td>
+</tr>
+<tr>
+<td>behavior weight</td>
+<td>行为的权重（如果是观看视频的行为，那么这个权重可以是观看时长；如果是打分行为，这个权重可以是分数）</td>
+</tr>
+<tr>
+<td>behavior content</td>
+<td>行为的内容（如果是评论行为，那么就是评论的文本；如果是打标签的行为，就是标签）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>产生行为的用户和行为的对象就是所有行为都<strong>必须包含</strong>的。</p>
+<p>一般来说，不同的数据集包含不同的行为，目前比较有代表性的数据集有下面几个。</p>
+<ul>
+<li><p><strong>无上下文信息的隐性反馈数据集</strong> 每一条行为记录仅仅包含用户ID和物品ID。</p>
+</li>
+<li><p><strong>无上下文信息的显性反馈数据集</strong> 每一条记录包含用户ID、物品ID和用户对物品的评分。</p>
+</li>
+<li><strong>有上下文信息的隐性反馈数据集</strong> 每一条记录包含用户ID、物品ID和用户对物品产生行为的时间戳。</li>
+<li><strong>有上下文信息的显性反馈数据集</strong> 每一条记录包含用户ID、物品ID、用户对物品的评分和评分行为的时间戳。</li>
+</ul>
+<p>本章使用的数据集都是第一种数据集。</p>
+<h2 id="用户行为分析"><a href="#用户行为分析" class="headerlink" title="用户行为分析"></a>用户行为分析</h2><h3 id="用户活跃度和物品流行度的分布"><a href="#用户活跃度和物品流行度的分布" class="headerlink" title="用户活跃度和物品流行度的分布"></a>用户活跃度和物品流行度的分布</h3><p>互联网上的很多数据分布都满足一种称为Power Law的分布，这个分布在互联网领域也称<strong>长尾分布</strong>。</p>
+<script type="math/tex; mode=display">
+f(x)=\alpha x^{k}</script><p>令 $f_{u}(k)$ 为对 $k$ 个物品产生过行为的用户数，令 $f_{i}(k)$ 为被 $k$ 个用户产生过行为的物品数。那么，$f_{u}(k)$ 和 $f_{i}(k)$ 都满足长尾分布。也就是说:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+&f_{i}(k)=\alpha_{i} k^{\beta_{i}} \\
+&f_{u}(k)=\alpha_{u} k^{\beta_{u}}
+\end{aligned}</script><p>下图展示了Delicious和 CiteULike数据集中物品流行度的分布曲线。横坐标是物品的流行度 $K$，纵坐标是流行度为 $K$ 的物品的总数。这里，物品的流行度指对物品产生过行为的用户总数。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507151720930.png" class title="图片">
+<p>下图展示了Delicious和 CiteULike数据集中用户活跃度的分布曲线。横坐标是用户的活跃度 $K$，纵坐标是活跃度为 $K$ 的用户总数。这里，用户的活跃度为用户产生过行为的物品总数。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507151807265.png" class title="图片">
+<h3 id="用户活跃度和物品流行度的关系"><a href="#用户活跃度和物品流行度的关系" class="headerlink" title="用户活跃度和物品流行度的关系"></a>用户活跃度和物品流行度的关系</h3><p>一般认为，新用户倾向于浏览热门的物品，因为他们对网站还不熟悉，只能点击首页的热门物品，而老用户会逐渐开始浏览冷门的物品。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507151934438.png" class title="图片">
+<p>仅仅基于用户行为数据设计的推荐算法一般称为<strong>协同过滤算法</strong>。学术界对协同过滤算法进行了深入研究，提出了很多方法。比如<em>基于邻域的方法</em>（neighborhood-based）、<em>隐语义模型</em>（latent factor model），<em>基于图的随机游走算法</em>（random walk on graph）等。</p>
+<p>在这些方法中，最著名的、在业界得到最广泛应用的算法是基于邻域的方法，而基于邻域的方法主要包含下面两种算法。</p>
+<ul>
+<li><strong>基于用户的协同过滤算法</strong> 这种算法给用户推荐和他兴趣相似的其他用户喜欢的物品。</li>
+<li><strong>基于物品的协同过滤算法</strong> 这种算法给用户推荐和他之前喜欢的物品相似的物品。</li>
+</ul>
+<h2 id="实验设计和算法评测"><a href="#实验设计和算法评测" class="headerlink" title="实验设计和算法评测"></a>实验设计和算法评测</h2><h3 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h3><p>本章采用GroupLens提供的<a target="_blank" rel="noopener" href="http://www.grouplens.org/node/73">MovieLens数据集</a>，且着重研究隐反馈数据集中的TopN推荐问题，因此忽略了数据集中的评分记录。</p>
+<h3 id="实验设计"><a href="#实验设计" class="headerlink" title="实验设计"></a>实验设计</h3><p>协同过滤算法的离线实验一般如下设计。</p>
+<ol>
+<li>将用户行为数据集按照均匀分布随机分成M 份（本章取M=8），挑选一份作为测试集，将剩下的M-1份作为训练集。</li>
+<li>在训练集上建立用户兴趣模型，并在测试集上对用户行为进行预测，统计出相应的评测指标。为了保证评测指标并不是过拟合的结果，需要进行M次实验，并且每次都使用不同的测试集。</li>
+<li>然后将M次实验测出的评测指标的平均值作为最终的评测指标。</li>
+</ol>
+<p>下面的Python代码描述了将数据集随机分成训练集和测试集的过程∶</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">def SplitData(data,M,k,seed):</span><br><span class="line">	test=[]</span><br><span class="line">	train = []</span><br><span class="line">	random.seed(seed)</span><br><span class="line">	for user, item in data:</span><br><span class="line">		if random.randint (0,M) == k:</span><br><span class="line">		test.append([user, item])</span><br><span class="line">    	else:</span><br><span class="line">		train.append([user,item])</span><br><span class="line">	return train, test</span><br></pre></td></tr></table></figure>
+<p>这里，每次实验选取不同的<em>k</em> (<em>0≤k≤M-1</em> ) 和相同的随机数种子seed，进行<em>M</em>次实验就可以得到<em>M</em>个不同的训练集和测试集，然后分别进行实验。用<em>M</em>次实验的平均值作为最后的评测指标。这样做主要是防止某次实验的结果是过拟合的结果 (over fitting)，但如果数据集够大，模型够简单，为了快速通过离线实验初步地选择算法，也可以只进行一次实验。</p>
+<h3 id="评测指标"><a href="#评测指标" class="headerlink" title="评测指标"></a>评测指标</h3><p>对用户 $u$ 推荐 $N$ 个物品（ 记为 $R(u)$ )，令用户 $u$ 在测试集上喜欢的物品集合为 $T(u)$，然后可以通过<strong>召回率</strong>/<strong>准确率</strong>评测推荐算法的精度：</p>
+<script type="math/tex; mode=display">
+\text { Recall }=\frac{\sum\limits_{u}|R(u) \cap T(u)|}{\sum\limits_{u}|T(u)|}</script><script type="math/tex; mode=display">
+\text { Precision }=\frac{\sum\limits_{u}|R(u) \cap T(u)|}{\sum\limits_{u}|R(u)|}</script><p>召回率描述有多少比例的用户一物品评分记录包含在最终的推荐列表中。</p>
+<p>准确率描述最终的推荐列表中有多少比例是发生过的用户–物品评分记录。</p>
+<p>下面两段代码体现了召回率和准确率的计算方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def Recall(train, test, N):</span><br><span class="line">	hit = 0</span><br><span class="line">	all = 0</span><br><span class="line">	for user in train.keys():</span><br><span class="line">		tu = test[user]</span><br><span class="line">		rank = GetRecommendation(user, N)</span><br><span class="line">		for item, pui in rank:</span><br><span class="line">			if item in tu:</span><br><span class="line">				hit += 1</span><br><span class="line">		all += len (tu)</span><br><span class="line">	return hit / (all * 1.0)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def Precision(train, test, N):</span><br><span class="line">	hit = 0</span><br><span class="line">	all = 0</span><br><span class="line">	for user in train.keys():</span><br><span class="line">		tu = test[user]</span><br><span class="line">		rank = GetRecommendation(user, N)</span><br><span class="line">		for item, pui in rank:</span><br><span class="line">			if item in tu:</span><br><span class="line">				hit += 1</span><br><span class="line">		all += N</span><br><span class="line">	return hit / (all * 1.0)</span><br></pre></td></tr></table></figure>
+<p>然后，本章还计算了算法的覆盖率，<strong>覆盖率</strong>反映了推荐算法发掘长尾的能力，覆盖率越高，说明推荐算法越能够将长尾中的物品推荐给用户。这里，我们采用最简单的覆盖率定义:</p>
+<script type="math/tex; mode=display">
+\text { Coverage }=\frac{\left|\bigcup_{ u\in U } R(u)\right|}{|I|}</script><p>该覆盖率表示最终的推荐列表中包含多大比例的物品。如果所有的物品都被推荐给至少一个用户，那么覆盖率就是 $100 \%$ 。</p>
+<p>如下代码可以用来计算推荐算法的覆盖率：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">def Coverage (train, test, N):</span><br><span class="line">	recommend_items = set()</span><br><span class="line">	all items = set()</span><br><span class="line">	for user in train.keys():</span><br><span class="line">		for item in train[user].keys():</span><br><span class="line">			all_items.add(item)</span><br><span class="line">		rank = GetRecommendation(user, N)</span><br><span class="line">		for item, pui in rank:</span><br><span class="line">			recommend_items.add(item)</span><br><span class="line">	return len(recomend_items) / (len(all_items) * 1.0)</span><br></pre></td></tr></table></figure>
+<p>最后，我们还需要评测推荐的新颖度，这里用推荐列表中物品的平均流行度度量推荐结果的<strong>新颖度</strong>。如果推荐出的物品都很热门，说明推荐的新颖度较低，否则说明推荐结果比较新颖。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">def Popularity(train, test, N):</span><br><span class="line">	item_popularity = dict()</span><br><span class="line">	for user, items in train.items ():</span><br><span class="line">		for item in items.keys():</span><br><span class="line">			if item not in item_popularity:</span><br><span class="line">				item_popularity[item] = 0</span><br><span class="line">            item_popularity[item] += 1</span><br><span class="line">	ret = 0</span><br><span class="line">	n =0</span><br><span class="line">	for user in train.keys():</span><br><span class="line">		rank = GetRecommendation (user, N)</span><br><span class="line">		for item, pui in rank:</span><br><span class="line">			ret += math.log(1 + item_popularity[item])</span><br><span class="line">			n += 1</span><br><span class="line">	ret /= n * 1.0</span><br><span class="line">	return ret</span><br></pre></td></tr></table></figure>
+<p>这里，在计算平均流行度时对每个物品的流行度<strong>取对数</strong>，这是因为物品的流行度分布满足长尾分布，在取对数后，流行度的平均值更加稳定。</p>
+<h2 id="基于邻域的方法"><a href="#基于邻域的方法" class="headerlink" title="基于邻域的方法"></a>基于邻域的方法</h2><h3 id="基于用户的协同过滤算法"><a href="#基于用户的协同过滤算法" class="headerlink" title="基于用户的协同过滤算法"></a>基于用户的协同过滤算法</h3><h4 id="基础算法"><a href="#基础算法" class="headerlink" title="基础算法"></a>基础算法</h4><p>在一个在线个性化推荐系统中，当一个用户A需要个性化推荐时，可以先找到和他有相似兴趣的其他用户，然后把那些用户喜欢的、而用户A没有听说过的物品推荐给A。这种方法称为<strong>基于用户的协同过滤算法</strong>。</p>
+<p>基于用户的协同过滤算法主要包括两个步骤。</p>
+<ol>
+<li><p>找到和目标用户兴趣相似的用户集合。</p>
+</li>
+<li><p>找到这个集合中的用户喜欢的，且目标用户没有听说过的物品推荐给目标用户。</p>
+</li>
+</ol>
+<p>步骤1的关键就是计算两个用户的兴趣相似度。这里，协同过滤算法主要利用行为的相似度计算兴趣的相似度。给定用户 $\mathrm{u}$ 和用户v，令 $N(u)$ 表示用户曾经有过正反馈的物品集合，令 $N(v)$ 为用户v曾经有过正反馈的物品集合。那么，我们可以通过如下的<strong>Jaccard公式</strong>简单地计算 $\mathrm{u}$ 和 $\mathrm{v}$ 的 兴趣相似度：</p>
+<script type="math/tex; mode=display">
+w_{u v}=\frac{|N(u) \cap N(v)|}{|N(u) \bigcup N(v)|}</script><p>或者通过<strong>余弦相似度计算</strong>:</p>
+<script type="math/tex; mode=display">
+w_{u v}=\frac{|N(u) \cap N(v)|}{\sqrt{|N(u)||N(v)|}}</script><p>下面以图2-6中的用户行为记录为例, 举例说明UserCF计算用户兴趣相似度的例子。在该例中，用户 $\mathrm{A}$ 对物品 $\{a, b, d\}$ 有过行为，用户B对物品 $\{a, c\}$ 有过行为, 利用余弦相似度公式计算用户 $\mathrm{A}$ 和用户B的兴趣相似度为:</p>
+<script type="math/tex; mode=display">
+w_{A B}=\frac{|\{a, b, d\} \cap\{a, c\}|}{\sqrt{|\{a, b, d\}||\{a, c\}|}}=\frac{1}{\sqrt{6}}</script><img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507171030196.png" class title="图片">
+<p>以余弦相似度为例，实现该相似度可以利用如下的伪码∶</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">def UserSimilarity(train):</span><br><span class="line">	W = dict()</span><br><span class="line">	for u in train.keys():</span><br><span class="line">		for v in train.keys():</span><br><span class="line">			if u == v:</span><br><span class="line">				continue</span><br><span class="line">			W[u][v] = len(train[u] &amp; train[v])</span><br><span class="line">			W[u][v] /= math.sqrt(len(train[u]) * len(train[v]) * 1.0)</span><br><span class="line">	return W</span><br></pre></td></tr></table></figure>
+<p>该代码对两两用户都利用余弦相似度计算相似度。这种方法的时间复杂度是 $\mathrm{O}(|\mathrm{U}| *|\mathrm{U}|)$</p>
+<p>事实上，很多用户相互之间并没有对同样的物品产生过行为，即很多时候 $|N(u) \cap N(v)|=0$ 。如果换一 个思路, 我们可以首先计算出 $|N(u) \cap N(v)| \neq 0$ 的用户对 $(u, v)$，然后再对这种情况除以分母 $\sqrt{|N(u)||N(v)|}$ 。<br>为此, 可以首先建立物品到用户的倒排表, 对于每个物品都保存对该物品产生过行为的用户列表。令稀疏矩阵 $C[u][v]=|N(u) \cap N(v)|$ 。那么, 假设用户 $\mathrm{u}$ 和用户 $\mathrm{v}$ 同时属于倒排表中 $K$ 个物品对应的用户列表, 就有 $C[u][v]=K$ 。从而, 可以扫描倒排表中每个物品对应的用户列表, 将用户列表中的两两用户对应的 $C[u][v]$ 加 1 , 最终就可以得到所有用户之间不为 0 的 $C[u][v]$ 。面的代码实现了上面提到的算法:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">def UserSimilarity(train):</span><br><span class="line">	# build inverse table for item_users</span><br><span class="line">	item_users = dict ()</span><br><span class="line">	for u, items in train.items():</span><br><span class="line">		for i in items.keys():</span><br><span class="line">			if i not in item_users:</span><br><span class="line">				item_users[i] = set()</span><br><span class="line">			item_users[i].add(u)</span><br><span class="line">			</span><br><span class="line">	# calculate co-rated items between users</span><br><span class="line">	C= dict()</span><br><span class="line">	N= dict()</span><br><span class="line">	for i, users in item_users.items():</span><br><span class="line">		for u in users:</span><br><span class="line">			N[u] += 1</span><br><span class="line">			for v in users:</span><br><span class="line">				if u == V:</span><br><span class="line">					continue</span><br><span class="line">				C[u][v] += 1</span><br><span class="line"></span><br><span class="line">	# calculate finial similarity matrix W</span><br><span class="line">	W= dict()</span><br><span class="line">	for u, related_users in C.items():</span><br><span class="line">		for v, cuv in related users.items():</span><br><span class="line">			W[u][v] = cuv / math.sqrt(N[u] * N[v])</span><br><span class="line">	return W</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507171750930.png" class title="图片">
+<p>得到用户之间的兴趣相似度后，UserCF算法会给用户推荐和他兴趣最相似的 $K$ 个用户喜欢的物品。如下的公式度量了<strong>UserCF算法</strong>中用户u对物品 $i$ 的感兴趣程度:</p>
+<script type="math/tex; mode=display">
+p(u, i)=\sum_{v \in S(u, K) \cap N(i)} w_{u v} r_{v i}</script><p>其中，$S(u, K)$ 包含和用户 $\mathrm{u}$ 兴趣最接近的 $K$ 个用户， $N(i)$ 是对物品 $i$ 有过行为的用户集合，$w_{u v}$ 是用户 $\mathrm{u}$ 和用户v的兴趣相似度，$r_{v i}$ 代表用户v对物品 $\mathrm{i}$ 的兴趣，因为使用的是单一行为的隐反馈数据，所以所有的 $r_{v}=1$ 。<br>如下代码实现了上面的UserCF推荐算法:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">def Recommend(user,train,W):</span><br><span class="line">	rank = dict()</span><br><span class="line">	interacted_items = train[user]</span><br><span class="line">	for v, wuv in sorted(W[u].items,key=itemgetter(1),\</span><br><span class="line">		reverse=True)[0:K]:</span><br><span class="line">		for i, rvi in train[v].items():</span><br><span class="line">			if i in interacted_items:</span><br><span class="line">				# we should filter items user interacted before continue</span><br><span class="line">			rank(i] += wuv * rvi</span><br><span class="line">	return rank</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507172556581.png" class title="图片">
+<p>为了反映该数据集上离线算法的基本性能，下表给出了两种基本推荐算法的性能。表中，Random算法每次都随机挑选10个用户没有产生过行为的物品推荐给当前用户，MostPopular算法则按照物品的流行度给用户推荐他没有产生过行为的物品中最热门的 10 个物品。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507172621188.png" class title="图片">
+<p>如上图所示，MostPopular算法的准确率和召回率远远高于Random算法，但它的覆盖率非常低，结果都非常热门。可见，Random算法的准确率和召回率很低，但覆盖度很高，结果平均流行度很低。</p>
+<ul>
+<li><strong>准确率和召回率</strong> 可以看到，<strong>推荐系统的精度指标（准确率和召回率）并不和参数K成线性关系</strong>。在MovieLens数据集中，选择K=80左右会获得比较高的准确率和召回率。因此选择合适的K对于获得高的推荐系统精度比较重要。当然，推荐结果的精度对K也不是特别敏感，只要选在一定的区域内，就可以获得不错的精度。</li>
+<li><p><strong>流行度</strong> 可以看到，在3个数据集上<strong>K越大则UserCF推荐结果就越热门</strong>。这是因为K决定了UserCF在给你做推荐时参考多少和你兴趣相似的其他用户的兴趣，那么如果K越大，参考的人越多，结果就越来越趋近于全局热门的物品。</p>
+</li>
+<li><p><strong>覆盖率</strong> 可以看到，在3个数据集上，<strong>K越大则UserCF推荐结果的覆盖率越低</strong>。覆盖率的降低是因为流行度的增加，随着流行度增加，UserCF越来越倾向于推荐热门的物品，从而对长尾物品的推荐越来越少，因此造成了覆盖率的降低。</p>
+</li>
+</ul>
+<h4 id="用户相似度计算的改进"><a href="#用户相似度计算的改进" class="headerlink" title="用户相似度计算的改进"></a>用户相似度计算的改进</h4><p>两个用户对冷门物品采取过同样的行为更能说明他们兴趣的相似度。因此可以根据用户行为计算用户的兴趣相似度:</p>
+<script type="math/tex; mode=display">
+w_{t v}=\frac{\sum_{i \in N(u) \cap N(v)} \frac{1}{\log (1+|N(i)|)}}{\sqrt{|N(u)||N(v)|}}</script><p>该公式通过 $\frac{1}{\log (1+|N(i)|)}$ 惩罚了用户 $u$ 和用户 $v$ 共同兴趣列表中热门物品对他们相似度的影响。<br>本书将基于上述用户相似度公式的UserCF算法记为<strong>User-IIF算法</strong>。下面的代码实现了上述用 户相似度公式。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">def UserSimilarity(train):</span><br><span class="line">	# build inverse table for item_users</span><br><span class="line">	item_users = dict ()</span><br><span class="line">	for u, items in train.items():</span><br><span class="line">		for i in items.keys():</span><br><span class="line">			if i not in item_users:</span><br><span class="line">				item_users[i] = set()</span><br><span class="line">			item_users[i].add(u)</span><br><span class="line">			</span><br><span class="line">	# calculate co-rated items between users</span><br><span class="line">	C= dict()</span><br><span class="line">	N= dict()</span><br><span class="line">	for i, users in item_users.items():</span><br><span class="line">		for u in users:</span><br><span class="line">			N[u] += 1</span><br><span class="line">			for v in users:</span><br><span class="line">				if u == V:</span><br><span class="line">					continue</span><br><span class="line">				C[u][v] += 1 / math.log(1 + len(users[i]))</span><br><span class="line"></span><br><span class="line">	# calculate finial similarity matrix W</span><br><span class="line">	W = dict()</span><br><span class="line">	for u, related_users in C.items():</span><br><span class="line">		for v, cuv in related users.items():</span><br><span class="line">			W[u][v] = cuv / math.sqrt(N[u] * N[v])</span><br><span class="line">	return W</span><br></pre></td></tr></table></figure>
+<p>在上一节的实验中，K=80时UserCF的性能最好，因此这里的实验同样选取K=80。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507173449949.png" class title="图片">
+<h3 id="基于物品的协同过滤算法"><a href="#基于物品的协同过滤算法" class="headerlink" title="基于物品的协同过滤算法"></a>基于物品的协同过滤算法</h3><h4 id="基础算法-1"><a href="#基础算法-1" class="headerlink" title="基础算法"></a>基础算法</h4><p>基于用户的协同过滤算法在一些网站（ 如Digg，一个新闻推荐网站 ）中得到了应用，但该算法有一些<strong>缺点</strong>。首先，随着网站的用户数目越来越大，计算用户兴趣相似度矩阵将越来越困难，其运算时间复杂度和空间复杂度的增长和用户数的增长近似于平方关系。其次，基于用户的协同过滤很难对推荐结果作出解释。</p>
+<p>基于物品的协同过滤算法（ 简称ItemCF ）给用户推荐那些和他们之前喜欢的物品相似的物品。该算法<strong>假设</strong>，物品A和物品B具有很大的相似度是因为喜欢物品A的用户大都也喜欢物品B。</p>
+<p>基于物品的协同过滤算法主要分为两步。</p>
+<ol>
+<li><p>计算物品之间的相似度。</p>
+</li>
+<li><p>根据物品的相似度和用户的历史行为给用户生成推荐列表。</p>
+</li>
+</ol>
+<p>从这句话的定义出发, 我们可以用下面的公式定义<strong>物品的相似度</strong>：</p>
+<script type="math/tex; mode=display">
+w_{i j}=\frac{|N(i) \cap N(j)|}{|N(i)|}</script><p>这里，分母 $|N(i)|$ 是喜欢物品 $i$ 的用户数，而分子 $|N(i) \cap N(j)|$ 是同时喜欢物品 $\mathrm{i}$ 和物品 $\mathrm{j}$ 的用户数。因此，上述公式可以理解为喜欢物品 $\mathrm{i}$  的用户中有多少比例的用户也喜欢物品 $\mathrm{j}$。<br>为了避免推荐出热门的物品, 可以用下面的公式：</p>
+<script type="math/tex; mode=display">
+w_{i j}=\frac{|N(i) \cap N(j)|}{\sqrt{|N(i)||N(j)|}}</script><p>这个公式惩罚了物品 $\mathrm{j}$ 的权重，因此减轻了热门物品会和很多物品相似的可能性。</p>
+<p>用<strong>ItemCF算法</strong>计算物品相似度时也可以首先建立用户-物品倒排表 ( 即对每个用户津立一个包含他喜欢的物品的列表 )，然后对于每个用户，将他物品列表中的物品两两在共现矩阵C中加1。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">def Itemsimilarity(train):</span><br><span class="line">	# calculate co-rated users between items</span><br><span class="line">	C = dict()</span><br><span class="line">	N = dict()</span><br><span class="line">	for u, items in train.items():</span><br><span class="line">		for i in users:</span><br><span class="line">			N[i] += 1</span><br><span class="line">			for j in users:</span><br><span class="line">				if i == j:</span><br><span class="line">					continue</span><br><span class="line">                c[i][j] += 1</span><br><span class="line"></span><br><span class="line">	# calculate finial similarity matrix w</span><br><span class="line">	W = dict()</span><br><span class="line">	for i, related_items in C.items();</span><br><span class="line">		for j, cij in related_items.items():</span><br><span class="line">			W[i][j] = cij / math.sqrt(N[i] * N[j])</span><br><span class="line">	return W</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507174741264.png" class title="图片">
+<p>在得到物品之间的相似度后，ItemCF通过如下公式计算<strong>用户u对一个物品j的兴趣</strong>：</p>
+<script type="math/tex; mode=display">
+p_{u j}=\sum_{i \in N(t) \cap S(j, K)} w_{j i} r_{u t}</script><p>这里 $N(u)$ 是用户喜欢的物品的集合，$S(j, K)$ 是和物品 $j$ 最相似的 $K$ 个物品的集合，$w_{j j}$ 是物品 $\mathrm{j}$ 和 $\mathrm{i}$ 的相似度， $r_{u i}$ 是用户 $\mathrm{u}$ 对物品的兴趣。( 对于隐反饸数据集, 如果用户u对物品i有过行为，即可令 $r_{u l}=1$ ) 该公式的含义是，和用户历史上感兴趣的物品越相似的物品，越有可能在用户的推荐列表中获得比较高的排名。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">def Recommendation(train, user_id, W, K):</span><br><span class="line">	rank = dict ()</span><br><span class="line">	ru = train[user_id]</span><br><span class="line">	for i, pi in ru.items():</span><br><span class="line">		for j, wj in sorted(W[i].items(), /</span><br><span class="line">						key=itemgetter(1), reverse=True)[0:K]:</span><br><span class="line">			if j in ru:</span><br><span class="line">				continue</span><br><span class="line">			rank[j] += pi * wj</span><br><span class="line">	return rank</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507175356801.png" class title="图片">
+<p>从这个例子可以看到，ItemCF的一个优势就是可以提供推荐解释，即利用用户历史上喜欢的物品为现在的推荐结果进行解释。如下代码实现了<strong>带解释的ItemCF算法</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def Recommendation(train, user_id, W, K):</span><br><span class="line">	rank= dict()</span><br><span class="line">	ru = train[user_id]</span><br><span class="line">	for i, pi in ru.items():</span><br><span class="line">		for j, wj in sorted(W[i].items(), /</span><br><span class="line">						key=itemgetter(1), reverse=True)[0:K]:</span><br><span class="line">			if j in ru:</span><br><span class="line">				continue</span><br><span class="line">			rank[j].weight += pi * wj</span><br><span class="line">			rank[j].reason[i] = pi * wj</span><br><span class="line">	return rank</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507175645874.png" class title="图片">
+<p>上图中列出了在MovieLens数据集上ItemCF算法离线实验的各项性能指标的评测结果。该表包括算法在不同K值下的性能。</p>
+<ul>
+<li><p><strong>精度（准确率和召回率）</strong> 可以看到<strong>ItemCF推荐结果的精度也是不和K成正相关或者负相关的</strong>，因此选择合适的K对获得最高精度是非常重要的。</p>
+</li>
+<li><p><strong>流行度</strong> 和UserCF不同，<strong>参数K对ItemCF推荐结果流行度的影响也不是完全正相关的</strong>。随着K的增加，结果流行度会逐渐提高，但当K增加到一定程度，流行度就不会再有明显变化。</p>
+</li>
+<li><p><strong>覆盖率</strong> <strong>K增加会降低系统的覆盖率</strong>。</p>
+</li>
+</ul>
+<h4 id="用户活跃度对物品相似度的影响"><a href="#用户活跃度对物品相似度的影响" class="headerlink" title="用户活跃度对物品相似度的影响"></a>用户活跃度对物品相似度的影响</h4><p>John S. Breese在论文中提出了一个称为<strong>IUF</strong> ( Inverse User Frequence ), 即用户活跃度对数的倒数的参数, 他也认为活跃用户对物品相似度的贡献应该小于不活跃的用户, 他提出应该增加IUF参数来修正物品相似度的计算公式:</p>
+<script type="math/tex; mode=display">
+w_{i j}=\frac{\sum_{u \in N(i) \cap N(j)} \frac{1}{\log (1+|N(u)|)}}{\sqrt{|N(i)||N(j)|}}</script><p>当然，上面的公式只是对活跃用户做了一种软性的惩罚，但对于很多过于活跃的用户，为了避免相似度矩阵过于调密，我们在实际计算中一般直接忽略他的兴趣列表，而不将其纳入到相似度计算数据集中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">def Itemsimilarity(train):</span><br><span class="line">	# calculate co-rated users between items</span><br><span class="line">	C = dict()</span><br><span class="line">	N = dict()</span><br><span class="line">	for u, items in train.items():</span><br><span class="line">		for i in users:</span><br><span class="line">			N[i] += 1</span><br><span class="line">			for j in users:</span><br><span class="line">				if i == j:</span><br><span class="line">					continue</span><br><span class="line">                c[i][j] += 1 / math.log(1 + len(items) * 1.0)</span><br><span class="line"></span><br><span class="line">	# calculate finial similarity matrix w</span><br><span class="line">	W = dict()</span><br><span class="line">	for i, related_items in C.items();</span><br><span class="line">		for j, cij in related_items.items():</span><br><span class="line">			W[i][j] = cij / math.sqrt(N[i] * N[j])</span><br><span class="line">	return W</span><br></pre></td></tr></table></figure>
+<p>本书将上面的算法记为<strong>ItemCF-IUF</strong>，下面我们用离线实验评测这个算法。在这里我们不再考虑参数K的影响，而是将K选为在前面实验中取得最优准确率和召回率的值10。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507183642549.png" class title="图片">
+<h4 id="物品相似度的归一化"><a href="#物品相似度的归一化" class="headerlink" title="物品相似度的归一化"></a>物品相似度的归一化</h4><p>研究表明, 如果已经得到了物品相似度矩阵 $w$, 那么可以用如下公式得到归一化之后的相似度矩阵 $w^{\prime}$ ，提高推荐的准确率:</p>
+<script type="math/tex; mode=display">
+w_{i j}^{\prime}=\frac{w_{i j}}{\max _{j} w_{i j}}</script><p>其实，归一化的好处不仅仅在于增加推荐的准确度，它还可以提高推荐的覆盖率和多样性。 一般来说，物品总是属于很多不同的类，每一类中的物品联系比较紧密。而热门的类其类内物品相似度一般比较大。如果不进行归一化，就会推荐比较热门的类里面的物品，而这些物品也是比较热门的。因此，推荐的覆盖率就比较低。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507183922505.png" class title="图片">
+<h3 id="UserCF-和-ItemCF-的综合比较"><a href="#UserCF-和-ItemCF-的综合比较" class="headerlink" title="UserCF 和 ItemCF 的综合比较"></a>UserCF 和 ItemCF 的综合比较</h3><p>UserCF和Item优缺点的对比</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>UserCF</th>
+<th>ItemCF</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>性能</td>
+<td>适用于用户较少的场合，如果用户很多，计算用户相似度矩阵代价很大</td>
+<td>适用于物品数明显小于用户数的场合，如果物品很多（网页），计算物品相似度矩阵代价很大</td>
+</tr>
+<tr>
+<td>领域</td>
+<td>时效性较强，用户个性化兴趣不太明显的领域</td>
+<td>长尾物品丰富，用户个性化需求强烈的领域</td>
+</tr>
+<tr>
+<td>实时性</td>
+<td>用户有新行为，不一定造成推荐结果的立即变化</td>
+<td>用户有新行为，一定会导致推荐结果的实时变化</td>
+</tr>
+<tr>
+<td>冷启动</td>
+<td>在新用户对很少的物品产生行为后，不能立即对他进行个性化推荐，因为用户相似度表是每隔一段时间离线计算的；新物品上线后一段时间，一旦有用户对物品产生行为，就可以将新物品推荐给和对它产生行为的用户兴趣相似的其他用户</td>
+<td>新用户只要对一个物品产生行为，就可以给他荐和该物品相关的其他物品；但没有办法在不离线更新物品相似度表的情况下将物品推荐给用户</td>
+</tr>
+<tr>
+<td>推荐理由</td>
+<td>很难提供令用户信服的推荐解释</td>
+<td>利用用户的历史行为给用户做推荐解释，可以令用户比较信服</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h4 id="哈利波特问题"><a href="#哈利波特问题" class="headerlink" title="哈利波特问题"></a>哈利波特问题</h4><p>回顾一下ItemCF计算物品相似度的经典公式:</p>
+<script type="math/tex; mode=display">
+w_{i j}=\frac{|N(i) \cap N(j)|}{\sqrt{|N(i)||N(j)|}}</script><p>前面说过，如果 $\mathrm{j}$ 非常热门，那么上面公式的分子 $|N(i) \cap N(j)|$ 就会越来越接近 $|N(i)|$ 。尽管上面的公式分母已经考虑到了 $\mathrm{j}$ 的流行度，但在实际应用中，热门的 $\mathrm{j}$ 仍然会获得比较大的相 似度。<br>哈利波特问题有几种解决方案。<br>第一种是最容易想到的，我们可以<strong>在分母上加大对热门物品的惩罚</strong>，比如采用如下公式:</p>
+<script type="math/tex; mode=display">
+w_{i j}=\frac{|N(i) \cap N(j)|^{\mid}}{|N(i)|^{1-\alpha}|N(j)|^{\alpha}}</script><p>其中 $\alpha \in[0.5,1]$ 。通过提高 $\alpha$，就可以惩罚热门的 $j$ 。<br>从下表，如果看覆盖率和平均流行度就可以发现，$\alpha$ 越大，覆盖率就越高，并且结果的平均热门程度会降低。因此, 通过这种方法可以在适当牺牲准确率和召回率的情况下显著提升结果的覆盖率和新颖性(降低流行度即提高了新颖性)。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220507185029433.png" class title="图片">
+<p>由于，两个不同领域的最热门物品之间往往具有比较高的相似度。这个时候，仅仅靠用户行为数据是不能解决这个问题的，因为用户的行为表示这种物品之间应该相似度很高。此时，我们只能依靠引入物品的内容数据解决这个问题，比如对不同领域的物品降低权重等。</p>
+<h2 id="隐语义模型"><a href="#隐语义模型" class="headerlink" title="隐语义模型"></a>隐语义模型</h2><h3 id="基础算法-2"><a href="#基础算法-2" class="headerlink" title="基础算法"></a>基础算法</h3><p>隐语义模型的核心思想是通过隐含特征 (latent factor) 联系用户兴趣和物品。</p>
+<p>对书和物品的兴趣进行分类，对于某个用户，首先得到他的兴趣分类，然后从分类中挑选他可能喜欢的物品。</p>
+<p>总结一下，这个基于兴趣分类的方法大概<strong>需要解决3个问题</strong>。</p>
+<ul>
+<li><p>如何给物品进行分类?</p>
+</li>
+<li><p>如何确定用户对哪些类的物品感兴趣，以及感兴趣的程度?</p>
+</li>
+<li><p>对于一个给定的类，选择哪些属于这个类的物品推荐给用户，以及如何确定这些物品在一个类中的权重?</p>
+</li>
+</ul>
+<p>隐含语义分析技术因为采取基于用户行为统计的自动聚类，较好地解决了编辑分类遇到的5个间题。</p>
+<ul>
+<li>编辑的意见不能代表各种用户的意见，但隐含语义分析技术的分类来自对用户行为的统计，代表了用户对物品分类的看法。隐含语义分析技术和ItemCF在物品分类方面的思想类似，如果两个物品被很多用户同时喜欢，那么这两个物品就很有可能属于同一个类。</li>
+<li><p>编辑很难控制分类的粒度，但隐含语义分析技术允许我们指定最终有多少个分类，这个数字越大，分类的粒度就会越细，反之分类粒度就越粗。</p>
+</li>
+<li><p>编辑很难给一个物品多个分类，但隐含语义分析技术会计算出物品属于每个类的权重，因此每个物品都不是硬性地被分到某一个类中。</p>
+</li>
+<li><p>编辑很难给出多维度的分类，但隐含语义分析技术给出的每个分类都不是同一个维度的，它是基于用户的共同兴趣计算出来的，如果用户的共同兴趣是某一个维度，那么LFM给出的类也是相同的维度。</p>
+</li>
+<li><p>编辑很难决定一个物品在某一个分类中的权重，但隐含语义分析技术可以通过统计用户行为决定物品在每个类中的权重，如果喜欢某个类的用户都会喜欢某个物品，那么这个物品在这个类中的权重就可能比较高。</p>
+</li>
+</ul>
+<p>本章将以LFM为例介绍隐含语义分析技术在推荐系统中的应用。</p>
+<p>LFM通过如下公式计算<strong>用户u对物品i的兴趣</strong>:</p>
+<script type="math/tex; mode=display">
+\operatorname{Preference}(u, i)=r_{u i}=p_{u}^{T} q_{i}=\sum_{f=1}^{F} p_{u, k} q_{i, k}</script><p>这个公式中 $p_{u, k}$ 和 $q_{i, k}$ 是模型的参数，其中 $p_{u, k}$ 度量了用户u的兴趣和第 $k$ 个隐类的关系，而 $q_{i, k}$ 度量了第 $k$ 个隐类和物品 $\mathrm{i}$ 之间的关系。<br>要计算这两个参数，需要一个训练集，对于每个用户u，训练集里都包含了用户 $\mathrm{u}$​ 喜欢的物品和不感兴趣的物品，通过学习这个数据集，就可以获得上面的模型参数。</p>
+<p>在隐性反馈数据集上应用LFM解决TopN推荐的第一个关键问题就是如何给每个用户生成负样本（用户对什么物品不感兴趣）。</p>
+<p>我们发现<strong>对负样本采样时应该遵循以下原则</strong>。</p>
+<ul>
+<li><p>对每个用户，要保证正负样本的平衡（数目相似）。</p>
+</li>
+<li><p>对每个用户采样负样本时，要选取那些很热门，而用户却没有行为的物品。</p>
+</li>
+</ul>
+<p>一般认为，很热门而用户却没有行为更加代表用户对这个物品不感兴趣。因为对于冷门的物品，用户可能压根没在网站中发现这个物品，所以谈不上是否感兴趣。</p>
+<p>下面的Python代码实现了负样本采样过程∶</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">det RandomSelectNegativeSample(self, items):</span><br><span class="line">	ret = dict()</span><br><span class="line">	for i in items.keys():</span><br><span class="line">		ret[i] = 1</span><br><span class="line">    n = 0</span><br><span class="line">    for i in range(0, len(items) * 3):</span><br><span class="line">    	item = items_pool[random.randint(0, len(items_pool) - 1)]</span><br><span class="line">    	if item in ret:</span><br><span class="line">    		continue</span><br><span class="line">    	ret[item] = 0</span><br><span class="line">    	n += 1</span><br><span class="line">    	if n &gt; len(items):</span><br><span class="line">    		break</span><br><span class="line">    return ret</span><br></pre></td></tr></table></figure>
+<p>在上面的代码中，items_pool维护了候选物品的列表，在这个列表中，物品i出现的次数和物品i的流行度成正比。items是一个dict，它维护了用户已经有过行为的物品的集合。</p>
+<p>上面的代码按照物品的流行度采样出了那些热门的、但用户却没有过行为的物品。经过采样，可以得到一个用户-物品集 $K=\{(u, i)\}$，其中如果 $(u, i)$ 是正样本，则有 $r_{u t}=1$，否则有 $r_{u d}=0$ 。然后，需要优化如下的<strong>损失函数</strong>来找到最合适的参数 $p$ 和 $q$ :</p>
+<script type="math/tex; mode=display">
+C=\sum_{(u, i) \in K}\left(r_{u i}-\hat{r}_{u i}\right)^{2}=\sum_{(u, i) \in K}\left(r_{u i}-\sum_{k=1}^{K} p_{u, k} q_{i, k}\right)^{2}+\lambda\left\|p_{u}\right\|^{2}+\lambda\left\|q_{i}\right\|^{2}</script><p>这里，$\lambda\left|p_{u}\right|^{2}+\lambda\left|q_{i}\right|^{2}$ 是用来防止过拟合的正则化项，$\lambda$ 可以通过实验获得。<br>上面定义的损失函数里有两组参数 $p_{u k}$ 和 $q_{i k}$，首先对它们分别求偏导数, 可以得到：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+&\frac{\partial C}{\partial p_{u k}}=-2 q_{i k} \cdot e_{u i}+2 \lambda p_{u k} \\
+&\frac{\partial C}{\partial q_{i k}}=-2 p_{u k} \cdot e_{u i}+2 \lambda q_{i k}
+\end{aligned}</script><p>然后，根据随机梯度下降法，需要将参数沿着最速下降方向向前推进, 因此可以得到如下递推公式:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+p_{u k} &=p_{u k}+\alpha\left(q_{i k} \cdot e_{u t}-\lambda p_{u k}\right) \\
+q_{i k} &=q_{i k}+\alpha\left(p_{u k} \cdot e_{u k}-\lambda q_{i k}\right)
+\end{aligned}</script><p>其中，$\alpha$ 是学习速率 (learning rate )，它的选取需要通过反复实验获得。</p>
+<p>下面的Python代码实现了这一优化过程∶</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">def LatentFactorModel(user_items, F, N, alpha, lambda):</span><br><span class="line">	[P, Q] = InitModel(user_items, F)</span><br><span class="line">	for step in range(0, N):</span><br><span class="line">		for user, items in user_items.items ():</span><br><span class="line">			samples = RandSelectNegativeSamples(items)</span><br><span class="line">			for item, rui in samples.items():</span><br><span class="line">				eui = rui - Predict(user, item)</span><br><span class="line">				for f in range(0,F):</span><br><span class="line">				P[user][f] += alpha * (eui * Q[item][f] - \</span><br><span class="line">						lambda * P[user][f])</span><br><span class="line">				Q[item][f] += alpha *(eui * P[user][f] - \</span><br><span class="line">						lambda* Q[item] [f])</span><br><span class="line">		alpha *= 0.9	# In SGD, learning rate should decrease in every step</span><br><span class="line"></span><br><span class="line">def Recommend (user, P, Q):</span><br><span class="line">	rank = dict()</span><br><span class="line">	for f, puf in P[user].items():</span><br><span class="line">		for i, qfi in Q[f].items():</span><br><span class="line">			if i not in rank:</span><br><span class="line">				rank[i] += puf * qfi</span><br><span class="line">	return rank</span><br></pre></td></tr></table></figure>
+<p>在LFM中，重要的参数有4个∶</p>
+<ul>
+<li>隐特征的个数F;</li>
+<li>学习速率alpha;</li>
+<li>正则化参数lambda;</li>
+<li>负样本/正样本比例ratio。</li>
+</ul>
+<p>通过实验发现，ratio参数对LFM的性能影响最大。因此，固定F=100、alpha=0.02、lambda=0.01，然后研究负样本/正样本比例ratio对推荐结果性能的影响。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220508132203806.png" class title="图片">
+<p>如表所示，<strong>随着负样本数目的增加，LFM的准确率和召回率有明显提高</strong>。不过当ratio&gt;10以后，准确率和召回率基本就比较稳定了。同时，<strong>随着负样本数目的增加，覆盖率不断降低，而推存结果的流行度不断增加</strong>，说明ratio参数控制了推荐算法发掘长尾的能力。我们也发现，<strong>当数据集非常稀疏时，LFM的性能会明显下降，甚至不如UserCF和ItemCF的性能</strong>。</p>
+<h3 id="基于-LFM-的实际系统的例子"><a href="#基于-LFM-的实际系统的例子" class="headerlink" title="基于 LFM 的实际系统的例子"></a>基于 LFM 的实际系统的例子</h3><p>LFM模型在实际使用中有一个困难，那就是它<strong>很难实现实时的推荐</strong>。经典的LFM模型每次训练时都需要扫描所有的用户行为记录，这样才能计算出用户隐类向量 $\left(p_{u}\right)$ 和物品隐类向量 $\left(q_{i}\right)$ 。而且LFM的训练需要在用户行为记录上反复迭代才能获得比较好的性能。</p>
+<p>因此，LFM的每次训练都很耗时，一般在实际应用中只能每天训练一次。</p>
+<p>为了解决传统LFM不能实时化，而产品需要实时性的矛盾，雅虎的研究人员提出了一个解决方案。</p>
+<p>首先，他们利用新闻链接的内容属性 (关键词、类别等) 得到链接的内容特征向量 $y_{i}$ 。</p>
+<p>其次，他们会实时地收集用户对链接的行为, 并且用这些数据得到链 接i的䧔特征向量 $q_{i}$ 。</p>
+<p>然后，他们会利用如下公式预测用户 $\mathrm{u}$ 是否会单击链接i:</p>
+<script type="math/tex; mode=display">
+r_{u t}=x_{u}^{T} \cdot y_{t}+p_{u t}^{T} \cdot q_{t}</script><p>其中，$y_{i}$ 是根据物品的内容属性直接生成的，$x_{u k}$ 是用户 $\mathrm{u}$ 对内容特征 $k$ 的兴趣程度，用户向量 $x_{u}$ 可以根据历史行为记录获得，而且每天只需要计算一次。而 $p_{u} 、 q_{i}$ 是根据实时拿到的用户最近几小时的行为训练LFM获得的。因此，对于一个新加入的物品 $\mathrm{i}$，可以通过 $x_{u}^{T} \cdot y_{i}$ 估计用户对物品i的兴趣，然后经过几个小时后，就可以通过 $p_{u}^{T} \cdot q_{i}$ 得到更加准确的预测值。</p>
+<h3 id="LFM-和基于邻域的方法的比较"><a href="#LFM-和基于邻域的方法的比较" class="headerlink" title="LFM 和基于邻域的方法的比较"></a>LFM 和基于邻域的方法的比较</h3><p>下面将从不同的方面对比LFM和基于邻域的方法。</p>
+<ul>
+<li><strong>理论基础</strong> LFM具有比较好的理论基础，它是一种学习方法，通过优化一个设定的指标建立最优的模型。基于邻域的方法更多的是一种基于统计的方法，并没有学习过程。</li>
+<li><strong>离线计算的空间复杂度</strong> 基于邻域的方法需要维护一张离线的相关表。在离线计算相关表的过程中，如果用户/物品数很多，将会占据很大的内存。假设有 $M$ 个用户和 $N$ 个物品，在计算相关表的过程中, 我们可能会获得一张比较稠密的临时相关表 (尽管最终我们对每个物品只保留 $K$ 个最相关的物品, 但在中间计算过程中稠密的相关表是不可避免的 )，那么假设是用户相关表，则需要 O(M*M) 的空间，而对于物品相关表, 则需要 O(N*N) 的空间。而LFM在建模过程中，如果是 $F$ 个隐类，那么它需要的存储空间是 O(F*(M+N))，这在 $M$ 和 $N$ 很大时可以很好地节省离线计算的内存。</li>
+<li><p><strong>离线计算的时间复杂度</strong> 假设有 $M$ 个用户、 $N$ 个物品、 $K$ 条用户对物品的行为记录。那么，UserCF计算用户相关表的时间复杂度是 O(N*(K/N)^2)，而ItemCF计算物品相关表的时间复杂度是 O(M*(K/M)^2) 。而对于LFM，如果用 $F$ 个隐类，迭代 $S$ 次，那么它的计算复杂度是 O(K * F * S) 。在一般情况下, LFM的时间复杂度要稍微高于UserCF和ItemCF，这主要是因为该算法需要多次迭代。但总体上，这两种算法在时间复杂度上没有质的差别。</p>
+</li>
+<li><p><strong>在线实时推荐</strong> UserCF和ItemCF在线服务算法需要将相关表缓存在内存中, 然后可以在线进行实时的预测。而从LFM 的预测公式可以看到，LFM在给用户生成推荐列表时，需要计算用户对所有物品的兴趣权重，然后排名，返回权重最大的 $N$ 个物品。那么，在物品数很多时，这一过程的时间时间复杂度非常高。另一方面，LFM在生成一个用户推荐列表时速度太慢，因此不能在线实时计算，而需要离线将所有用户的推荐结果事先计算好存储在数据库中。</p>
+</li>
+<li><strong>推荐解释</strong> ItemCF算法支持很好的推荐解释，它可以利用用户的历史行为解释推荐结果。 但LFM无法提供这样的解释，它计算出的隐类虽然在语义上确实代表了一类兴趣和物品，却很难用自然语言描述并生成解释展现给用户。</li>
+</ul>
+<h2 id="基于图的模型"><a href="#基于图的模型" class="headerlink" title="基于图的模型"></a>基于图的模型</h2><h3 id="用户行为数据的二分图表示"><a href="#用户行为数据的二分图表示" class="headerlink" title="用户行为数据的二分图表示"></a>用户行为数据的二分图表示</h3><p>本章讨论的用户行为数据是由一系列二元组组成的，其中每个二元组 $(u, i)$ 表示用户 u 对物品i产生过行为。<br>令 $G(V, E)$ 表示用户物品二分图，其中 $V=V_{U} \cup V_{I}$ 由用户顶点集合 $V_{U}$ 和物品顶点集合 $V_{I}$ 组成。对于数据集中每一个二元组 $(u, i)$，图中都有一套对应的边 $e\left(v_{u}, v_{i}\right)$，其中 $v_{u} \in V_{U}$ 是用户 $\mathrm{u}$ 对应的顶点，$v_{i} \in V_{I}$ 是物品 $\mathrm{i}$ 对应的顶点。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220508134238442.png" class title="图片">
+<h3 id="基于图的推荐算法"><a href="#基于图的推荐算法" class="headerlink" title="基于图的推荐算法"></a>基于图的推荐算法</h3><p>给用户 u 推荐物品的<strong>任务</strong>可以转化为度量度量用户顶点 $v_u$ 和 $v_u$ 没有边直接相连的物品节点在图上的相关性，相关性越高的物品在推荐列表中的权重就越高。</p>
+<p>一般来说<strong>顶点的相关性主要取决于下面3个因素</strong>：</p>
+<ul>
+<li>两个顶点之间的路径数；</li>
+<li>两个顶点之间路径的长度；</li>
+<li>两个顶点之间的路径经过的顶点。</li>
+</ul>
+<p><strong>相关性高的一对顶点</strong>一般具有如下<strong>特征</strong>：</p>
+<ul>
+<li>两个顶点之间有很多路径相连；</li>
+<li>连接两个顶点之间的路径长度都比较短；</li>
+<li>连接两个顶点之间的路径不会经过出度比较大的顶点。</li>
+</ul>
+<p>基于上面3个主要因素，本节将介绍一种基于随机游走的PersonalRank算法。</p>
+<p>假设要给用户 $\mathrm{u}$ 进行个性化推荐，可以从用户 $\mathrm{u}$ 对应的节点 $v_{u}$ 开始在用户物品二分图上进行随机游走。游走到任何一个节点时，首先按照概率 $\alpha$ 决定是继续游走，还是停止这次游走并从 $v_{u}$ 节点开始重新游走。如果决定继续游走，那么就从当前节点指向的节点中按照均匀分布随机选择一 个节点作为游走下次经过的节点。这样，经过很多次随机游走后, 每个物品节点被访问到的概率会收敛到一个数。最终的推荐列表中物品的权重就是物品节点的访问概率。<br>如果将上面的描述表示成公式, 可以得到如下公式:</p>
+<script type="math/tex; mode=display">
+\operatorname{PR}(v)=\left\{\begin{array}{l}
+\alpha \sum\limits_{v \in \operatorname{in}(v)} \frac{\operatorname{PR}\left(v^{\prime}\right)}{\left|\operatorname{out}\left(v^{\prime}\right)\right|} \quad\left(v \neq v_{u}\right) \\
+(1-\operatorname{alpha})+\alpha \sum\limits_{v \in \operatorname{in}(v)} \frac{\operatorname{PR}\left(v^{\prime}\right)}{\left|\operatorname{out}\left(v^{\prime}\right)\right|} \quad\left(v=v_{u}\right)
+\end{array}\right.</script><p>下面的Python代码简单实现了上面的公式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">def PersonalRank(G, alpha, root, max_step):</span><br><span class="line">	rank = dict()</span><br><span class="line">	rank = &#123;x:0 for x in G.keys() &#125;</span><br><span class="line">	rank[root] = 1</span><br><span class="line">	for k in range(max_step):</span><br><span class="line">		tmp = &#123;x:0 for x in G.keys()&#125;</span><br><span class="line">		for i, ri in G.items():</span><br><span class="line">			for j, wij in ri.items():</span><br><span class="line">				if j not in tmp:</span><br><span class="line">					tmp[j] = 0</span><br><span class="line">					tmp[j]+= alpha * rank[i] / (1.0 * len(ri))</span><br><span class="line">				if j == root:</span><br><span class="line">					tmp[j] += 1 - alpha</span><br><span class="line">		rank = tmp</span><br><span class="line">	return rank</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220508135303325.png" class title="图片">
+<p>本节在MovieLens的数据集上评测了PersonalRank算法，实验结果如表2-15所示。</p>
+<img src="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/image-20220508135346536.png" class title="图片">
+<p>虽然PersonalRank算法可以通过随机游走进行<strong>比较好的理论解释</strong>，但该算法<strong>在时间复杂度上有明显的缺点</strong>。因为在为每个用户进行推荐时，都需要在整个用户物品二分图上进行迭代，直到整个图上的每个顶点的PR值收敛。这一过程的时间复杂度非常高，不仅无法在线提供实时推荐，甚至离线生成推荐结果也很耗时。<br>这里给出两种解决方案。</p>
+<p>第一种很容易想到，就是减少迭代次数，在收敛之前就停止。这样会影响最终的精度，但一般来说影响不会特别大。</p>
+<p>另一种方法就是从矩阵论出发，重新设计算法。<br>令 $M$ 为用户物品二分图的转移概率矩阵，即：</p>
+<script type="math/tex; mode=display">
+M\left(v, v^{\prime}\right)=\frac{1}{|\operatorname{out}(v)|}</script><p>那么, 迭代公式可以转化为：</p>
+<script type="math/tex; mode=display">
+r=(1-\alpha) r_{0}+\alpha M^{T} r</script><p>得到：</p>
+<script type="math/tex; mode=display">
+r=(1-\alpha)\left(1-\alpha M^{T}\right)^{-1} r_{0}</script><p>因此，只需要计算一次 $\left(1-\alpha M^{T}\right)^{-1}$，这里 $1-\alpha M^{T}$ 是稀疏矩阵。</p>
+<blockquote>
+<p>关于稀疏矩阵求逆，参考 Song Li的 “Fast Algorithms For Sparse Matrix Inverse Computations” (2009)</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/markdown/" rel="tag"># markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/06/%E5%A5%BD%E7%9A%84%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" rel="prev" title="好的推荐系统">
+      <i class="fa fa-chevron-left"></i> 好的推荐系统
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/" rel="next" title="推荐系统冷启动问题">
+      推荐系统冷启动问题 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE"><span class="nav-number">1.</span> <span class="nav-text">利用用户行为数据</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">用户行为数据简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E5%88%86%E6%9E%90"><span class="nav-number">1.2.</span> <span class="nav-text">用户行为分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%B4%BB%E8%B7%83%E5%BA%A6%E5%92%8C%E7%89%A9%E5%93%81%E6%B5%81%E8%A1%8C%E5%BA%A6%E7%9A%84%E5%88%86%E5%B8%83"><span class="nav-number">1.2.1.</span> <span class="nav-text">用户活跃度和物品流行度的分布</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%B4%BB%E8%B7%83%E5%BA%A6%E5%92%8C%E7%89%A9%E5%93%81%E6%B5%81%E8%A1%8C%E5%BA%A6%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">1.2.2.</span> <span class="nav-text">用户活跃度和物品流行度的关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E8%AE%A1%E5%92%8C%E7%AE%97%E6%B3%95%E8%AF%84%E6%B5%8B"><span class="nav-number">1.3.</span> <span class="nav-text">实验设计和算法评测</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">1.3.1.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.3.2.</span> <span class="nav-text">实验设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%84%E6%B5%8B%E6%8C%87%E6%A0%87"><span class="nav-number">1.3.3.</span> <span class="nav-text">评测指标</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E9%82%BB%E5%9F%9F%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">1.4.</span> <span class="nav-text">基于邻域的方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%94%A8%E6%88%B7%E7%9A%84%E5%8D%8F%E5%90%8C%E8%BF%87%E6%BB%A4%E7%AE%97%E6%B3%95"><span class="nav-number">1.4.1.</span> <span class="nav-text">基于用户的协同过滤算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E7%AE%97%E6%B3%95"><span class="nav-number">1.4.1.1.</span> <span class="nav-text">基础算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%9B%B8%E4%BC%BC%E5%BA%A6%E8%AE%A1%E7%AE%97%E7%9A%84%E6%94%B9%E8%BF%9B"><span class="nav-number">1.4.1.2.</span> <span class="nav-text">用户相似度计算的改进</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%89%A9%E5%93%81%E7%9A%84%E5%8D%8F%E5%90%8C%E8%BF%87%E6%BB%A4%E7%AE%97%E6%B3%95"><span class="nav-number">1.4.2.</span> <span class="nav-text">基于物品的协同过滤算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E7%AE%97%E6%B3%95-1"><span class="nav-number">1.4.2.1.</span> <span class="nav-text">基础算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%B4%BB%E8%B7%83%E5%BA%A6%E5%AF%B9%E7%89%A9%E5%93%81%E7%9B%B8%E4%BC%BC%E5%BA%A6%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="nav-number">1.4.2.2.</span> <span class="nav-text">用户活跃度对物品相似度的影响</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%89%A9%E5%93%81%E7%9B%B8%E4%BC%BC%E5%BA%A6%E7%9A%84%E5%BD%92%E4%B8%80%E5%8C%96"><span class="nav-number">1.4.2.3.</span> <span class="nav-text">物品相似度的归一化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UserCF-%E5%92%8C-ItemCF-%E7%9A%84%E7%BB%BC%E5%90%88%E6%AF%94%E8%BE%83"><span class="nav-number">1.4.3.</span> <span class="nav-text">UserCF 和 ItemCF 的综合比较</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%93%88%E5%88%A9%E6%B3%A2%E7%89%B9%E9%97%AE%E9%A2%98"><span class="nav-number">1.4.3.1.</span> <span class="nav-text">哈利波特问题</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9A%90%E8%AF%AD%E4%B9%89%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.5.</span> <span class="nav-text">隐语义模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E7%AE%97%E6%B3%95-2"><span class="nav-number">1.5.1.</span> <span class="nav-text">基础算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E-LFM-%E7%9A%84%E5%AE%9E%E9%99%85%E7%B3%BB%E7%BB%9F%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="nav-number">1.5.2.</span> <span class="nav-text">基于 LFM 的实际系统的例子</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LFM-%E5%92%8C%E5%9F%BA%E4%BA%8E%E9%82%BB%E5%9F%9F%E7%9A%84%E6%96%B9%E6%B3%95%E7%9A%84%E6%AF%94%E8%BE%83"><span class="nav-number">1.5.3.</span> <span class="nav-text">LFM 和基于邻域的方法的比较</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%9A%84%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.6.</span> <span class="nav-text">基于图的模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE%E7%9A%84%E4%BA%8C%E5%88%86%E5%9B%BE%E8%A1%A8%E7%A4%BA"><span class="nav-number">1.6.1.</span> <span class="nav-text">用户行为数据的二分图表示</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%9A%84%E6%8E%A8%E8%8D%90%E7%AE%97%E6%B3%95"><span class="nav-number">1.6.2.</span> <span class="nav-text">基于图的推荐算法</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/853784202@qq.com" title="E-Mail → 853784202@qq.com"><i class="lee-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+
+
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="lee"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Lee</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

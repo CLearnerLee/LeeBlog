@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="《推荐系统实践》(作者：项亮) 读书笔记第三章：推荐系统冷启动问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="推荐系统冷启动问题">
+<meta property="og:url" content="https://github.com/CLearnerLee/LeeBlog/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="AI 自学笔记">
+<meta property="og:description" content="《推荐系统实践》(作者：项亮) 读书笔记第三章：推荐系统冷启动问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508150141352.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508150417857.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508152436984.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508152906720.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508153518777.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508154411973.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508155222882.png">
+<meta property="og:image" content="https://github.com/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508160935207.png">
+<meta property="article:published_time" content="2022-05-08T08:12:47.000Z">
+<meta property="article:modified_time" content="2022-05-08T08:20:43.049Z">
+<meta property="article:author" content="Lee">
+<meta property="article:tag" content="markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508150141352.png">
+
+<link rel="canonical" href="https://github.com/CLearnerLee/LeeBlog/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>推荐系统冷启动问题 | AI 自学笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">AI 自学笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-标签">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags - markdown fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th - 我的第一篇博客 - CS224U 笔记 fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-归档">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/CLearnerLee/LeeBlog/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="AI 自学笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          推荐系统冷启动问题
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-08 16:12:47 / 修改时间：16:20:43" itemprop="dateCreated datePublished" datetime="2022-05-08T16:12:47+08:00">2022-05-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8A%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%AE%9E%E8%B7%B5%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">《推荐系统实践》读书笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="lee-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">《推荐系统实践》(作者：项亮) 读书笔记第三章：推荐系统冷启动问题</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="推荐系统冷启动问题"><a href="#推荐系统冷启动问题" class="headerlink" title="推荐系统冷启动问题"></a>推荐系统冷启动问题</h1><h2 id="冷启动问题简介"><a href="#冷启动问题简介" class="headerlink" title="冷启动问题简介"></a>冷启动问题简介</h2><p><strong>冷启动问题</strong>（cold start）主要分3类。</p>
+<ul>
+<li><p><strong>用户冷启动</strong> 用户冷启动主要解决如何给新用户做个性化推荐的问题。</p>
+</li>
+<li><p><strong>物品冷启动</strong> 物品冷启动主要解决如何将新的物品推荐给可能对它感兴趣的用户这一问题。</p>
+</li>
+<li><strong>系统冷启动</strong> 系统冷启动主要解决如何在一个新开发的网站上（还没有用户，也没有用户行为，只有一些物品的信息）设计个性化推荐系统，从而在网站刚发布时就让用户体验到个性化推荐服务这一问题。</li>
+</ul>
+<p>一般来说，可以参考如下<strong>解决方案</strong>。</p>
+<ul>
+<li><p><strong>提供非个性化的推荐</strong> 非个性化推荐的最简单例子就是热门排行榜，我们可以给用户推荐热门排行榜，然后等到用户数据收集到一定的时候，再切换为个性化推荐。</p>
+</li>
+<li><p>利用用户注册时提供的年龄、性别等数据做粗粒度的个性化。</p>
+</li>
+<li><p>利用用户的社交网络账号登录（需要用户授权），导入用户在社交网站上的好友信息，然后给用户推荐其好友喜欢的物品。</p>
+</li>
+<li><p>要求用户在登录时对一些物品进行反馈，收集用户对这些物品的兴趣信息，然后给用户推荐那些和这些物品相似的物品。</p>
+</li>
+<li><p>对于新加入的物品，可以利用内容信息，将它们推荐给喜欢过和它们相似的物品的用户。</p>
+</li>
+<li><p>在系统冷启动时，可以引入专家的知识，通过一定的高效方式迅速建立起物品的相关度表。</p>
+</li>
+</ul>
+<h2 id="利用用户注册信息"><a href="#利用用户注册信息" class="headerlink" title="利用用户注册信息"></a>利用用户注册信息</h2><p>利用用户的注册信息可以很好地解决注册用户的冷启动问题。</p>
+<p>在绝大多数网站中，年龄、性别一般都是注册用户的必备信息，我们可以利用这一点将用户分类。</p>
+<p>用户的<strong>注册信息</strong>分3种。</p>
+<ul>
+<li><p><strong>人口统计学信息</strong></p>
+</li>
+<li><p><strong>用户兴趣的描述</strong></p>
+</li>
+<li><p><strong>从其他网站导入的用户站外行为数据</strong></p>
+</li>
+</ul>
+<p>基于人口统计学特征的推荐系统其典型代表是Bruce Krulwich开发的Lifestyle Finder。首先，Bruce Krulwich将美国人群根据人口统计学属性分成62类，然后对于每个新用户根据其填写的个人资料判断他属于什么分类，最后给他推荐这类用户最喜欢的15个链接，其中5个链接是推荐他购买的商品，5个链接是推荐他旅游的地点，剩下的5个链接是推荐他去逛的商店。</p>
+<img src="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508150141352.png" class title="图片">
+<p><strong>基于注册信息的个性化推荐流程</strong>基本如下∶</p>
+<ol>
+<li><p>获取用户的注册信息;</p>
+</li>
+<li><p>根据用户的注册信息对用户分类;</p>
+</li>
+<li><p>给用户推荐他所属分类中用户喜欢的物品。</p>
+</li>
+</ol>
+<p>实际应用中，既可以单独考虑用户特征，也可以考虑组合特征</p>
+<img src="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508150417857.png" class title="图片">
+<p>基于用户注册信息的推荐算法<strong>核心问题</strong>是计算每种特征的用户喜欢的物品。</p>
+<p>对于每种特征 $f$，计算具有这种特征的用户对各个物品的喜好程度 $p(f, i)$ 。 $p(f, i)$ 可以简单地定义为物品 $i$ 在具有 $f$ 的特征的用户中的热门程度：</p>
+<script type="math/tex; mode=display">
+p(f, i)=|N(i) \cap U(f)|</script><p>其中 $N(i)$ 是喜欢物品 $\mathrm{i}$ 的用户集合, $U(f)$ 是具有特征 $f$ 的用户集合。<br>在这种定义下，往往热门的物品会在各种特征的用户中都具有比较高的权重。也就是说具有比较高的 $|N(i)|$ 的物品会在每一类用户中都有比较高的 $p(f, i)$ 。</p>
+<p>而给用户推荐热门物品并不是推荐系统的主要任务，<strong>推荐系统应该帮助用户发现他们不容易发现的物品</strong>。因此，我们可以将 $p(f, i)$ 定义为喜欢物品i的用户中具有特征 $f$ 的比例:</p>
+<script type="math/tex; mode=display">
+p(f, i)=\frac{|N(i) \cap U(f)|}{|N(i)|+\alpha}</script><p>这里分母中使用参数 $\alpha$ 的目的是解决数据稀疏问题。比如有一个物品只被1个用户喜欢过, 而这个用户刚好就有特征 $f$, 那么就有 $p(f, i)=1$ 。但是, 这种情况并没有统计意义, 因此我们为分母加上一个比较大的数, 可以避免这样的物品产生比较大的权重。<br>有两个推荐系统数据集包含了人口统计学信息, 一个是<a target="_blank" rel="noopener" href="http://www.informatik.uni-freiburg.de/~cziegler/BX/">BookCrossing数据集</a>，另一个是<a target="_blank" rel="noopener" href="http://ocelma.net/MusicRecommendationDataset/lastfm-360K.html">Last.fm数据集</a>。</p>
+<p>BookCrossing数据集包含用户对图书的行为信息，包含3个文件。</p>
+<ul>
+<li><p><code>BX-Users.csv</code>，包含用户的ID、位置和年龄。</p>
+</li>
+<li><p><code>BX-Books.csv</code>，包含图书的ISBN、标题、作者、发表年代、出版社和缩略。</p>
+</li>
+<li><code>BX-Book-Ratings.csv</code>，包含用户对图书的评分信息。</li>
+</ul>
+<p>Last.fim数据集包含了更多的用户人口统计学信息，包括用户的性别、年龄和国籍。</p>
+<p>我们准备用该数据集对比一下使用不同的人口统计学特征预测用户行为的精度。这里，我们将数据集划分成10份，9份作为训练集，1份作为测试集。然后，我们在训练集上利用 $p(f, i)=|N(i) \cap U(f)|$ 计算每一类用户对物品的兴趣程度 $p(f, i)$ 。然后在测试集中给每一类用户推荐 $p(f, i)$ 最高的 10 个物品, 并通过准确率和召回率计算预测准确度。同时，我们也会计算推荐的覆盖率来评测推荐结果。</p>
+<p>我们按照不同的粒度给用户分类，对比了5种不同的算法。</p>
+<ul>
+<li><strong>MostPopular</strong> 给用户推荐最热门的歌手。</li>
+<li><strong>GenderMostPopular</strong> 给用户推荐对于和他同性别的用户最热门的歌手，这里我们将用户分成男女两类。</li>
+<li><strong>AgeMostPopular</strong> 给用户推荐对于和他同一个年龄段的用户最热门的歌手，这里我们将10岁作为一个年龄段，将用户按照不同的年龄段分类。</li>
+<li><strong>CountryMostPopular</strong> 给用户推荐对于和他同一个国家的用户最热门的歌手。</li>
+<li><strong>DemographicMostPopular</strong> 给用户推荐对于和他同性别、年龄段、国家的用户最热门的歌手。</li>
+</ul>
+<p>从算法的描述可见，这5种算法具有不同的粒度，其中MostPopular粒度最粗，而DemographicMostPopular算法的粒度最细。一般说来，粒度越细，精度和覆盖率也会越高。</p>
+<p>结果显示：</p>
+<img src="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508152436984.png" class title="图片">
+<p>这说明在预测用户对音乐的兴趣时，国家对年龄、性别特征影响更大。</p>
+<h2 id="选择合适的物品启动用户的兴趣"><a href="#选择合适的物品启动用户的兴趣" class="headerlink" title="选择合适的物品启动用户的兴趣"></a>选择合适的物品启动用户的兴趣</h2><p>解决用户冷启动问题的<strong>另一个方法</strong>是在新用户第一次访问推荐系统时，不立即给用户展示推荐结果，而是给用户提供一些物品，让用户反馈他们对这些物品的兴趣，然后根据用户反馈给提供个性化推荐。</p>
+<p>对于这些通过让用户对物品进行评分来收集用户兴趣，从而对用户进行冷启动的系统，它们需要解决的<strong>首要问题</strong>就是如何选择物品让用户进行反馈。</p>
+<p>一般来说，能够用来启动用户兴趣的物品需要具有以下<strong>特点</strong>。</p>
+<ul>
+<li><strong>比较热门</strong> 如果要让用户对一个物品进行反馈，前提是用户知道这个物品是什么东西。</li>
+<li><strong>具有代表性和区分性</strong> 启动用户兴趣的物品不能是大众化或老少咸宜的，因为这样的物品对用户的兴趣没有区分性。</li>
+<li><strong>启动物品集合需要有多样性</strong> 在冷启动时，我们不知道用户的兴趣，而用户兴趣的可能性非常多，为了匹配多样的兴趣，我们需要提供具有很高覆盖率的启动物品集合，这些物品能覆盖几乎所有主流的用户兴趣。以图3-8为例，Jinni在让用户反馈时没有直接拿电影让用户反馈，而是给出了12个电影类型（截图中只显示了其中的6个电影类型），让用户先选择喜欢哪种类型，这样就很好地保证了启动物品集合的多样性。</li>
+</ul>
+<img src="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508152906720.png" class title="图片">
+<p>关于如何设计一个选择启动物品集合的系统，Nadav Golbandi 在论文中探讨了这个问题，提出可以用一个<strong>决策树解决</strong>这个问题。<br>首先，给定一群用户，Nadav Golbandi用这群<strong>用户对物品评分的方差度量这群用户兴趣的一致程度</strong>。如果方差很小，说明这一群用户的兴趣不太一致，也就是物品具有比较大的区分度，反之则说明这群用户的兴趣比较一致。令 $\sigma_{u \in U^{\prime}}$ 为用户集合 $U^{\prime}$ 中所有评分的方差，<strong>Nadav Golbandi 的基本思想</strong>是通过如下方式度量一个物品的区分度 $D(i)$ :</p>
+<script type="math/tex; mode=display">
+D(i)=\sigma_{u \in N^{+}(i)}+\sigma_{u \in N^{-}(i)}+\sigma_{u \in \bar{N}(i)}</script><p>其中，$N^{+}(i)$ 是喜欢物品i的用户集合，$N^{-}(i)$ 是不喜欢物品 $i$ 的用户集合，$\bar{N}(i)$ 是没有对物品 i评分的用户集合。 $\sigma_{u \in N^{+}(i)}$ 是喜欢物品i的用户对其他物品评分的方差，$\sigma_{u \in N^{-}(i)}$ 是不喜欢物品i的用户对其他物品评分的方差，$\sigma_{u \in \bar{N}(i)}$ 是没有对物品i评分的用户对其他物品评分的方差。也就是说，对于物品 i，Nadav Golbandi将用户分成 3 类——喜欢物品i的用户、不喜欢物品i的用户和不知道物品i的用户（即没有给i评分的用户）。如果这3类用户集合内的用户对其他的物品兴趣很不一致，说明物品i具有较高的区分度。</p>
+<p><strong>Nadav Golbandi的算法</strong>首先会从所有用户中找到具有最高区分度的物品 $\mathrm{i}$，然后将用户分成 3 类。然后在每类用户中再找到最具区分度的物品，然后将每一类用户又各自分为 3 类，也就是将总用户分成 9 类，然后这样继续下去，最终可以通过对一系列物品的看法将用户进行分类。而在冷启动时，我们从根节点开始询问用户对该节点物品的看法，然后根据用户的选择将用户放到不同的分枝，直到进入最后的叶子节点，此时我们就已经对用户的兴趣有了比较清楚的了解，从而可以开始对用户进行比较准确地个性化推荐。</p>
+<img src="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508153518777.png" class title="图片">
+<h2 id="利用物品的内容信息"><a href="#利用物品的内容信息" class="headerlink" title="利用物品的内容信息"></a>利用物品的内容信息</h2><p><strong>物品冷启动</strong>需要解决的问题是如何将新加入的物品推荐给对它感兴趣的用户。</p>
+<p><strong>对于UserCF算法</strong>来说，<strong>首先需要解决第一推动力的问题</strong>，即第一个用户从哪儿发现新的物品，只要有一个用户对新物品产生反馈，和他历史兴趣相似的其他用户的推荐列表种就可能出现这一物品，从而更多的人就会对这个物品产生反馈。</p>
+<p><strong>解决第一推动力最简单的方法</strong>就是将新的物品随机展示给用户，但这样不太个性化，因此可以考虑利用物品的内容信息。</p>
+<p><strong>对于Item算法</strong>来说，当新物品加入时，内存中的物品相关表中不会存在这个物品。</p>
+<p><strong>解决这一问题的办法</strong>是利用物品的内容信息计算物品相关表，并且频繁地更新相关表（比如半小时计算一次）</p>
+<p>常见物品的内容信息：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>物品</th>
+<th>内容信息</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>图书</td>
+<td>标题、作者、出版社、出版时代、丛书名、目录、正文</td>
+</tr>
+<tr>
+<td>论文</td>
+<td>标题、作者、作者单位、关键字、分类、摘要、正文</td>
+</tr>
+<tr>
+<td>电影</td>
+<td>标题、导演、演员、编辑、类别、剧情简介、发行公司</td>
+</tr>
+<tr>
+<td>新闻</td>
+<td>标题、正文、来源、作者</td>
+</tr>
+<tr>
+<td>微博</td>
+<td>作者、内容、评论</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>一般来说，<strong>物品的内容可以通过向量空间模型表示</strong>，该模型会将物品表示成一个关键词向量。</p>
+<img src="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508154411973.png" class title="图片">
+<p>对物品d，它的内容表示成一个<strong>关键词向量</strong>如下:</p>
+<script type="math/tex; mode=display">
+d_{i}=\left\{\left(e_{1}, w_{1}\right),\left(e_{2}, w_{2}\right), \cdots\right\}</script><p>其中，$e_{i}$ 就是关键词，$w_{i}$ 是关键词对应的权重。如果物品是文本，我们可以TF-IDF公式计算词的权重:</p>
+<script type="math/tex; mode=display">
+w_{i}=\frac{\operatorname{TF}\left(e_{i}\right)}{\log \operatorname{DF}\left(e_{i}\right)}</script><p>如果物品是电影，可以根据演员在剧中的重要程度赋予他们权重。</p>
+<p>向量空间模型的<strong>优点</strong>是简单，<strong>缺点</strong>是丢失了一些信息，比如关键词之间的关系信息。<br>在给定物品内容的关键词向量后，物品的内容相似度可以通过向量之间的余弦相似度计算:</p>
+<script type="math/tex; mode=display">
+w_{i j}=\frac{d_{i} \cdot d_{j}}{\sqrt{\left\|d_{i}\right\|\left\|d_{j}\right\|}}</script><p>在具体计算物品之间的内容相似度时，最简单的方法当然是对两两物品都利用上面的余弦相似度公式计算相似度，如下代码简单实现了这种方法:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">function CalculateSimilarity(D):</span><br><span class="line">	for di in D:</span><br><span class="line">		for dj in D:</span><br><span class="line">			w[i][j] = CosineSimilarity(di, dj)</span><br><span class="line">	return w</span><br></pre></td></tr></table></figure>
+<p>这里，D是文档集合。</p>
+<p>但这种算法的时间复杂度很高。假设有N个物品，每个物品平均由m个实体表示，那么这个算法的复杂度是 $O(N^2 m)$。</p>
+<p>在实际应用中，可以首先通过建立关键词-物品的倒排表加速这一计算过程</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">function Calculatesimilarity(entity-items):</span><br><span class="line">	w = dict()</span><br><span class="line">	ni = dict()</span><br><span class="line">	for e, items in entity_items.items():</span><br><span class="line">		for i, wie in items.items():</span><br><span class="line">			addToVec(ni, i, wie * wie)</span><br><span class="line">			for j, wje in items.items():</span><br><span class="line">				addToMat(w, i, j, wie, wje)</span><br><span class="line">	for i, relate_items in w.items():</span><br><span class="line">		relate_items = &#123;x:y/math.sqrt(ni[i] * ni[x]) for x,y in \</span><br><span class="line">				relate_items.items()&#125;</span><br></pre></td></tr></table></figure>
+<p>为了说明内容过滤算法和协同过滤算法的优劣，本节在MovieLens和GitHub两个数据集上进行了实验。MoyieLens数据集提供了有限的内容信息，要包括电影的类别信息（动作片、爱情片等类别），GitHub数据集包含代码开发者对开源项目的兴趣数据，它的用户是程序员，物品是开源工程，如果一名程序员关注某个开源工程，就会有一条行为记录。该数据集中主要的内容数据是开源项目的所有者名。</p>
+<img src="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508155222882.png" class title="图片">
+<p>通过对数据分析，我们发现如果用户的行为强烈受某一内容属性的影响，那么内容过滤的算法还是可以在精度上超过协同过滤算法的。不过这种强的内容特征不是所有物品都具有的，而且需要丰富的领域知识才能获得，所以很多时候内容过滤算法的精度比协同过滤算法差。</p>
+<p><strong>向量空间模型在内容数据丰富时可以获得比较好的效果</strong>。以文本为例，如果是计算长文本的相似度，用向量空间模型利用关键词计算相似度已经可以获得很高的精确度。但是，如果文本很短，关键词很少，向量空间模型就很难计算出准确的相似度，在这种情况下，首先要知道文章的话题分布，然后才能准确地计算文章的相似度。如何建立文章、话题和关键词的关系是话题模型（topic model）研究的重点。</p>
+<p><strong>代表性的话题模型有LDA</strong></p>
+<p>话题模型的<strong>基本思想</strong>是，一个人在写一篇文档的时候，会首先想这篇文章要讨论哪些话题，然后思考这些话题应该用什么词描述，从而最终用词写成一篇文章。因此，文章和词之间是通过话题联系的。</p>
+<p><strong>LDA中有3种元素，即文档、话题和词语</strong>。每一篇文档都会表现为词的集合，这称为词袋模型 ( bag of words )。每个词在一篇文章中属于一个话题。令 $D$ 为文档集合，$D[i]$ 是第 $i$ 篇文档，$w[i][j]$ 是第 $i$ 篇文档中的第 $j$ 个词，$z[i][j]$ 是第 $i$ 篇文档中第 $j$ 个词属于的话题。</p>
+<p><strong>LDA的计算过程包括初始化和迭代两部分</strong>。首先要对 $z$ 进行初始化，即假设一共有 $K$ 个话题，那么对第 $i$ 篇文章中的第 $j$ 个词，可以随机给它赋予一个话题。同时，用 $\mathrm{NWZ}(w, z)$ 记录词 $\mathrm{w}$ 被赋予话题z的次数，$\mathrm{NZD}(z, d)$ 记录文档 $\mathrm{d}$ 中被赋予话题 $\mathrm{z}$ 的词的个数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">foreach document i in range(0, |D|):</span><br><span class="line">	foreach word j in range(0, |D(i)|):</span><br><span class="line">		z[i][j] = rand() % K</span><br><span class="line">		NZD[z[i][j], D[i]]++</span><br><span class="line">		NWZ[w[i][j], z[i][j]]++</span><br><span class="line">		NZ[z[i][j]]++</span><br></pre></td></tr></table></figure>
+<p>在初始化之后，要通过迭代使话题的分布收敛到一个合理的分布上去。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">while not converged:</span><br><span class="line">	foreach document i in range(0, |D|):</span><br><span class="line">		foreach word j in range(0, |D(i)|):</span><br><span class="line">			NWZ[w[i][j], z[i][j]]--</span><br><span class="line">			NZ[z[i][j]]--</span><br><span class="line">			NZD[z[i][j], D[i]]--</span><br><span class="line">			z[i][j] = SampleTopic()</span><br><span class="line">			NWZ[w[i][j], z[i][j]]++</span><br><span class="line">			NZ[z[i][j]]++</span><br><span class="line">			NZD[z[i][j], D[i]]++</span><br></pre></td></tr></table></figure>
+<p>在<strong>使用LDA计算物品的内容相似度</strong>时，我们可以先计算出物品在话题上的分布，然后利用两个物品的话题分布计算物品的相似度。比如，如果两个物品的话题分布相似，则认为两个物品具有较高的相似度，反之则认为两个物品的相似度较低。计算分布的相似度可以利用KL散度：</p>
+<script type="math/tex; mode=display">
+\mathrm{D}_{\mathrm{KL}}(p \| q)=\sum_{i} p(i) \ln \frac{p(i)}{q(i)}</script><p>其中 $p$ 和 $q$ 是两个分布，KL散度越大说明分布的相似度越低。</p>
+<h2 id="发挥专家的作用"><a href="#发挥专家的作用" class="headerlink" title="发挥专家的作用"></a>发挥专家的作用</h2><p>例如，<a target="_blank" rel="noopener" href="http://www.jinni.com/movie-genome.html">Jinni</a>设计了电影基因系统，让专家给电影进行标注。</p>
+<img src="/2022/05/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98/image-20220508160935207.png" class title="图片">
+<p>可以看到，这里的基因包括如下分类。</p>
+<ul>
+<li><strong>心情（Mood）</strong> 表示用户观看电影的心情.</li>
+<li><strong>剧情（Plot）</strong> 包括电影剧情的标签。</li>
+<li><strong>类别（Genres）</strong> 表示电影的类别，主要包括动画片、喜剧片、动作片等分类。</li>
+<li><strong>时间（Time/Period）</strong> 电影故事发生的时间。</li>
+<li><strong>地点（Place）</strong> 电影故事发生的地点。</li>
+<li><strong>观众（Audience）</strong> 电影的主要观众群。</li>
+<li><strong>获奖（Praise）</strong> 电影的获奖和评价情况。</li>
+<li><strong>风格（Style）</strong> 功夫片、全明星阵容等。</li>
+<li><strong>态度（Attitudes）</strong> 电影描述故事的态度。</li>
+<li><strong>画面（Look）</strong> 电脑拍摄的画面技术，比如《功夫熊猫》是用电脑动画制作的。</li>
+<li><strong>标记（Flag）</strong> 主要表示电影有没有暴力和色情内容。</li>
+</ul>
+<p>Jinni在电影基因工程中采用了半人工、半自动的方式。首先，它让专家对电影进行标记，每个电影都有大约50个基因，这些基因来自大约1000个基因库。然后，在专家标记一定的样本后，Jinni会使用自然语言理解和机器学习技术，通过分析用户对电影的评论和电影的一些内容属性对电影（特别是新电影）进行自己的标记。同时，Jinni也设计了让用户对基因进行反馈的界面，希望通过用户反馈不断改进电影基因系统。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/markdown/" rel="tag"># markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/08/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E8%A1%8C%E4%B8%BA%E6%95%B0%E6%8D%AE/" rel="prev" title="利用用户行为数据">
+      <i class="fa fa-chevron-left"></i> 利用用户行为数据
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/05/09/%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%A0%87%E7%AD%BE%E6%95%B0%E6%8D%AE/" rel="next" title="利用用户标签数据">
+      利用用户标签数据 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">推荐系统冷启动问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%B7%E5%90%AF%E5%8A%A8%E9%97%AE%E9%A2%98%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">冷启动问题简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E7%94%A8%E6%88%B7%E6%B3%A8%E5%86%8C%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.</span> <span class="nav-text">利用用户注册信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E5%90%88%E9%80%82%E7%9A%84%E7%89%A9%E5%93%81%E5%90%AF%E5%8A%A8%E7%94%A8%E6%88%B7%E7%9A%84%E5%85%B4%E8%B6%A3"><span class="nav-number">1.3.</span> <span class="nav-text">选择合适的物品启动用户的兴趣</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E7%89%A9%E5%93%81%E7%9A%84%E5%86%85%E5%AE%B9%E4%BF%A1%E6%81%AF"><span class="nav-number">1.4.</span> <span class="nav-text">利用物品的内容信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%91%E6%8C%A5%E4%B8%93%E5%AE%B6%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">1.5.</span> <span class="nav-text">发挥专家的作用</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/853784202@qq.com" title="E-Mail → 853784202@qq.com"><i class="lee-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+
+
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="lee"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Lee</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
