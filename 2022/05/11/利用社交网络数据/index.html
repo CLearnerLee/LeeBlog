@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="《推荐系统实践》(作者：项亮) 读书笔记第六章：利用社交网络数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用社交网络数据">
+<meta property="og:url" content="https://github.com/CLearnerLee/LeeBlog/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/index.html">
+<meta property="og:site_name" content="AI 自学笔记">
+<meta property="og:description" content="《推荐系统实践》(作者：项亮) 读书笔记第六章：利用社交网络数据">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511110431717.png">
+<meta property="og:image" content="https://github.com/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511110437571.png">
+<meta property="og:image" content="https://github.com/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511113238489.png">
+<meta property="og:image" content="https://github.com/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511113559789.png">
+<meta property="og:image" content="https://github.com/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511120059466.png">
+<meta property="og:image" content="https://github.com/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511121609948.png">
+<meta property="og:image" content="https://github.com/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511130758969.png">
+<meta property="article:published_time" content="2022-05-11T05:09:47.000Z">
+<meta property="article:modified_time" content="2022-05-11T05:12:18.463Z">
+<meta property="article:author" content="Lee">
+<meta property="article:tag" content="markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511110431717.png">
+
+<link rel="canonical" href="https://github.com/CLearnerLee/LeeBlog/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>利用社交网络数据 | AI 自学笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">AI 自学笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-标签">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags - markdown fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th - 我的第一篇博客 - CS224U 笔记 fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-归档">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/CLearnerLee/LeeBlog/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="AI 自学笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          利用社交网络数据
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-11 13:09:47 / 修改时间：13:12:18" itemprop="dateCreated datePublished" datetime="2022-05-11T13:09:47+08:00">2022-05-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8A%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%AE%9E%E8%B7%B5%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">《推荐系统实践》读书笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="lee-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">《推荐系统实践》(作者：项亮) 读书笔记第六章：利用社交网络数据</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="利用社交网络数据"><a href="#利用社交网络数据" class="headerlink" title="利用社交网络数据"></a>利用社交网络数据</h1><h2 id="获取社交网络数据的途径"><a href="#获取社交网络数据的途径" class="headerlink" title="获取社交网络数据的途径"></a>获取社交网络数据的途径</h2><h3 id="电子邮件"><a href="#电子邮件" class="headerlink" title="电子邮件"></a>电子邮件</h3><p>电子邮件是一个封闭的系统，一般的研究人员很难得到用户的联系人列表和用户之间的来往信件。所以对电子邮件中社交关系的研究集中在一些有大型电子邮件系统的公司中。</p>
+<p>如果我们获得了用户的邮箱，也可以通过邮箱后缀得到一定的社交关系信息。一般来说，邮箱名是name@xxx.xxx的格式。如果用户用的是公司邮箱，那么我们可以根据后缀知道哪些用户是同一家公司的。同一家公司的用户可能互相认识，因而我们也可以获得一种隐性的社交关系。正是由于电子邮件系统包含了用户的大量社交信息，很多社交网站都在用户注册时提供了让用户从电子邮件联系人中导入好友关系的功能，<strong>用以解决社交网络的冷启动问题</strong>。</p>
+<h3 id="用户注册信息"><a href="#用户注册信息" class="headerlink" title="用户注册信息"></a>用户注册信息</h3><p>有些网站需要用户在注册时填写一些诸如公司、学校等信息。有了这些信息后，我们就可以知道哪些用户曾经在同一家公司工作过，哪些用户曾经在同一个学校学习过。这也是一种隐性的社交网络数据。</p>
+<h3 id="用户的位置数据"><a href="#用户的位置数据" class="headerlink" title="用户的位置数据"></a>用户的位置数据</h3><p>对于手机等移动设备，我们可以拿到更详细的GPS数据。位置信息也是一种反映用户社交关系的数据。一般来说，在给定位置信息后，可以通过查表知道用户访问时的地址。这种地址在某些时候不太精确，只能精确到城市级别，但在有些时候可以精确到学校里的某栋宿舍楼或者某家公司。那么，我们也可以合理地假设同一栋宿舍楼或同一家公司的用户可能有好友关系。</p>
+<h3 id="论坛和讨论组"><a href="#论坛和讨论组" class="headerlink" title="论坛和讨论组"></a>论坛和讨论组</h3><p>如果两个用户同时加入了很多不同的小组，我们可以认为这两个用户很可能互相了解或者具有相似的兴趣。如果两个用户在讨论组中曾经就某一个帖子共同进行过讨论，那就更加说明他们之间的熟悉程度或兴趣相似度很高。</p>
+<h3 id="即时聊天工具"><a href="#即时聊天工具" class="headerlink" title="即时聊天工具"></a>即时聊天工具</h3><p>用户在即时聊天工具上有一个联系人列表，而且往往会给联系人进行分组。通过这个列表和分组信息，我们就可以知道用户的社交网络关系，而通过统计用户之间聊天的频繁程度，可以度量出用户之间的熟悉程度。</p>
+<p>但是，即时聊天工具是一个封闭的系统，获取用户的即时聊天信息是非常困难的，这里面存在着很多隐私问题。一般来说，绝大部分用户不会公开他们的联系人列表和聊天记录。</p>
+<h3 id="社交网络"><a href="#社交网络" class="headerlink" title="社交网络"></a>社交网络</h3><p>社交网络允许用户创建一个公开的页面介绍自己，并且默认公开用户的好友列表（当然用户可以指定不将某些好友公开，但如果用户不指定，默认是公开的），而用户基于它们讨论的话题也很少涉及个人隐私，大都是讨论一些社会热点或分享一些图片、音乐、视频和笑话。</p>
+<h4 id="社会图谱和兴趣图谱"><a href="#社会图谱和兴趣图谱" class="headerlink" title="社会图谱和兴趣图谱"></a>社会图谱和兴趣图谱</h4><p>以Facebook为代表的社交网络称为社会图谱（social graph），而以Twitter为代表的社交网络称为兴趣图谱（interest graph）。</p>
+<p>一般认为，Facebook中的绝大多数用户联系基于社会图谱，而Twitter中的绝大多数用户联系基于兴趣图谱。但是，在Twitter 或者微博中，我们也会关注现实中的亲朋好友，在Facebook中我们也会和部分好友有同样的兴趣。</p>
+<h2 id="社会网络数据简介"><a href="#社会网络数据简介" class="headerlink" title="社会网络数据简介"></a>社会网络数据简介</h2><p>我们用图 $\text{G}(V,E,w)$ 定义一个社交网络，其中是$V$顶点集合，每个顶点代表一个用户，$E$是边集合，如果用户$v_a$和$v_b$有社交网络关系，那么就有一条边 $e(v_a,v_b)$ 连接这两个用户，而 $w(v_a,v_b)$ 定义了边的权重。</p>
+<p>业界有两种著名的社交网络。一种以Facebook为代表，它的朋友关系是需要双向确认的，因此在这种社交网络上可以用无向边连接有社交网络关系的用户。另一种以Twitter为代表，它的朋友关系是单向的，因此可以用有向边代表这种社交网络上的用户关系。</p>
+<p>此外，对图G中的用户顶点$u$，定义$\text{out}(u)$为顶点$u$指向的顶点集合（如果套用微博中的术语，$\text{out}(u)$就是用户u关注的用户集合），定义$\text{in}(u)$为指向顶点u的顶点集合（也就是关注用户u的用户集合）。在Facebook这种无向社交网络中显然有$\text{out}(u)=\text{in}(u)$。</p>
+<p>一般来说，<strong>有3种不同的社交网络数据</strong>。</p>
+<ul>
+<li><strong>双向确认的社交网络数据</strong> 在以Facebook和人人网为代表的社交网络中，用户A和B之间形成好友关系需要通过双方的确认。因此，这种社交网络一般可以通过无向图表示。</li>
+<li><p><strong>单向关注的社交网络数据</strong> 在以Twitter和新浪微博为代表的社交网络中，用户A可以关注用户B而不需要得到用户B的允许，因此这种社交网络中的用户关系是单向的，可以通过有向图表示。</p>
+</li>
+<li><p><strong>基于社区的社交网络数据</strong> 用户之间并没有明确的关系，但是这种数据包含了用户属于不同社区的数据。比如豆瓣小组，属于同一个小组可能代表了用户兴趣的相似性。</p>
+</li>
+</ul>
+<h3 id="社交网络数据中的长尾分布"><a href="#社交网络数据中的长尾分布" class="headerlink" title="社交网络数据中的长尾分布"></a>社交网络数据中的长尾分布</h3><p>社交网络中用户的入度（in degree）和出度（out degree）的分布也是满足长尾分布的。</p>
+<img src="/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511110431717.png" class title="图片">
+<img src="/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511110437571.png" class title="图片">
+<h2 id="基于社交网络的数据"><a href="#基于社交网络的数据" class="headerlink" title="基于社交网络的数据"></a>基于社交网络的数据</h2><p>社会化推荐有如下<strong>优点</strong>。</p>
+<ul>
+<li><p><strong>好友推荐可以增加推荐的信任度</strong> 好友往往是用户最信任的。同样是给用户推荐《天龙八部》，基于物品的协同过滤算法会说是因为用户之前看过《射雕英雄传》。而好友推荐会说是因为用户有8个好友都非常喜欢《天龙八部》。对比这两种解释，第二种解释一般能让用户更加心动，从而购买或者观看《天龙八部》。</p>
+</li>
+<li><p><strong>社交网络可以解决冷启动问题</strong> 当一个新用户通过微博或者Facebook账号登录网站时，我们可以从社交网站中获取用户的好友列表，然后给用户推荐好友在网站上喜欢的物品。从而我们可以在没有用户行为记录时就给用户提供较高质量的推荐结果，部分解决了推荐系统的冷启动问题。</p>
+</li>
+</ul>
+<p>当然，社会化推荐也有一些<strong>缺点</strong>，其中最主要的就是很多时候并不一定能提高推荐算法的离线精度（准确率和召回率）。特别是在基于社会图谱数据的推荐系统中，因为用户的好友关系不是基于共同兴趣产生的，所以用户好友的兴趣往往和用户的兴趣并不一致。</p>
+<h3 id="基于邻域的社会化推荐算法"><a href="#基于邻域的社会化推荐算法" class="headerlink" title="基于邻域的社会化推荐算法"></a>基于邻域的社会化推荐算法</h3><p>如果给定一个社交网络和一份用户行为数据集。其中社交网络定义了用户之间的好友关系， 而用户行为数据集定义了不同用户的历史行为和兴趣数据。那么我们想到的最简单算法是给用户推荐好友喜欢的物品集合。即用户u对物品i的兴趣 $p_{u i}$ 可以通过如下公式计算。</p>
+<script type="math/tex; mode=display">
+p_{u i}=\sum_{v \in \operatorname{out}(u)} r_{v i}</script><p>其中$\text{out}(u)$是用户u的好友集合，如果用户 $\mathrm{v}$ 喜欢物品 $\mathrm{i}$, 则 $r_{v i}=1$，否则 $r_{v i}=0$ 。不过, 即使都是用户 $\mathrm{u}$ 的好友，不同的好友和用户 $\mathrm{u}$ 的熟悉程度和兴趣相似度也是不同的。因此，我们应该在推荐算法中考虑好友和用户的熟悉程度以及兴趣相似度:</p>
+<script type="math/tex; mode=display">
+p_{u i}=\sum_{v \in \text { out }(u)} w_{u v} r_{v i}</script><p>这里, $w_{u v}$ <strong>由两部分相似度构成</strong>，一部分是用户 $\mathrm{u}$ 和用户 $\mathrm{v}$ 的熟悉程度，另一部分是用户 $\mathrm{u}$ 和用户v的兴趣相似度。用户 $\mathrm{u}$ 和用户v的熟悉程度（familiarity）描述了用户 $\mathrm{u}$ 和用户v在现实社会中的熟悉程度。熟悉度可以用用户之间的共同好友比例来度量，也就是说如果用户 $\mathrm{u}$ 和用户 $\mathrm{v}$ 很熟悉，那么一般来说他们应该有很多共同的好友。</p>
+<script type="math/tex; mode=display">
+\operatorname{familiarity}(u, v)=\frac{|\operatorname{out}(u) \cap \operatorname{out}(v)|}{|\operatorname{out}(u) \bigcup \operatorname{out}(v)|}</script><p>除了熟悉程度，还需要考虑兴趣相似度 ( similarity )，而兴趣相似度可以通过和UserCF类似的方法度量，即如果两个用户喜欢的物品集合重合度很高，两个用户的兴趣相似度很高。</p>
+<script type="math/tex; mode=display">
+\operatorname{similiarity}(u, v)=\frac{|N(u) \cap N(v)|}{|N(u) \cup N(v)|}</script><p>其中 $N(u)$ 是用户 $\mathrm{u}$ 喜欢的物品集合。</p>
+<p>下面的代码实现社会化推荐的逻辑。在代码中，<code>familiarity</code>存储了每个用户最熟悉的K个好友和他们的熟悉程度，<code>similarity</code>存储了和每个用户兴趣最相关的K个好友和他们的兴趣相似度。<code>train</code>记录了每个用户的行为记录，其中<code>train[u]</code>记录了用户u喜欢的物品列表。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">def Recommend(uid, familiarity, similarity, train):</span><br><span class="line">	rank = dict()</span><br><span class="line">	interacted_items = train[uid]</span><br><span class="line">	# 用户熟悉度 fw</span><br><span class="line">	for fid, fw in familiarity[uid]:</span><br><span class="line">		for item, pw in train[fid]:</span><br><span class="line">			# if user has already know the item </span><br><span class="line">			# do not recommend it</span><br><span class="line">			if item in interacted_items:</span><br><span class="line">				continue</span><br><span class="line">			addToDict (rank, item, fw * pw)</span><br><span class="line">	</span><br><span class="line">    # 用户相似度 sw</span><br><span class="line">	for vid, sw in similarity[uid]:</span><br><span class="line">		for item, pw in train[vid]:</span><br><span class="line">			if item in interacted items:</span><br><span class="line">				continue</span><br><span class="line">			addToDict(rank,item,sw * pw)</span><br><span class="line">	return rank</span><br></pre></td></tr></table></figure>
+<h3 id="基于图的社会化推荐算法"><a href="#基于图的社会化推荐算法" class="headerlink" title="基于图的社会化推荐算法"></a>基于图的社会化推荐算法</h3><p>用户的社交网络可以表示为社交网络图，用户对物品的行为可以表示为用户物品二分图，而这两种图可以结合成一个图。图上有用户顶点（圆圈）和物品顶点（方块）两种顶点。如果用户u对物品i产生过行为，那么两个节点之间就有边相连。</p>
+<img src="/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511113238489.png" class title="图片">
+<p>在定义完图中的顶点和边后，需要定义边的权重。其中用户和用户之间边的权重可以定义为用户之间相似度的$\alpha$倍 (包括熟悉程度和兴趣相似度)，而用户和物品之间的权重可以定义为用户对物品喜欢程度的$\beta$倍。$\alpha$和$\beta$需要根据应用的需求确定。如果我们希望用户好友的行为对推荐结果产生比较大的影响，那么就可以选择比较大的$\alpha$。相反，如果我们希望用户的历史行为对推荐结果产生比较大的影响，就可以选择比较大的$\beta$。</p>
+<p>在定义完图中的顶点、边和边的权重后，我们就可以利用PersonalRank图排序算法给每个用户生成推荐结果。</p>
+<p>在社交网络中，还有一种关系，即两个用户属于同一个社群。Quan Yuan等详细研究了这两种社交网络关系”，他们将第一种社交网络关系称为friendship，而将第二种社交网络关系称为membership。如果要在前面提到的基于邻域的社会化推荐算法中考虑membership的社交关系，可以利用两个用户加入的社区重合度计算用户相似度，然后给用户推荐和他相似的用户喜欢的物品。如下图所示，可以加入一种节点表示社群（最左边一列的节点），而如果用户属于某一社群，图中就有一条边联系用户对应的节点和社群对应的节点。在建立完图模型后，我们就可以通过基于图的推荐算法（比如PersonalRank）给用户推荐物品。</p>
+<img src="/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511113559789.png" class title="图片">
+<h3 id="实际系统中的社会化推荐算法"><a href="#实际系统中的社会化推荐算法" class="headerlink" title="实际系统中的社会化推荐算法"></a>实际系统中的社会化推荐算法</h3><p>因为大型网站中用户数目非常庞大，用户的历史行为记录也非常庞大，所以不太可能将用户的所有行为都缓存在内存中，只能在数据库前做一个热数据的缓存。而如果我们需要比较实时的数据，这个缓存中的数据就要比较频繁地更新，因而避免不了数据库的查询，而数据库查询一般是很慢的。</p>
+<p>所以，我们需要从几个方面改进基于邻域的社会化推荐算法，让它能够具有比较快的响应时间。<strong>改进的方向有两种</strong>，<strong>一种是做两处截断</strong>。第一处截断就是在拿用户好友集合时并不拿出用户所有的好友，而是只拿出和用户相似度最高的N个好友，这里N可以取一个比较小的数，从而给该用户做推荐时可以只查询N次用户历史行为接口。此外，在查询每个用户的历史行为时，可以只返回用户最近1个月的行为，这样就可以在用户行为缓存中缓存更多用户的历史行为数据，从而加快查询用户历史行为接口的速度。此外，还可以牺牲一定的实时性，降低缓存中用户行为列表过期的频率。</p>
+<p>而<strong>第二种解决方案需要重新设计数据库</strong>。通过前面的分析可以发现，社会化推荐中关键的操作就是拿到用户所有好友的行为数据，然后通过一定的聚合展示给用户。如果对照一下微博，我们就可以发现微博中每个用户都有一个信息墙，这个墙上实时展示着用户关注的所有好友的动态。因此，如果能够实现这个信息墙，就能够实现社会化推荐算法。Twitter的解决方案是给每个用户维护一个消息队列（message queue ），当一个用户发表一条微博时，所有关注他的用户的消息队列中都会加入这条微博。</p>
+<p>这个实现的<strong>优点</strong>是用户获取信息墙时可以直接读消息队列，所以终端用户的读操作很快。</p>
+<p>这个实现也有<strong>缺点</strong>，当一个用户发表了一条微博，就会触发很多写操作，因为要更新所有关注他的用户的消息队列，特别是当一个人被很多人关注时，就会有大量的写操作。Twitter通过大量的缓存解决了这一问题。</p>
+<p>如果将Twitter的架构搬到社会化推荐系统中，我们就可以<strong>按照如下方式设计系统</strong>：</p>
+<ul>
+<li>首先，为每个用户维护一个消息队列，用于存储他的推荐列表；</li>
+<li>当一个用户喜欢一个物品时，就将（物品ID、用户ID和时间）这条记录写入关注该用户的推荐列表消息队列中；</li>
+<li>当用户访问推荐系统时，读出他的推荐列表消息队列，对于这个消息队列中的每个物品，重新计算该物品的权重。计算权重时需要考虑物品在队列中出现的次数，物品对应的用户和当前用户的熟悉程度、物品的时间戳。同时，计算出每个物品被哪些好友喜欢过，用这些好友作为物品的推荐解释。</li>
+</ul>
+<h3 id="社会化推荐系统和协同过滤推荐系统"><a href="#社会化推荐系统和协同过滤推荐系统" class="headerlink" title="社会化推荐系统和协同过滤推荐系统"></a>社会化推荐系统和协同过滤推荐系统</h3><p>很多社交网站（特别是基于社会图谱的社交网站）中具有好友关系的用户并不一定有相似的兴趣。因此，利用好友关系有时并不能增加离线评测的准确率和召回率。所以，很多研究人员<strong>利用用户调查和在线实验的方式评测社会化推荐系统</strong>。</p>
+<blockquote>
+<p>相关文献：①参见”Recommendations in Taste Related Domains: Collaborative Filtering vs. Social Filtering”，2007年。②参见”Comparing Recommendations Made by Online Systems and Friends”，2001年。</p>
+</blockquote>
+<h3 id="信息流推荐"><a href="#信息流推荐" class="headerlink" title="信息流推荐"></a>信息流推荐</h3><p>信息流的个性化推荐要解决的问题就是如何进一步帮助用户从信息墙上挑选有用的信息。</p>
+<p>目前最流行的信息流推荐算法是Facebook的EdgeRank，该算法综合考虑了信息流中每个会话的时间、长度与用户兴趣的相似度。EdgeRank算法比较神秘，没有相关的论文，不过TechCrunch曾经公开过它的主要思想。Facebook将其他用户对当前用户信息流中的会话产生过行为的行为称为edge，而一条会话的权重定义为∶</p>
+<script type="math/tex; mode=display">
+\sum\limits_{\text{edges}\ e}u_ew_ed_e</script><p>其中∶</p>
+<ul>
+<li>$u$指产生行为的用户和当前用户的相似度，这里的相似度主要是在社交网络图中的熟悉度；</li>
+<li><p>$w$指行为的权重，这里的行为包括创建、评论、like（喜欢）、打标签等，不同的行为有不同的权重。</p>
+</li>
+<li><p>$d$。指时间衰减参数，越早的行为对权重的影响越低。</p>
+</li>
+</ul>
+<p>从上面的描述中可以得出如下结论：如果一个会话被你熟悉的好友最近产生过重要的行为，它就会有比较高的权重。</p>
+<p>不过，EdgeRank算法的个性化因素仅仅是好友的熟悉度，它并没有考虑帖子内容和用户兴趣的相似度。所以EdgeRank仅仅考虑了“我”周围用户的社会化兴趣，而没有重视”我“个人的个性化兴趣。为此，GroupLens的研究人员Jilin Chen深入研究了信息流推荐中社会兴趣和个性化兴趣之间的关系。他们的排名算法考虑了如下因素。</p>
+<ul>
+<li><p><strong>会话的长度</strong> 越长的会话包括越多的信息。</p>
+</li>
+<li><p><strong>话题相关性</strong> 度量了会话中主要话题和用户兴趣之间的相关性。这里Jilin Chen用了简单的TF-IDF建立用户历史兴趣的关键词向量和当前会话的关键词向量，然后用这两个向量的相似度度量话题相关性。</p>
+</li>
+<li><p><strong>用户熟悉程度</strong> 主要度量了会话中涉及的用户（比如会话的创建者、讨论者等）和当前用户的熟悉程度。计算熟悉度的主要思想是考虑用户之间的共同好友数等。</p>
+</li>
+</ul>
+<p>为了验证算法的性能，Jilin Chen同样也设计了一个用户调查。首先，他通过问卷将用户分成两种类型。第一种类型的用户使用Twitter的目的是寻找信息，也就是说他们将Twitter看做一种信息源和新闻媒体。而第二种用户使用Twitter的目的是了解好友的最新动态以及和好朋友聊天。然后，他让参试者对如下5种算法的推荐结果给出1~5分的评分，其中1分表示不喜欢，5分表示最喜欢。</p>
+<ul>
+<li><strong>Random</strong> 给用户随机推荐会话。</li>
+<li><strong>Length</strong> 给用户推荐比较长的会话。</li>
+<li><strong>Topic</strong> 给用户推荐和他兴趣相关的会话。</li>
+<li><p><strong>Tie</strong> 给用户推荐和他熟悉的好友参与的会话。</p>
+</li>
+<li><p><strong>Topic+Tie</strong> 综合考虑会话和用户的兴趣相关度以及用户好友参与会话的程度。</p>
+</li>
+</ul>
+<p>通过收集用户反馈，Jilin Chen发现：</p>
+<p>对于所有用户不同算法的平均得分是：Topic+Tie &gt; Tie &gt; Topic &gt; Length &gt; Random</p>
+<p>而对于主要目的是寻找信息的用户，不同算法的得分是：</p>
+<p>Topic+Tie ≥ Topic &gt; Length &gt; Tie &gt; Random </p>
+<p>对于主要目的是交友的用户，不同算法的得分是：</p>
+<p>Topic+Tie &gt;Tie &gt; Topic &gt; Length &gt;Random</p>
+<p>实验结果说明，综合考虑用户的社会兴趣和个人兴趣对于提高用户满意度是有帮助的。因此，当我们在—个社交网站中设计推荐系统时，可以综合考虑这两个因素，找到最合适的融合参数来融合用户的社会兴趣和个人兴趣，从而给用户提供最令他们满意的推荐结果。</p>
+<img src="/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511120059466.png" class title="图片">
+<h2 id="给用户推荐好友"><a href="#给用户推荐好友" class="headerlink" title="给用户推荐好友"></a>给用户推荐好友</h2><p>好友推荐系统的目的是根据用户现有的好友、用户的行为记录给用户推荐新的好友，从而增加整个社交网络的稠密程度和社交网站用户的活跃度。</p>
+<p>好友推荐算法在社交网络上被称为链接预测（ link prediction ）</p>
+<h3 id="基于内容的匹配"><a href="#基于内容的匹配" class="headerlink" title="基于内容的匹配"></a>基于内容的匹配</h3><p>我们可以给用户推荐和他们有相似内容属性的用户作为好友，下面给出了常用的内容属性。</p>
+<ul>
+<li>用户人口统计学属性，包括年龄、性别、职业、毕业学校和工作单位等。</li>
+<li>用户的兴趣，包括用户喜欢的物品和发布过的言论等。</li>
+<li>用户的位置信息，包括用户的住址、IP地址和邮编等。</li>
+</ul>
+<h3 id="基于共同兴趣的好友推荐"><a href="#基于共同兴趣的好友推荐" class="headerlink" title="基于共同兴趣的好友推荐"></a>基于共同兴趣的好友推荐</h3><p>在Twitter和微博为代表的以兴趣图谱为主的社交网络中，需要给用户推荐和他有共同兴趣的其他用户作为好友。</p>
+<p>在Facebook中，因为有大量用户Like（喜欢）的数据，所以更容易用UserCF算法计算用户的兴趣相似度。</p>
+<p>此外，也可以根据用户在社交网络中的发言提取用户的兴趣标签，来计算用户的兴趣相似度。</p>
+<h3 id="基于社交网络图的好友推荐"><a href="#基于社交网络图的好友推荐" class="headerlink" title="基于社交网络图的好友推荐"></a>基于社交网络图的好友推荐</h3><p>在社交网站中，我们会获得用户之间现有的社交网络图，然后可以基于现有的社交网络给用户推荐新的好友，比如可以给用户推荐好友的好友。</p>
+<p>最简单的好友推荐算法是给用户推荐好友的好友。</p>
+<p>基于好友的好友推荐算法可以用来给用户推荐他们在现实社会中互相熟悉，而在当前社交网络中没有联系的其他用户，下面将介绍3种基于社交网络的好友推荐算法。<br>对于用户 $\mathrm{u}$ 和用户 $\mathrm{v}$, 我们可以用共同好友比例计算他们的相似度:</p>
+<script type="math/tex; mode=display">
+w_{\text {out }}(u, v)=\frac{|\operatorname{out}(u) \bigcap \operatorname{out}(v)|}{\sqrt{|\operatorname{out}(u)||\operatorname{out}(v)|}}</script><p>下面的代码实现了这种相似度：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def FriendSuggestion(user, G, GT):</span><br><span class="line">	suggestions = dict()</span><br><span class="line">	friends = G[user]</span><br><span class="line">	for fid in G[user]:</span><br><span class="line">		for ffid in GT[fid]:</span><br><span class="line">			if ffid in friends:</span><br><span class="line">            	continue</span><br><span class="line">			if ffid not in suggestions:</span><br><span class="line">				suggestions[ffid] = 0</span><br><span class="line">			suggestions[ffid] += 1</span><br><span class="line">	suggestions =(x: y / math.sqrt(len(G[user]) * len(G[x])) for x,y in suggestions&#125;</span><br></pre></td></tr></table></figure>
+<p>$w_{\text {out }}(u, v)$ 公式中$\text{out}(u)$是在社交网络图中用户 $\mathrm{u}$ 指向的其他好友的集合。我们也可以定义in $(u)$ 是在社交网络图中指向用户 $\mathrm{u}$ 的用户的集合。在无向社交网络图中，$\operatorname{out}(u)$ 和 $\operatorname{in}(u)$ 是相同的集合。 但在微博这种有向社交网络中，这两个集合就不同了，因此也可以通过$\text{in}(u)$定义另一种相似度：</p>
+<script type="math/tex; mode=display">
+w_{\text {in }}(u, v)=\frac{|\operatorname{in}(u) \bigcap \operatorname{in}(v)|}{\sqrt{|\operatorname{in}(u)||\operatorname{in}(v)|}}</script><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def FriendSuggestion (user, G, GT):</span><br><span class="line">	sugqestion3 = dict()</span><br><span class="line">	friends = GT[user]</span><br><span class="line">	for fid in GT[user]:</span><br><span class="line">		for ffid in G[fid]:</span><br><span class="line">			if ffid in friends:</span><br><span class="line">				continue</span><br><span class="line">			if ffid not in suggestions:</span><br><span class="line">				suggestions[ffid] = 0</span><br><span class="line">			Suggestions [ffid] += 1</span><br><span class="line">	suggestions=(x: y / math.sqrt(len(GT[user]) * len(GT[x])) for x,y in suggestions&#125;</span><br></pre></td></tr></table></figure>
+<p>这两种相似度的定义有着不同的含义, 我们用微博中的关注来解释这两种相似度。如果用户 $\mathrm{u}$ 关注了用户 $\mathrm{v}$，那么 $\mathrm{v}$ 就属于$\operatorname{out}(u)$，而 $u$ 就属于 $\mathrm{in}(v)$ 。因此，$w_{\text {out }}(u, v)$ 越大表示用户 $\mathrm{u}$ 和 $\mathrm{v}$ 关注的 用户集合重合度越大，而 $w_{\text {in }}(u, v)$ 越大表示关注用户 $\mathrm{u}$ 和关注用户 $\mathrm{v}$ 的用户的集合重合度越大。<br>前面两种相似度都是对称的，也就是 $w_{\text {in }}(u, v)=w_{\text {in }}(v, u), w_{\text {out }}(u, v)=w_{\text {out }}(v, u)$ 。同时，我们还可以定义第三种有向的相似度：</p>
+<script type="math/tex; mode=display">
+w_{\text {outin }}(u, v)=\frac{|\operatorname{out}(u) \bigcap \operatorname{in}(v)|}{|\operatorname{out}(u)|}</script><p>这个相似度的含义是用户 $\mathrm{u}$ 关注的用户中，有多大比例也关注了用户 $\mathrm{v}$ 。但是，这个相似度有一个缺点, 就是在该相似度的定义下所有人都和名人有很大的相似度。这是因为这个相似度在分 母的部分没有考虑 $|\operatorname{in}(v)|$ 的大小。因此，我们可以用如下公式改进上面的相似度：</p>
+<script type="math/tex; mode=display">
+w_{\text {out,in }}^{\prime}(u, v)=\frac{|\operatorname{out}(u) \bigcap \operatorname{in}(v)|}{\sqrt{|\operatorname{out}(u)||\operatorname{in}(v)|}}</script><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def FriendSuggestion (user, G, GT):</span><br><span class="line">	suggestions = dict()</span><br><span class="line">	friends = GT[user]</span><br><span class="line">	for fid in GT[user]:</span><br><span class="line">		for ffid in G[fid]:</span><br><span class="line">			if ffid in friends:</span><br><span class="line">				continue</span><br><span class="line">			if ffid not in suggestions:</span><br><span class="line">				suggestions[ffid] = 0</span><br><span class="line">			suggestions[ffid] += 1</span><br><span class="line">	suggestions = &#123;x: y / math.sqrt(len(GT[user]) * len(GT[x])) for x, y in suggestions&#125;</span><br></pre></td></tr></table></figure>
+<p>前面讨论的这些相似度都是基于一些简单计算公式给出的。这些相似度的计算无论时间复杂度还是空间复杂度都不是很高，非常适合在线应用使用。</p>
+<h4 id="离线实验"><a href="#离线实验" class="headerlink" title="离线实验"></a>离线实验</h4><p>为了测试不同好友推荐算法的性能，本节将数据集按照9:1分成训练集和测试集。然后，给定用户u，我们会利用训练集中的社交网络给用户生成长度为10的好友排荐列表$R(u)$，其中$R(u)$中的用户不包含用户在训练集中的好友。</p>
+<img src="/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511121609948.png" class title="图片">
+<p>从表中结果可以看到，不同数据集上不同算法的性能并不相同。在Slashdot数据集上$w_{\text {out }}$取得了最好的性能，而在Epinion数据集上$w_{\text {out,in }}$取得了最好的性能。所以，在实际系统中我们需要在自己的数据集上对比不同的算法，找到最适合自己数据集的好友推荐算法。</p>
+<h3 id="基于用户调查的好友推荐算法对比"><a href="#基于用户调查的好友推荐算法对比" class="headerlink" title="基于用户调查的好友推荐算法对比"></a>基于用户调查的好友推荐算法对比</h3><p>对于好友推荐算法，GroupLens的Jilin Chen也进行了研究，他通过用户调查对比了不同算法的用户满意度”，其中算法（这里我们使用了不同的命名）如下。</p>
+<ul>
+<li><strong>InterestBased</strong> 给用户推荐和他兴趣相似的其他用户作为好友。</li>
+<li><strong>SocialBased</strong>  基于社交网络给用户推荐他好友的好友作为好友。</li>
+<li><p><strong>Interest+Social</strong> 将InterestBased算法推荐的好友和SocialBased算法推荐的好友按照一定权重融合。</p>
+</li>
+<li><p><strong>SONA</strong> SONA是IBM内部的推荐算法，该算法利用大量用户信息建立了IBM员工之间的社交网络。这些信息包括所在的部门、共同发表的文章、共同写的Wiki、IBM的内部社交网络信息、共同合作的专利等。</p>
+</li>
+</ul>
+<p>然后，Jilin Chen在IBM数据的基础上用上述算法建立4种不同的好友推荐系统，然后给每个参加测试的用户提供12个推荐结果，其中每个算法提供了3个推荐结果。也就是说，参试者并不知道每个结果来自哪个算法。然后，Jilin Chen让参试者对每个推荐结果回答以下4个问题。</p>
+<ul>
+<li><p>你是否认识这个人</p>
+</li>
+<li><p>你是否觉得这是一个好的推荐结果□ 你是否觉得推荐理由能够帮助你决策?</p>
+</li>
+<li><p>看到这个推荐结果后你决定进行以下哪种行为（单选）∶</p>
+<ul>
+<li><p>主动和这个人交朋友；</p>
+</li>
+<li><p>希望别人能够向这个人介绍自己</p>
+</li>
+<li>什么也不干。</li>
+</ul>
+</li>
+</ul>
+<p>调查结果如下表所示。</p>
+<img src="/2022/05/11/%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/image-20220511130758969.png" class title="图片">
+<p>首先，从结果可以发现，对推荐结果的新颖性不同算法的排名如下：InterestBased&gt;Interest+Social&gt;SocialBased&gt;SONA</p>
+<p>SONA因为用到了部门信息、共同写论文和发表专利的信息，所以推挥的好友大部分都是用户认识的，因此新颖度不高。</p>
+<p>其次，结果表明如果用户认识推荐结果中的人，那么绝大部分用户都会觉得这是一个好的推荐结果，而如果用户不认识推荐结果中的人，绝大多数人都觉得推荐结果不好。</p>
+<p>从用户认为推荐结果是否好的比例看，不同算法的排名如下：SONA &gt; SocialBased &gt; Interest+Social &gt; InterestBased</p>
+<p>SONA排名不高是因为它综合了更多的信息。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/markdown/" rel="tag"># markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/10/%E5%88%A9%E7%94%A8%E4%B8%8A%E4%B8%8B%E6%96%87%E4%BF%A1%E6%81%AF/" rel="prev" title="利用上下文信息">
+      <i class="fa fa-chevron-left"></i> 利用上下文信息
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE"><span class="nav-number">1.</span> <span class="nav-text">利用社交网络数据</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE%E7%9A%84%E9%80%94%E5%BE%84"><span class="nav-number">1.1.</span> <span class="nav-text">获取社交网络数据的途径</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%B5%E5%AD%90%E9%82%AE%E4%BB%B6"><span class="nav-number">1.1.1.</span> <span class="nav-text">电子邮件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%B3%A8%E5%86%8C%E4%BF%A1%E6%81%AF"><span class="nav-number">1.1.2.</span> <span class="nav-text">用户注册信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%9A%84%E4%BD%8D%E7%BD%AE%E6%95%B0%E6%8D%AE"><span class="nav-number">1.1.3.</span> <span class="nav-text">用户的位置数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BA%E5%9D%9B%E5%92%8C%E8%AE%A8%E8%AE%BA%E7%BB%84"><span class="nav-number">1.1.4.</span> <span class="nav-text">论坛和讨论组</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%B3%E6%97%B6%E8%81%8A%E5%A4%A9%E5%B7%A5%E5%85%B7"><span class="nav-number">1.1.5.</span> <span class="nav-text">即时聊天工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C"><span class="nav-number">1.1.6.</span> <span class="nav-text">社交网络</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BE%E4%BC%9A%E5%9B%BE%E8%B0%B1%E5%92%8C%E5%85%B4%E8%B6%A3%E5%9B%BE%E8%B0%B1"><span class="nav-number">1.1.6.1.</span> <span class="nav-text">社会图谱和兴趣图谱</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A4%BE%E4%BC%9A%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE%E7%AE%80%E4%BB%8B"><span class="nav-number">1.2.</span> <span class="nav-text">社会网络数据简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE%E4%B8%AD%E7%9A%84%E9%95%BF%E5%B0%BE%E5%88%86%E5%B8%83"><span class="nav-number">1.2.1.</span> <span class="nav-text">社交网络数据中的长尾分布</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="nav-number">1.3.</span> <span class="nav-text">基于社交网络的数据</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E9%82%BB%E5%9F%9F%E7%9A%84%E7%A4%BE%E4%BC%9A%E5%8C%96%E6%8E%A8%E8%8D%90%E7%AE%97%E6%B3%95"><span class="nav-number">1.3.1.</span> <span class="nav-text">基于邻域的社会化推荐算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%9A%84%E7%A4%BE%E4%BC%9A%E5%8C%96%E6%8E%A8%E8%8D%90%E7%AE%97%E6%B3%95"><span class="nav-number">1.3.2.</span> <span class="nav-text">基于图的社会化推荐算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E7%A4%BE%E4%BC%9A%E5%8C%96%E6%8E%A8%E8%8D%90%E7%AE%97%E6%B3%95"><span class="nav-number">1.3.3.</span> <span class="nav-text">实际系统中的社会化推荐算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BE%E4%BC%9A%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%92%8C%E5%8D%8F%E5%90%8C%E8%BF%87%E6%BB%A4%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.3.4.</span> <span class="nav-text">社会化推荐系统和协同过滤推荐系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%A1%E6%81%AF%E6%B5%81%E6%8E%A8%E8%8D%90"><span class="nav-number">1.3.5.</span> <span class="nav-text">信息流推荐</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%99%E7%94%A8%E6%88%B7%E6%8E%A8%E8%8D%90%E5%A5%BD%E5%8F%8B"><span class="nav-number">1.4.</span> <span class="nav-text">给用户推荐好友</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E5%8C%B9%E9%85%8D"><span class="nav-number">1.4.1.</span> <span class="nav-text">基于内容的匹配</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%85%B1%E5%90%8C%E5%85%B4%E8%B6%A3%E7%9A%84%E5%A5%BD%E5%8F%8B%E6%8E%A8%E8%8D%90"><span class="nav-number">1.4.2.</span> <span class="nav-text">基于共同兴趣的好友推荐</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E5%9B%BE%E7%9A%84%E5%A5%BD%E5%8F%8B%E6%8E%A8%E8%8D%90"><span class="nav-number">1.4.3.</span> <span class="nav-text">基于社交网络图的好友推荐</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A6%BB%E7%BA%BF%E5%AE%9E%E9%AA%8C"><span class="nav-number">1.4.3.1.</span> <span class="nav-text">离线实验</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%94%A8%E6%88%B7%E8%B0%83%E6%9F%A5%E7%9A%84%E5%A5%BD%E5%8F%8B%E6%8E%A8%E8%8D%90%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94"><span class="nav-number">1.4.4.</span> <span class="nav-text">基于用户调查的好友推荐算法对比</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/853784202@qq.com" title="E-Mail → 853784202@qq.com"><i class="lee-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+
+
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="lee"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Lee</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
