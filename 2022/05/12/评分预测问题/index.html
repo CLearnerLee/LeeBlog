@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="《推荐系统实践》(作者：项亮) 读书笔记第八章：评分预测问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="评分预测问题">
+<meta property="og:url" content="https://github.com/CLearnerLee/LeeBlog/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="AI 自学笔记">
+<meta property="og:description" content="《推荐系统实践》(作者：项亮) 读书笔记第八章：评分预测问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/image-20220512112833266.png">
+<meta property="og:image" content="https://github.com/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/image-20220512120254155.png">
+<meta property="og:image" content="https://github.com/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/image-20220512134350453.png">
+<meta property="og:image" content="https://github.com/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/image-20220512134623366.png">
+<meta property="article:published_time" content="2022-05-12T05:47:04.000Z">
+<meta property="article:modified_time" content="2022-05-12T05:49:04.782Z">
+<meta property="article:author" content="Lee">
+<meta property="article:tag" content="markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/image-20220512112833266.png">
+
+<link rel="canonical" href="https://github.com/CLearnerLee/LeeBlog/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>评分预测问题 | AI 自学笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">AI 自学笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-标签">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags - markdown fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th - 我的第一篇博客 - CS224U 笔记 fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-归档">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/CLearnerLee/LeeBlog/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="AI 自学笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          评分预测问题
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-12 13:47:04 / 修改时间：13:49:04" itemprop="dateCreated datePublished" datetime="2022-05-12T13:47:04+08:00">2022-05-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8A%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%AE%9E%E8%B7%B5%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">《推荐系统实践》读书笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="lee-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">《推荐系统实践》(作者：项亮) 读书笔记第八章：评分预测问题</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="评分预测问题"><a href="#评分预测问题" class="headerlink" title="评分预测问题"></a>评分预测问题</h1><p>评分预测问题最基本 的数据集就是用户评分数据集。该数据集由用户评分记录组成, 每一条评分记录是一个三元组 $(u, i, r)$，表示用户 $\mathrm{u}$ 给物品赋予了评分 $\mathrm{r}$，本章用 $r_{u i}$ 表示用户 $\mathrm{u}$ 对物品i的评分。因为用户不可能对所有物品都评分，因此评分预测问题就是如何通过已知的用户历史评分记录预测末知的用户评分记录。</p>
+<img src="/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/image-20220512112833266.png" class title="图片">
+<h2 id="离线实验方法"><a href="#离线实验方法" class="headerlink" title="离线实验方法"></a>离线实验方法</h2><p>评分预测问题基本都通过离线实验进行研究。</p>
+<p>在给定用户评分数据集后，研究人员会将数据集按照一定的方式分成训练集和测试集，然后根据训练集建立用户兴趣模型来预测测试集中的用户评分。对于测试集中的一对用户和物品 $(u, i)$，用户u对物品i的真实评分是 $r_{u i}$，而推荐算法预测的用户u对物品i的评分为 $\hat{r}_{u i}$，那么一般可以用均方根误差RMSE度量预测的精度：</p>
+<script type="math/tex; mode=display">
+\text { RMSE }=\sqrt{\frac{\sum_{(u, i) \in T}\left(r_{u i}-\hat{r}_{u i}\right)^{2}}{\mid \text { Test } \mid}}</script><p>评分预测的目的就是找到最好的模型最小化测试集的RMSE。<br>关于如何划分训练集和测试集：</p>
+<ul>
+<li>如果是和时间无关的预测任务，可以以均匀分布随机划分数据集，即对每个用户，随机选择一些评分记录作为训练集，剩下的记录作为测试集。</li>
+<li>如果是和时间相关的任务，那么需要将用户的旧行为作为训练集，将用户的新行为作为测试集。Netflix通过如下方式划分数据集，首先将每个用户的评分记录按照从早到晩进行排序，然后将用户最后 $10 \%$ 的评分记录作为测试集，前 $90 \%$ 的评分记录作为训练集。</li>
+</ul>
+<h2 id="评分预测算法"><a href="#评分预测算法" class="headerlink" title="评分预测算法"></a>评分预测算法</h2><h3 id="平均值"><a href="#平均值" class="headerlink" title="平均值"></a>平均值</h3><p>最简单的评分预测算法是利用平均值预测用户对物品的评分的。下面各节将分别介绍各种不 同的平均值。</p>
+<h4 id="全局平均值"><a href="#全局平均值" class="headerlink" title="全局平均值"></a>全局平均值</h4><p>在平均值里最简单的是全局平均值。它的定义为训练集中所有评分记录的评分平均值:</p>
+<script type="math/tex; mode=display">
+\mu=\frac{\sum_{(u, i) \in \operatorname{Trin}} r_{u i}}{\sum_{(u, i) \in \operatorname{Train}} 1}</script><p>而最终的预测函数可以直接定义为:</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\mu</script><h4 id="用户评分平均值"><a href="#用户评分平均值" class="headerlink" title="用户评分平均值"></a>用户评分平均值</h4><p>用户 $\mathrm{u}$ 的评分平均值 $\bar{u}_{u}$ 定义为用户 $\mathrm{u}$ 在训练集中所有评分的平均值:</p>
+<script type="math/tex; mode=display">
+\overline{r_{u}}=\frac{\sum_{i \in N(u)} r_{u i}}{\sum_{i \in N(u)}}</script><p>而最终的预测函数可以定义为:</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u t}=\bar{r}_{u}</script><h4 id="物品评分平均值"><a href="#物品评分平均值" class="headerlink" title="物品评分平均值"></a>物品评分平均值</h4><p>物品i的评分平均值 $\bar{r}_{i}$ 定义为物品 $\mathrm{i}$ 在训练集中接受的所有评分的平均值:</p>
+<script type="math/tex; mode=display">
+\bar{r}_{i}=\frac{\sum_{u \in N(i)} r_{u i}}{\sum_{u \in N(i)} 1}</script><p>而最终的预测函数可以定义为:</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\bar{r}_{i}</script><h4 id="用户分类对物品分类的平均值"><a href="#用户分类对物品分类的平均值" class="headerlink" title="用户分类对物品分类的平均值"></a>用户分类对物品分类的平均值</h4><p>假设有两个分类函数，一个是用户分类函数 $\phi$，一个是物品分类函数 $\varphi 。 \phi(u)$ 定义了用户u所属的类，$\varphi(i)$ 定义了物品i所属的类。那么，我们可以利用训练集中同类用户对同类物品评分的平均值预测用户对物品的评分，即:</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u t}=\frac{\sum_{(v, j) \in \operatorname{Train}, \phi(u)=\phi(v) . \varphi(i)=\varphi(j)} r_{v j}}{\sum_{(v, j) \in \operatorname{Train}, \phi(u)=\phi(v) . \varphi(i)=\varphi(j)} 1}</script><p>前面提出的全局平均值，用户评分平均值和物品评分平均值都是类类平均值的一种特例。</p>
+<ul>
+<li>如果定义 $\phi(u)=0, \varphi(i)=0$，那么 $\hat{r}_{u d}$ 就是全局平均值。</li>
+<li>如果定义 $\phi(u)=u, \varphi(i)=0$，那么 $\hat{r}_{u i}$ 就是用户评分平均值。</li>
+<li>如果定义 $\phi(u)=0, \varphi(i)=i$，那么 $\hat{r}_{u i}$ 就是物品评分平均值。</li>
+</ul>
+<p>除了这3种特殊的平均值，在用户评分数据上还可以定义很多不同的<strong>分类函数</strong>。</p>
+<ul>
+<li><p><strong>用户和物品的平均分</strong> 对于一个用户，可以计算他的评分平均分。然后将所有用户按照评分平均分从小到大排序，并将用户按照平均分平均分成N类。物品也可以用同样的方式分类。</p>
+</li>
+<li><p><strong>用户活跃度和物品流行度</strong> 对于一个用户，将他评分的物品数量定义为他的活跃度。得到用户活跃度之后，可以将用户通过活跃度从小到大排序，然后平均分为N类。物品的流行度定义为给物品评分的用户数目，物品也可以按照流行度均匀分成N类。</p>
+</li>
+</ul>
+<p>下面的Python代码给出了类类平均值的计算方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">def PredictAll(records, user_cluster, item_cluster):</span><br><span class="line">	total = dict()</span><br><span class="line">	count = dict()</span><br><span class="line">	for r in records:</span><br><span class="line">		if r.test != 0:</span><br><span class="line">			continue</span><br><span class="line">		gu = user_cluster.GetGroup(r.user)</span><br><span class="line">		gi = item_cluster.GetGroup(r.item)</span><br><span class="line">		basic.AddToMat(total, gu, gi, r.vote)</span><br><span class="line">		basic.AddToMat(count, gu, gi, 1)</span><br><span class="line">	for r in records:</span><br><span class="line">		gu = user_cluster.GetGroup(r.user)</span><br><span class="line">		gi = item_cluster.GetGroup(r.item)</span><br><span class="line">		average = total[gu][gi] / (1.0 * count[gu][gi] + 1.0)</span><br><span class="line">		r.predict = average</span><br></pre></td></tr></table></figure>
+<p>在这段代码中，<code>user_cluster.GetGroup</code>函数接收一个用户ID，然后根据一定的算法返回用户的类别。<code>item_cluster.GetGroup</code>函数接收一个物品的ID，然后根据一定的算法返回物品的类别。<code>total[gu][gi]/count[gu][gi]</code>记录了第<code>gu</code>类用户给第<code>gi</code>类物品评分的平均分。</p>
+<p>上文提到，<code>user_cluster</code>和<code>item_cluster</code>有很多不同的定义方式，下面的Python代码给出了不同的<code>user_cluster</code>和<code>item_cluster</code>定义方式。其中，<code>Cluster</code>是基类，对于任何用户和物品，它的<code>GetGroup</code>函数都返回0，因此如果<code>user_cluster</code>和<code>item_cluster</code>都是<code>Cluster</code>类型，那么最终的预测函数就是全局平均值。<code>IdCluster</code>的<code>GetGroup</code>函数接收一个ID，会返回这个ID，那么如果<code>user_cluster</code>是<code>Cluster</code>类型，而<code>item_cluster</code>是<code>IdCluster</code>类型，那么最终的预测函数给出的就是物品平均值。以此类推。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line">class Cluster:</span><br><span class="line">	def __init__(self, records):</span><br><span class="line">		self.group = dict()</span><br><span class="line">		</span><br><span class="line">	def GetGroup(self, i):</span><br><span class="line">		return 0</span><br><span class="line">		</span><br><span class="line">class IdCluster(Cluster):</span><br><span class="line">	def __init__(self, records):</span><br><span class="line">		Cluster.__init__(self, records)</span><br><span class="line">		</span><br><span class="line">	def GetGroup(self, i):</span><br><span class="line">		return i</span><br><span class="line">		</span><br><span class="line">class UserActivityCluster(Cluster):</span><br><span class="line">	def __init__(self, records):</span><br><span class="line">		Cluster._init___(self, records)</span><br><span class="line">		activity = dict()</span><br><span class="line">		for r in records:</span><br><span class="line">			if r.test != 0:</span><br><span class="line">				continue</span><br><span class="line">			basic.AddToDict(activity, r.user, 1)</span><br><span class="line">		k = 0</span><br><span class="line">		for user, n in sorted(activity.items(), \</span><br><span class="line">					key=itemgetter(1), reverse=False):</span><br><span class="line">			# 分成5类</span><br><span class="line">			c = int((k * 5) / (1.0 * len(activity)))</span><br><span class="line">			self.group[user] = c</span><br><span class="line">			k += 1</span><br><span class="line">			</span><br><span class="line">	def GetGroup(self, uid):</span><br><span class="line">		if uid not in self.group:</span><br><span class="line">			return -1</span><br><span class="line">		else:</span><br><span class="line">			return self.group[uid]</span><br><span class="line"></span><br><span class="line">class ItemPopularityCluster(Cluster):</span><br><span class="line">	def __init__(self, records):</span><br><span class="line">		Cluster.__init__(self, records)</span><br><span class="line">		popularity = dict()</span><br><span class="line">		for r in records:</span><br><span class="line">			if r.test != 0:</span><br><span class="line">				continue</span><br><span class="line">			basic.AddToDict(popularity, r.item, 1)</span><br><span class="line">		k = 0</span><br><span class="line">		for item, n in sorted(popularity.items(), \</span><br><span class="line">						key=itemgetter(1), reverse=False)</span><br><span class="line">			c=int((k * 5) / (1.0 * len(popularity)))</span><br><span class="line">			self.group[item] = c</span><br><span class="line">			k += 1</span><br><span class="line">			</span><br><span class="line">	def GetGroup(self, item):</span><br><span class="line">		if item not in self.group:</span><br><span class="line">			return -1</span><br><span class="line">		else:</span><br><span class="line">			return self.group[item]</span><br><span class="line"></span><br><span class="line">class UserVoteCluster(Cluster):</span><br><span class="line">	def __init__(self, records):</span><br><span class="line">		Cluster.__init__(self, records)</span><br><span class="line">		vote = dict()</span><br><span class="line">		count = dict()</span><br><span class="line">		for r in records:</span><br><span class="line">			if r.test != 0:</span><br><span class="line">				continue</span><br><span class="line">			basic.AddToDict(vote, r.user, r.vote)</span><br><span class="line">			basic.AddToDict(count, r.user, 1)</span><br><span class="line">		k = 0</span><br><span class="line">		for user, v in vote.items():</span><br><span class="line">			ave = v / (count[user] * 1.0)</span><br><span class="line">			c = int(ave * 2)</span><br><span class="line">			self.group[user] = c</span><br><span class="line"></span><br><span class="line">	def GetGroup(self, uid):</span><br><span class="line">		if uid not in self.group:</span><br><span class="line">			return -1</span><br><span class="line">		else:</span><br><span class="line">			return self.group[uid]</span><br><span class="line">			</span><br><span class="line">class ItemVoteCluster(Cluster):</span><br><span class="line">	def __init__(self, records):</span><br><span class="line">		Clustor.__init__(self, records)</span><br><span class="line">		vote = dict()</span><br><span class="line">		count = dict()</span><br><span class="line">		for r in records:</span><br><span class="line">			if r.test != 0:</span><br><span class="line">				continue</span><br><span class="line">			basic.AddToDict(vote, r.item, r.vote)</span><br><span class="line">			basic.AddToDict(count, r.item, 1)</span><br><span class="line">		k = 0</span><br><span class="line">		for item,v in vote.items():</span><br><span class="line">			ave = v / (count[item] * 1.0)</span><br><span class="line">			c = int(ave * 2)</span><br><span class="line">			self.group[item]= c</span><br><span class="line"></span><br><span class="line">	def GetGroup(self, item):</span><br><span class="line">		if item not in self.group:</span><br><span class="line">			return -1</span><br><span class="line">		else:</span><br><span class="line">			return self.group[item]</span><br></pre></td></tr></table></figure>
+<p>表8-2展示了MovieLens数据集中利用不同平均值方法得到的RMSE，实验结果表明对用户使用UserVoteCluster，对物品采用ItemVoteCluster，可以获得最小的RMSE。</p>
+<img src="/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/image-20220512120254155.png" class title="图片">
+<h3 id="基于邻域的方法"><a href="#基于邻域的方法" class="headerlink" title="基于邻域的方法"></a>基于邻域的方法</h3><p>基于用户的邻域算法和基于物品的邻域算法都可以应用到评分预测中。基于用户的邻域算法认为预测一个用户对一个物品的评分，需要参考和这个用户兴趣相似的用户对该物品的评分，即:</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\bar{r}_{u}+\frac{\sum_{v \in S(u, K) \cap N(i)} w_{u v}\left(r_{v i}-\bar{r}_{v}\right)}{\sum_{v \in S(u, K) \cap N(i)}\left|w_{u v}\right|}</script><p>这里，$S(u, K)$ 是和用户u兴趣最相似的 $K$ 个用户的集合，$N(i)$ 是对物品i评过分的用户集合，$r_{v i}$ 是用户 $\mathrm{v}$ 对物品i的评分，$\bar{r}$ 是用户v对他评过分的所有物品评分的平均值。用户之间的相似度 $w_{u v}$ 可以通过皮尔逊系数计算：</p>
+<script type="math/tex; mode=display">
+w_{u v}=\frac{\sum_{i \in I}\left(r_{u i}-\bar{r}_{u}\right) \cdot\left(r_{v i}-\bar{r}_{v}\right)}{\sqrt{\sum_{i \in I}\left(r_{u i}-\bar{r}_{u}\right)^{2} \sum_{i \in I}\left(r_{v i}-\bar{r}_{v}\right)^{2}}}</script><p>下面的Python代码实现了用户相似度的计算和最终的预测函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">def UserSimilarity(records):</span><br><span class="line">	item__users = dict()</span><br><span class="line">	ave_vote = dict()</span><br><span class="line">	activity = dict()</span><br><span class="line">	for r in records:</span><br><span class="line">		addToMat(item_users, r.item, r.user, r.value)</span><br><span class="line">		addToVec(ave_vote, r.user, r.value)</span><br><span class="line">		addToVec(activity, r.user, 1)</span><br><span class="line">	ave_vote = &#123;x: y / activity[x] for x, y in ave_vote.items()&#125;</span><br><span class="line">	nu = dict()</span><br><span class="line">	W= dict()</span><br><span class="line">	for i, ri in item_users.items():</span><br><span class="line">		for u, rui in ri.items():</span><br><span class="line">			addToVec(nu, u, (rui - ave_vote[u]) * (rui - ave_vote[u]))</span><br><span class="line">			for v, rvi in ri.items():</span><br><span class="line">				if u == v:</span><br><span class="line">					continue</span><br><span class="line">				addToMat(W, u, v, \</span><br><span class="line">						(rui - ave_vote[u]) * (rvi - ave_vote[v]))</span><br><span class="line">	for u in W:</span><br><span class="line">		W[u] = &#123;x: y / math.sqrt(nu[x] * nu[u]) for x, y in W[u].items()&#125;</span><br><span class="line">	return W</span><br><span class="line">	</span><br><span class="line">def PredictAll(records, test, ave_vote, W, K):</span><br><span class="line">	user_items = dict()</span><br><span class="line">	for r in records:</span><br><span class="line">		addToMat(user_items, r.user, r.item, r.value)</span><br><span class="line">	for r in test:</span><br><span class="line">		r.predict = 0</span><br><span class="line">		norm = 0</span><br><span class="line">		for v, wuv in sorted(W[r.user].items(), \</span><br><span class="line">					key=itemgetter(1), reverse=True)[0:K]:</span><br><span class="line">			if r.item in user_items[v]:</span><br><span class="line">				rvi = user_items[v][r.item]</span><br><span class="line">				r.predict += wuv * (rvi - ave_vote[v])</span><br><span class="line">				norm += abs(wuv)</span><br><span class="line">		if norm &gt; 0:</span><br><span class="line">			r.predict /= norm</span><br><span class="line">		r.predict += ave_vote[r.user]</span><br></pre></td></tr></table></figure>
+<p>基于物品的邻域算法在预测用户 $\mathbf{u}$ 对物品i的评分时, 会参考用户u对和物品i相似的其他物品的评分, 即:</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\bar{r}_{i}+\frac{\sum_{j \in S(i, K) \cap N(u)} w_{i j}\left(r_{u j}-\bar{r}_{j}\right)}{\sum_{j \in S(i, K) \cap N(u)}\left|w_{i j}\right|}</script><p>这里，$S(i, K)$ 是和最相似的物品集合，$N(u)$ 是用户u评过分的物品集合，$w_{i j}$ 是物品之间的相似度，$\bar{r}$ 是物品i的平均分。对于如何计算物品的相似度，Badrul Sarwar等在论文里做了详细的研究，文章比较了 3 种主要的相似度。<br>第一种是普通的余弦相似度 ( cosine similarity ):</p>
+<script type="math/tex; mode=display">
+w_{i j}=\frac{\sum_{u \in U} r_{u i} \cdot r_{u j}}{\sqrt{\sum_{u \in U} r_{u i}^{2} \sum_{u \in U} r_{u j}^{2}}}</script><p>第二种是皮尔逊系数 ( pearson correlation):</p>
+<script type="math/tex; mode=display">
+w_{i j}=\frac{\sum_{u \in U}\left(r_{u i}-\bar{r}_{i}\right) \cdot\left(r_{u j}-\bar{r}_{j}\right)}{\sqrt{\sum_{u \in U}\left(r_{u i}-\bar{r}_{i}\right)^{2} \sum_{u \in U}\left(r_{u j}-\bar{r}_{j}\right)^{2}}}</script><p>第三种被Sarwar称为修正的余弦相似度 ( adjust cosine similarity ):</p>
+<script type="math/tex; mode=display">
+w_{i j}=\frac{\sum_{u \in U}\left(r_{u i}-\bar{r}_{u}\right) \cdot\left(r_{u j}-\bar{r}_{u}\right)}{\sqrt{\sum_{u \in U}\left(r_{u i}-\bar{r}_{u}\right)^{2} \sum_{u \in U}\left(r_{u j}-\bar{r}_{u}\right)^{2}}}</script><p>Sarwar利用MovieLens最小的数据集对3种相似度进行了对比，并将MAE作为评测指标。实验结果表明利用修正后的余弦相似度进行评分预测可以获得最优的MAE。不过在一个数据集上的实验并不意味着在其他数据集上也能获得相同的结果。</p>
+<h3 id="隐语义模型与矩阵分解模型"><a href="#隐语义模型与矩阵分解模型" class="headerlink" title="隐语义模型与矩阵分解模型"></a>隐语义模型与矩阵分解模型</h3><p>用户的评分行为可以表示成一个评分矩阵 $R$，其中 $R[u][i]$ 就是用户对物品的评分。但是，用户不会对所有的物品评分，所以这个矩阵里有很多元素都是空的，这些空的元素称为缺失值 ( missing value )。因此，评分预测从某种意义上说就是填空，如果一个用户对一个物品没有评过分，那么推荐系统就要预测这个用户是否会对这个物品评分以及会评几分。</p>
+<h4 id="传统的SVD分解"><a href="#传统的SVD分解" class="headerlink" title="传统的SVD分解"></a>传统的SVD分解</h4><p>一个空的矩阵有很多种补全方法，而我们要找的是一种对矩阵扰动最小的补全方法。那么什么才算是对矩阵扰动最小呢？一般认为。如果补全后矩阵的特征值和补全之面矩阵的特征值相差不大。就算是扰动比较小。</p>
+<p>最早的矩阵分解模型是从数学上的SVD（奇异值分解）开始的。给定m个用户和n个物品，和用户对物品的评分矩阵 $R \in \mathbb{R}^{m \times n}$ 。首先需要对评分矩阵中的缺失值进行简单地补全，比如用全局平均值，或者用户/物品平均值补全，得到补全后的矩阵 $R^{\prime}$ 。接着，可以用SVD分解将 $R^{\prime}$ 分解成如下形式:</p>
+<script type="math/tex; mode=display">
+R^{\prime}=U^{T} S V</script><p>其中 $U \in \mathbb{R}^{k \times m}, V \in \mathbb{R}^{k \times n}$ 是两个正交矩阵，$S \in \mathbb{R}^{k \times k}$ 是对角阵，对角线上的每一个元素都是矩阵的奇异值。为了对 $R^{\prime}$ 进行降维，可以取最大的 $f$ 个奇异值组成对角矩阵 $S_{f}$，并且找到这 $f$ 个奇异值中 每个值在 $U 、 V$ 矩阵中对应的行和列，得到 $U_{f} 、 V_{f}$，从而可以得到一个降维后的评分矩阵：</p>
+<script type="math/tex; mode=display">
+R_{f}^{\prime}=U_{f}^{T} S_{f} V_{f}</script><p>其中，$R_{f}^{\prime}(u, i)$ 就是用户 $\mathrm{u}$ 对物品i评分的预测值。</p>
+<p>SVD分解是早期推荐系统研究常用的矩阵分解方法，不过该方法具有以下缺点，因此很难在实际系统中应用。</p>
+<ul>
+<li><p>该方法首先需要用一个简单的方法补全稀疏评分矩阵。一般来说，推荐系统中的评分矩阵是非常稀疏的，一般都有95%以上的元素是缺失的。而一旦补全，评分矩阵就会变成一个稠密矩阵，从而使评分矩阵的存储<strong>需要非常大的空间</strong>，这种空间的需求在实际系统中是不可能接受的。</p>
+</li>
+<li><p>该方法依赖的SVD分解方法的<strong>计算复杂度很高</strong>，特别是在稠密的大规模矩阵上更是非常慢。一般来说，这里的SVD分解用于1000维以上的矩阵就已经非常慢了，而实际系统动辄是上千万的用户和几百万的物品，所以这一方法无法使用。</p>
+</li>
+</ul>
+<h4 id="Simon-Funk的SVD分解"><a href="#Simon-Funk的SVD分解" class="headerlink" title="Simon Funk的SVD分解"></a>Simon Funk的SVD分解</h4><p>Simon Funk提出的Funk-SVD矩阵分解方法从矩阵分解的角度说，就是如果我们将评分矩阵 $R$ 分解为两个低维矩阵相乘：</p>
+<script type="math/tex; mode=display">
+\hat{R}=P^{T} Q</script><p>其中 $P \in \mathbb{R}^{f \times m}$ 和 $Q \in \mathbb{R}^{f \times n}$ 是两个降维后的矩阵。那么，对于用户 $\mathrm{u}$ 对物品 $\mathrm{i}$ 的评分的预测值 $\hat{R}(u, i)=\hat{r}_{u i}$，可以通过如下公式计算:</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\sum_{f} p_{u f} q_{i f}</script><p>其中 $p_{u f}=P(u, f), q_{i f}=Q(i, f)$ 。那么，Simon Funk的思想很简单：可以直接通过训练集中的观察值利用最小化RMSE学习 $P 、 Q$ 矩阵。</p>
+<p>Simon Funk认为，既然我们用RMSE作为评测指标，那么如果能找到合适的 $P 、 Q$ 来最小化训练集的预测误差，那么应该也能最小化测试集的预测误差。因此，Simon Funk定义损失函数为：</p>
+<script type="math/tex; mode=display">
+C(p, q)=\sum_{(u, i) \in \operatorname{Train}}\left(r_{u i}-\hat{r}_{u i}\right)^{2}=\sum_{(u , i) \in \operatorname{Train}}\left(r_{u i}-\sum_{f=1}^{F} p_{u f} q_{i f}\right)^{2}</script><p>直接优化上面的损失函数可能会导致学习的过拟合，因此还需要加入防止过拟合项 $\lambda\left(\left|p_{u}\right|^{2}+\left|q_{i}\right|^{2}\right)$，其中 $\lambda$ 是正则化参数，从而得到：</p>
+<script type="math/tex; mode=display">
+C(p, q)=\sum_{(u , i) \in \operatorname{Train}}\left(r_{u i}-\sum_{f=1}^{F} p_{u f} q_{i f}\right)^{2}+\lambda\left(\left\|p_{u}\right\|^{2}+\left\|q_{i}\right\|^{2}\right)</script><p>要最小化上面的损失函数，我们可以利用随机梯度下降法，它首先通过求参数的偏导数找到最速下降方向，然后通过迭代法不断地优化参数。下面我们将介绍优化方法的数学推导。<br>上面定义的损失函数里有两组参数 $\left(p_{u f}\right.$ 和 $\left.q_{i f}\right)$，最速下降法需要首先对它们分别求偏导数，可以得到：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+&\frac{\partial C}{\partial p_{u f}}=-2 q_{i f} \cdot e_{u i}+2 \lambda p_{u f} \\
+&\frac{\partial C}{\partial p_{i f}}=-2 p_{u f} \cdot e_{u i}+2 \lambda q_{i f}
+\end{aligned}</script><p>然后，根据随机梯度下降法，需要将参数沿着最速下降方向向前推进，因此可以得到如下递推公式：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+&p_{u f}=p_{u f}+\alpha\left(q_{i f} \cdot e_{u i}-\lambda p_{u f}\right) \\
+&q_{i f}=q_{i f}+\alpha\left(p_{u f} \cdot e_{u i}-\lambda q_{i f}\right)
+\end{aligned}</script><p>其中，$\alpha$ 是学习速率 (learning rate )，它的取值需要通过反复实验获得。<br>下面的代码实现了学习LFM模型时的迭代过程。在<code>LearningLFM</code>函数中, 输入<code>train</code>是训练集中的用户评分记录，$\mathrm{F}$ 是隐类的格式，$\mathrm{n}$ 是迭代次数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def LearningLFM(train, F, n, alpha, lambda):</span><br><span class="line">	[p,q] = InitLFM(train, F)</span><br><span class="line">	for step in range(0, n):</span><br><span class="line">		for u, i, rui in train.items():</span><br><span class="line">			pui = Predict(u, i, p, q)</span><br><span class="line">			eui = rui - pui</span><br><span class="line">			for f in range(0, F):</span><br><span class="line">				p[u][k] += alpha * (q[i][k] * eui-lambda * p[u][k])</span><br><span class="line">				q[i][k] += alpha * (p[u][k] * eui-lambda * q[i][k])</span><br><span class="line">		alpha *= 0.9</span><br><span class="line">	return list(p, q)</span><br></pre></td></tr></table></figure>
+<p>如上面的代码所示，LearninguLPM主要包括两步。首先，需要对P、Q矩阵进行初始化，然后需要通过随机梯度下降法的迭代得到最终的 $P 、 Q$ 矩阵。在迭代时，需要在每一步对学习参数 $\alpha$ 进行衰减 <code>(alpha *= 0.9)</code>，这是随机梯度下降法算法要求的，其目的是使算法尽快收敛。<br>初始化 $P 、 Q$ 矩阵的方法很多，一般都是将这两个矩阵用随机数填充，但随机数的大小还是有讲究的，根据经验，随机数需要和 $1 / \operatorname{sqrt}(F)$ 成正比。下面的代码实现了初始化功能。</p>
+<p>初始化P、O矩阵的方法很多，一般都是将这两个矩阵用随机数填充，但随机数的大小还是有讲究的，根据经验，随机数需要和1/sqrt（F）成正比。下面的代码实现了初始化功能。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def InitLFM(train, F):</span><br><span class="line">	p = dict()</span><br><span class="line">	q= dict()</span><br><span class="line">	for u, i, rui in train.items():</span><br><span class="line">		if u not in p:</span><br><span class="line">			p[u] = [random.random() / math.sqrt(F) \</span><br><span class="line">					for x in range(0, F)]</span><br><span class="line">		if i not in q:</span><br><span class="line">			q[i] = [random.random() / math.sqrt(F) \</span><br><span class="line">					for x in range(0, F)]</span><br><span class="line">	return list(p,q)</span><br></pre></td></tr></table></figure>
+<p>而预测用户u对物品i的评分可以通过如下代码实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def Predict (u, i, p, q):</span><br><span class="line">	return sum(p[u][f] * q[i][f] for f in range(0, len(p[u]))</span><br></pre></td></tr></table></figure>
+<h4 id="加入偏置项后的LFM"><a href="#加入偏置项后的LFM" class="headerlink" title="加入偏置项后的LFM"></a>加入偏置项后的LFM</h4><p>再次回顾一下LFM预测公式：</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\sum_{f} p_{u f} q_{i f}</script><p>这个预测公式通过隐类将用户和物品联系在了一起。但是，实际情况下，一个评分系统有些固有属性和用户物品无关，而用户也有些属性和物品无关，物品也有些属性和用户无关。因此，Netflix Prize中提出了另一种LFM，其预测公式如下：</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u t}=\mu+b_{u}+b_{i}+p_{u}^{T} \cdot q_{i}</script><p>这个预测公式中加入了 3 项 $\mu 、 b_{u} 、 b_{i}$ 。本章将这个模型称为BiasSVD。这个模型中新增加的三项的作用如下：</p>
+<ul>
+<li>$\mu$ 训练集中所有记录的评分的全局平均数。在不同网站中，因为网站定位和销售的物品不同，网站的整体评分分布也会显示出一些差异。比如有些网站中的用户就是喜欢打高分，而另一些网站的用户就是喜欢打低分。而全局平均数可以表示网站本身对用户评分的影响。</li>
+<li>$b_{u}$​ 用户偏置（user bias ）项。这一项表示了用户的评分习惯中和物品没有关系的那种因素。比如有些用户就是比较苛刻，对什么东西要求都很高，那么他的评分就会偏低，而有些用户比较宽容, 对什么东西都觉得不错, 那么他的评分就会偏高。</li>
+<li>$b_{i}$ 物品偏置 ( item bias ) 项。这一项表示了物品接受的评分中和用户没有什么关系的因素。比如有些物品本身质量就很高，因此获得的评分相对都比较高，而有些物品本身质量很差，因此获得的评分相对都会比较低。</li>
+</ul>
+<p>增加的 3 个参数中，只有 $b_{u} 、 b_{i}$ 是要通过机器学习训练出来的。同样可以求导，然后用梯度下降法求解这两个参数，我们对LearningLFM稍做修改，就可以支持BiasLFM模型：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">def LearningBiasLFM(train, F, n, alpha, lambda, mu):</span><br><span class="line">	[bu,bi,p,g) = InitBiasLFM(train, F)</span><br><span class="line">	for step in range(0, n):</span><br><span class="line">		for u, i, rui in train.items():</span><br><span class="line">			pui = Predict(u, i, p, q, bu, bi, mu)</span><br><span class="line">			eui = rui - pui</span><br><span class="line">			bu[u] += alpha * (eui - lambda * bu[u])</span><br><span class="line">			bi[i] += alpha * (eui - lambda * bi[i])</span><br><span class="line">			for f in range(0, F):</span><br><span class="line">				p[u][k] += alpha * (q[i][k] * eui -lambda * p[u][k])</span><br><span class="line">				q[i][k] += alpha * (p[u][k] * eui -lambda * q[i][k])</span><br><span class="line">		alpha *= 0.9</span><br><span class="line">	return list (bu, bi, p, q)</span><br></pre></td></tr></table></figure>
+<p>而$b_u$、$b_i$在一开始只要初始化成全0的向量。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">def InitBiasLFM(train, F):</span><br><span class="line">	p = dict()</span><br><span class="line">	q = dict()</span><br><span class="line">	bu = dict()</span><br><span class="line">	bi = dict()</span><br><span class="line">	for u, i, rui in train.items():</span><br><span class="line">		bu[u] = 0</span><br><span class="line">		bi[i] = 0</span><br><span class="line">		if u not in p:</span><br><span class="line">			p[u] = [random.random() / math.sqrt(F) for x in range(0, F)]</span><br><span class="line">		if i not in q:</span><br><span class="line">			q[i] = [random.random() / math.sqrt(F) for x in range(0,F)]</span><br><span class="line">	return list(p, q)</span><br><span class="line"></span><br><span class="line">def Predict(u, i, p, q, bu, bi, mu):</span><br><span class="line">	ret = mu + bu[u] + bi[i]</span><br><span class="line">	ret += sum(p[u][f] * q[i][f] for f in range(0, len(p[u]))</span><br><span class="line">	return ret</span><br></pre></td></tr></table></figure>
+<h4 id="考虑邻域影响的-LFM"><a href="#考虑邻域影响的-LFM" class="headerlink" title="考虑邻域影响的 LFM"></a>考虑邻域影响的 LFM</h4><p>我们将ItemCF的预测算法改成如下方式：</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u d}=\frac{1}{\sqrt{|N(u)|}} \sum_{j \in N(u)} w_{i j}</script><p>这里，$w_{i j}$ 不再是根据ItemCF算法计算出的物品相似度矩阵，而是一个和 $P 、 Q$ 一样的参数，它可以通过优化如下的损失函数进行优化：</p>
+<script type="math/tex; mode=display">
+C(w)=\sum_{(u, i) \in \operatorname{Train}}\left(r_{u i}-\sum_{j \in N(u)} w_{i j} r_{u j}\right)^{2}+\lambda w_{i j}^{2}</script><p>不过，这个模型有一个缺点，就是 $w$ 将是一个比较稠密的矩阵，存储它需要比较大的空间。此外，如果有 $n$ 个物品，那么该模型的参数个数就是 $n^{2}$ 个，这个参数个数比较大，容易造成结果的过拟合。因此，Koren提出应该对 $w$ 矩阵也进行分解，将参数个数降低到 $2 <em> n </em> F$ 个，模型如下：</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\frac{1}{\sqrt{|N(u)|}} \sum_{j \in N(u)} x_{i}^{T} y_{j}=\frac{1}{\sqrt{|N(u)|}} x_{i}^{T} \sum_{j \in N(u)} y_{j}</script><p>这里，$x_{i} 、 y_{j}$ 是两个 $F$ 维的向量。由此可见，该模型用 $x_{i}^{T} y_{j}$ 代替了 $w_{i j}$，从而大大降低了参数的数量和存储空间。<br>再进一步，我们可以将前面的LFM和上面的模型相加，从而得到如下模型：</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\mu+b_{u}+b_{i}+p_{u}^{T} \cdot q_{i}+\frac{1}{\sqrt{|N(u)|}} x_{i}^{T} \sum_{j \in N(u)} y_{j}</script><p>Koren又提出，为了不增加太多参数造成过拟合，可以令 $x=q$, 从而得到最终的SVD++模型：</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\mu+b_{u}+b_{i}+q_{i}^{T} \cdot\left(p_{u}+\frac{1}{\sqrt{|N(u)|}} \sum_{j \in N(u)} y_{j}\right)</script><p>通过将损失函数对各个参数求偏导数，我们也可以轻松推导出迭代公式。这里，我们给出了SVD++模型训练的实现代码，如下所示。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">def LearningBiasLFM(train_ui, F, n, alpha, lambda, mu):</span><br><span class="line">	[bu, bi, p, q, y] = InitLFM(train, F)</span><br><span class="line">	Z = dict()</span><br><span class="line">	for step in range(0, n):</span><br><span class="line">		for u, items in train_ui.items():</span><br><span class="line">			z[u] = p[u]</span><br><span class="line">			ru = 1 / math.sqrt(1.0 * len(items))</span><br><span class="line">			for i, rui in items.items():</span><br><span class="line">				for f in range(0, F):</span><br><span class="line">					z[u][f] += y[i][f] * ru</span><br><span class="line">			sum = [0 for i in range(0, F)]</span><br><span class="line">			for i, rui in items.items():</span><br><span class="line">				pui = Predict()</span><br><span class="line">				eui = rui - pui</span><br><span class="line">				bu[u] += alpha * (eui - lambda * bu[u])</span><br><span class="line">				bi[i] += alpha * (eui - lambda * bi[i])</span><br><span class="line">				for f in range(0, F):</span><br><span class="line">					sum[f] += q[i][f] * eui * ru</span><br><span class="line">					p[u][f] += alpha * (q[i][f] * eui \</span><br><span class="line">								- lambda * p[u][f])</span><br><span class="line">					q[i][f]+= alpha *((z[u][f] + p[u][f]) * eui \</span><br><span class="line">								- lambda * q[i][f])</span><br><span class="line">			for i, rui in items.items():</span><br><span class="line">				for f in range(0, F):</span><br><span class="line">					y[i][f] += alpha * (sum[f] - lambda * y[i][f])</span><br><span class="line">		alpha *= 0.9</span><br><span class="line">	return list(bu, bi, p, q)</span><br></pre></td></tr></table></figure>
+<h3 id="加入时间信息"><a href="#加入时间信息" class="headerlink" title="加入时间信息"></a>加入时间信息</h3><h4 id="基于邻域的模型融合时间信息"><a href="#基于邻域的模型融合时间信息" class="headerlink" title="基于邻域的模型融合时间信息"></a>基于邻域的模型融合时间信息</h4><p>因为Netflix Prize数据集中用户数目太大，所以基于用户的邻域模型很少被使用，主要是因为存储用户相似度矩阵非常困难。因此，本节主要讨论如何将时间信息融合到基于物品的邻域模型中。</p>
+<p>Netflix Prize的参赛队伍BigChaos在技术报告中提到了一种融人时间信息的基于邻域的模型，本节将这个模型称为TItemCF。该算法通过如下公式预测用户在某一个时刻会给物品什么评分：</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i t}=\frac{\sum_{j \in N(u) \cap S(i, K)} f\left(w_{i j}, \Delta t\right) r_{u j}}{\sum_{j \in N(u) \cap S(i, K)} f\left(w_{i j}, \Delta t\right)}</script><p>这里，$\Delta t=t_{u t}-t_{u j}$ 是用户 $\mathrm{u}$ 对物品 $\mathrm{i}$ 和物品 $\mathrm{j}$ 评分的时间差，$w_{i j}$ 是物品 $\mathrm{i}$ 和 $\mathrm{j}$ 的相似度，$f\left(w_{i j}, \Delta t\right)$ 是一个考虑了时间衰减后的相似度函数，它的主要目的是提高用户最近的评分行为对推荐结果的影响，BigChaos在模型中采用了如下的 $f$ :</p>
+<script type="math/tex; mode=display">
+\begin{gathered}
+f\left(w_{i j}, \Delta t\right)=\sigma\left(\delta \cdot w_{i j} \cdot \exp \left(\frac{-|\Delta t|}{\beta}\right)+\gamma\right) \\
+\sigma(x)=\frac{1}{1+\exp (-x)}
+\end{gathered}</script><p>这里，$\sigma(x)$ 是sigmoid函数，它的目的是将相似度压缩到 $(0,1)$ 区间中。从上面的定义可以发现，随着 $\Delta t$ 增加，$f\left(w_{i j}, \Delta t\right)$ 会越来越小，也就是说用户很久之前的行为对预测用户当前评分的影响越来越小。</p>
+<h4 id="基于矩阵分解的模型融合时间信息"><a href="#基于矩阵分解的模型融合时间信息" class="headerlink" title="基于矩阵分解的模型融合时间信息"></a>基于矩阵分解的模型融合时间信息</h4><p>回顾一下前面的BiasSVD模型:</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\mu+b_{u}+b_{i}+p_{u}^{T} \cdot q_{i}</script><p>这里，$\mu$ 可以看做对二维矩阵的零维分解，$b_{u} 、 b_{i}$ 可以看做对二维矩阵的一维分解，而 $p_{u}^{T} \cdot q_{i}$ 可以看做对二维矩阵的二维分解。仿照这种分解，我们可以将用户–物品-时间三维矩阵如下分解：</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i t}=\mu+b_{u}+b_{i}+b_{t}+p_{u}^{T} \cdot q_{i}+x_{u}^{T} \cdot y_{t}+s_{i}^{T} z_{t}+\sum_{f} g_{u, f} h_{i, f} l_{t, f}</script><p>这里 $b_{t}$ 建模了系统整体平均分随时间变化的效应， $x_{u}^{T} \cdot y_{t}$ 建模了用户平均分随时间变化的效应，$s_{i}^{T} z_{t}$ 建模了物品平均分随时间变化的效应，而 $\Sigma_{f} g_{u, f} h_{i, f} l_{t, f}$ 建模了用户兴趣随时间影响的效应。这个模型也可以很容易地利用随机梯度下降法进行训练。本章将这个模型记为TSVD。<br>Koren在SVD++模型的基础上也引入了时间效应，回顾一下SVD++模型：</p>
+<script type="math/tex; mode=display">
+\hat{r}_{u i}=\mu+b_{u}+b_{i}+q_{i}^{T} \cdot\left(p_{u}+\frac{1}{\sqrt{|N(u)|}} \sum_{j \in N(u)} y_{j}\right)</script><p>我们可以对这个模型做如下改进以融合时间信息：</p>
+<script type="math/tex; mode=display">
+\begin{gathered}
+\hat{r}_{u i t}=\mu+b_{u}(t)+b_{i}(t)+q_{i}^{T} \cdot\left(p_{u}(t)+\frac{1}{\sqrt{|N(u)|}} \sum_{j \in N(u)} y_{j}\right) \\
+b_{u}(t)=b_{u}+\alpha_{u} \cdot \operatorname{dev}_{u}(t)+b_{u t}+b_{u, \text { period }(t)} \\
+\operatorname{dev}_{u}(t)=\operatorname{sign}\left(t-t_{u}\right) \cdot\left|t-t_{u}\right|^{\beta} \\
+b_{i}(t)=b_{i}+b_{i t}+b_{i, \text { period }(t)} \\
+p_{u f}(t)=p_{u f}+p_{u t f}
+\end{gathered}</script><p>这里，$t_{u}$ 是用户所有评分的平均时间。 $\operatorname{period}(t)$ 考虑了季节效应，可以定义为时刻 $t$ 所在的月份。该模型同样可以通过随机梯度下降法进行优化。</p>
+<h3 id="模型融合"><a href="#模型融合" class="headerlink" title="模型融合"></a>模型融合</h3><h4 id="模型级联融合"><a href="#模型级联融合" class="headerlink" title="模型级联融合"></a>模型级联融合</h4><p>假设已经有一个预测器 $\hat{r}^{(k)}$，对于每个用户–物品对 $(u, i)$ 都给出预测值，那么可以在这个预测器的基础上设计下一个预测器 $\hat{r}^{(k+1)}$ 来最小化损失函数：</p>
+<script type="math/tex; mode=display">
+C=\sum_{(u, i) \in \operatorname{Train}}\left(r_{u i}-\hat{r}_{u i}^{(k)}-\hat{r}_{u i}^{(k+1)}\right)^{2}</script><p>由上面的描述可以发现，级联融合很像Adaboost算法。和Adaboost算法类似，该方法每次产生一个新模型，按照一定的参数加到旧模型上去，从而使训练集误差最小化。不同的是，这里每次生成新模型时并不对样本集采样，针对那些预测错的样本，而是每次都还是利用全样本集进行预测，但每次使用的模型都有区别。</p>
+<p>一般来说，级联融合的方法都用于简单的预测器，比如前面提到的平均值预测器。下面的Python代码实现了利用平均值预测器进行级联融合的方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">def Predict(train, test, alpha):</span><br><span class="line">	total = dict()</span><br><span class="line">	count = dict()</span><br><span class="line">	for record in train:</span><br><span class="line">		gu = GetUserGroup(record.user)</span><br><span class="line">		gi = GetItemGroup(record.item)</span><br><span class="line">		AddToMat(total, gu, gi, record.vote - record.predict)</span><br><span class="line">		AddToMat(count, gu, gi, 1)</span><br><span class="line">	for record in test:</span><br><span class="line">		gu = GetUserGroup(record.user)</span><br><span class="line">		gi = GetUserGroup(record.item)</span><br><span class="line">		average= total[gu][gi] / (1.0 * count[gu][gi] + alpha)</span><br><span class="line">		record.predict += average</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/image-20220512134350453.png" class title="图片">
+<h4 id="模型加权融合"><a href="#模型加权融合" class="headerlink" title="模型加权融合"></a>模型加权融合</h4><p>假设我们有 $K$ 个不同的预测器 $\left\{\hat{r}^{(1)}, \hat{r}^{(2)}, \cdots, \hat{r}^{(K)}\right\}$，本节主要讨论如何将它们融合起来获得最低的预测误差。<br>最简单的融合算法就是线性融合，即最终的预测器 $\hat{r}$ 是这 $K$ 个预测器的线性加权：</p>
+<script type="math/tex; mode=display">
+\hat{r}=\sum_{k=1}^{K} \alpha_{k} \hat{r}^{(k)}</script><p>一般来说，评分预测问题的解决需要在训练集上训练 $K$ 个不同的预测器，然后在测试集上作出预测。但是，如果我们继续在训练集上融合 $K$ 个预测器，得到线性加权系数，就会造成过拟合的问题。因此, 在模型融合时一般采用如下方法。</p>
+<ul>
+<li>假设数据集已经被分为了训练集 $A$ 和测试集 $B$，那么首先需要将训练集 $A$ 按照相同的分割方法分为 $A 1$ 和 $A 2$，其中 $A 2$ 的生成方法和 $B$ 的生成方法一致，且大小相似。</li>
+<li>在 $A 1$ 上训练 $K$ 个不同的预测器，在 $A 2$ 上作出预测。因为我们知道 $A 2$ 上的真实评分值，所以可以在 $A 2$ 上利用最小二乘法计算出线性融合系数 $\alpha_{k}$ 。</li>
+<li>在 $A$ 上训练 $K$ 个不同的预测器，在 $B$ 上作出预测，并且将这 $K$ 个预测器在 $B$ 上的预测结果按照已经得到的线性融合系数加权融合，以得到最终的预测结果。</li>
+</ul>
+<p>除了线性融合，还有很多复杂的融合方法，比如利用人工神经网络的融合算法。其实，模型融合问题就是一个典型的回归问题，因此所有的回归算法都可以用于模型融合。</p>
+<img src="/2022/05/12/%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98/image-20220512134623366.png" class title="图片">
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/markdown/" rel="tag"># markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/12/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E5%AE%9E%E4%BE%8B/" rel="prev" title="推荐系统实例">
+      <i class="fa fa-chevron-left"></i> 推荐系统实例
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">评分预测问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A6%BB%E7%BA%BF%E5%AE%9E%E9%AA%8C%E6%96%B9%E6%B3%95"><span class="nav-number">1.1.</span> <span class="nav-text">离线实验方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%84%E5%88%86%E9%A2%84%E6%B5%8B%E7%AE%97%E6%B3%95"><span class="nav-number">1.2.</span> <span class="nav-text">评分预测算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B3%E5%9D%87%E5%80%BC"><span class="nav-number">1.2.1.</span> <span class="nav-text">平均值</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%A8%E5%B1%80%E5%B9%B3%E5%9D%87%E5%80%BC"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">全局平均值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E8%AF%84%E5%88%86%E5%B9%B3%E5%9D%87%E5%80%BC"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">用户评分平均值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%89%A9%E5%93%81%E8%AF%84%E5%88%86%E5%B9%B3%E5%9D%87%E5%80%BC"><span class="nav-number">1.2.1.3.</span> <span class="nav-text">物品评分平均值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E5%88%86%E7%B1%BB%E5%AF%B9%E7%89%A9%E5%93%81%E5%88%86%E7%B1%BB%E7%9A%84%E5%B9%B3%E5%9D%87%E5%80%BC"><span class="nav-number">1.2.1.4.</span> <span class="nav-text">用户分类对物品分类的平均值</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E9%82%BB%E5%9F%9F%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">1.2.2.</span> <span class="nav-text">基于邻域的方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9A%90%E8%AF%AD%E4%B9%89%E6%A8%A1%E5%9E%8B%E4%B8%8E%E7%9F%A9%E9%98%B5%E5%88%86%E8%A7%A3%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.2.3.</span> <span class="nav-text">隐语义模型与矩阵分解模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F%E7%9A%84SVD%E5%88%86%E8%A7%A3"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">传统的SVD分解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Simon-Funk%E7%9A%84SVD%E5%88%86%E8%A7%A3"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">Simon Funk的SVD分解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A0%E5%85%A5%E5%81%8F%E7%BD%AE%E9%A1%B9%E5%90%8E%E7%9A%84LFM"><span class="nav-number">1.2.3.3.</span> <span class="nav-text">加入偏置项后的LFM</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%80%83%E8%99%91%E9%82%BB%E5%9F%9F%E5%BD%B1%E5%93%8D%E7%9A%84-LFM"><span class="nav-number">1.2.3.4.</span> <span class="nav-text">考虑邻域影响的 LFM</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A0%E5%85%A5%E6%97%B6%E9%97%B4%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.4.</span> <span class="nav-text">加入时间信息</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E9%82%BB%E5%9F%9F%E7%9A%84%E6%A8%A1%E5%9E%8B%E8%9E%8D%E5%90%88%E6%97%B6%E9%97%B4%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.4.1.</span> <span class="nav-text">基于邻域的模型融合时间信息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%9F%A9%E9%98%B5%E5%88%86%E8%A7%A3%E7%9A%84%E6%A8%A1%E5%9E%8B%E8%9E%8D%E5%90%88%E6%97%B6%E9%97%B4%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.4.2.</span> <span class="nav-text">基于矩阵分解的模型融合时间信息</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E8%9E%8D%E5%90%88"><span class="nav-number">1.2.5.</span> <span class="nav-text">模型融合</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E7%BA%A7%E8%81%94%E8%9E%8D%E5%90%88"><span class="nav-number">1.2.5.1.</span> <span class="nav-text">模型级联融合</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E5%8A%A0%E6%9D%83%E8%9E%8D%E5%90%88"><span class="nav-number">1.2.5.2.</span> <span class="nav-text">模型加权融合</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/853784202@qq.com" title="E-Mail → 853784202@qq.com"><i class="lee-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+
+
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="lee"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Lee</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
