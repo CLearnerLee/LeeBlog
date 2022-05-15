@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="《EasyRL强化学习教程》(作者：王琦 杨毅远 江季) 读书笔记第二章：马尔可夫决策过程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="马尔可夫决策过程">
+<meta property="og:url" content="https://github.com/CLearnerLee/LeeBlog/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/index.html">
+<meta property="og:site_name" content="AI 自学笔记">
+<meta property="og:description" content="《EasyRL强化学习教程》(作者：王琦 杨毅远 江季) 读书笔记第二章：马尔可夫决策过程">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515150332137.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.11.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.13.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.16.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.17.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515154004781.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515160344147.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515160358191.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515160408321.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515160418201.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.29.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.30.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515163525951.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515163509903.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165646537.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165718348.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165735790.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165801200.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165854228.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165907467.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165958925.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515170015744.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515170033128.png">
+<meta property="og:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515170049917.png">
+<meta property="article:published_time" content="2022-05-15T09:18:31.000Z">
+<meta property="article:modified_time" content="2022-05-15T09:25:37.538Z">
+<meta property="article:author" content="Lee">
+<meta property="article:tag" content="markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515150332137.png">
+
+<link rel="canonical" href="https://github.com/CLearnerLee/LeeBlog/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>马尔可夫决策过程 | AI 自学笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">AI 自学笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-标签">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags - markdown fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th - 我的第一篇博客 - CS224U 笔记 fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-归档">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/CLearnerLee/LeeBlog/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="AI 自学笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          马尔可夫决策过程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-15 17:18:31 / 修改时间：17:25:37" itemprop="dateCreated datePublished" datetime="2022-05-15T17:18:31+08:00">2022-05-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8AEasyRL%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E6%95%99%E7%A8%8B%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">《EasyRL强化学习教程》读书笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="lee-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">《EasyRL强化学习教程》(作者：王琦 杨毅远 江季) 读书笔记第二章：马尔可夫决策过程</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="马尔可夫决策过程"><a href="#马尔可夫决策过程" class="headerlink" title="马尔可夫决策过程"></a>马尔可夫决策过程</h1><h2 id="马尔可夫过程"><a href="#马尔可夫过程" class="headerlink" title="马尔可夫过程"></a>马尔可夫过程</h2><h3 id="马尔可夫性质"><a href="#马尔可夫性质" class="headerlink" title="马尔可夫性质"></a>马尔可夫性质</h3><p>在随机过程中，<strong>马尔可夫性质（Markov property）</strong>是指一个随机过程在给定现在状态及所有过</p>
+<p>去状态情况下，其未来状态的条件概率分布仅依赖于当前状态。</p>
+<p>以离散随机过程为例，假设随机变量 $X_{0}, X_{1}, \cdots, X_{T}$ 构成一个随机过程。</p>
+<p>这些随机变量的所有可能取值的集合被称为状态空间 (state space)。</p>
+<p>如果 $X_{t+1}$ 对于过去状态的条件概率分布仅是 $X_{t}$ 的一个函数，则</p>
+<script type="math/tex; mode=display">
+p\left(X_{t+1}=x_{t+1} \mid X_{0: t}=x_{0: t}\right)=p\left(X_{t+1}=x_{t+1} \mid X_{t}=x_{t}\right)</script><p>其中，$X_{0: t}$ 表示变量集合 $X_{0}, X_{1}, \cdots, X_{t}, x_{0: t}$ 为在状态空间中的状态序列 $x_{0}, x_{1}, \cdots, x_{t}$ 。</p>
+<p>马尔可夫性质也可以描述为给定当前状态时，将来的状态与过去状态是条件独立的。</p>
+<p>如果某一个过程满足马尔可夫性质，那么未来的转移与过去的是独立的，它只取决于现在。</p>
+<h3 id="马尔可夫过程-马尔可夫链"><a href="#马尔可夫过程-马尔可夫链" class="headerlink" title="马尔可夫过程/马尔可夫链"></a>马尔可夫过程/马尔可夫链</h3><p><strong>马尔可夫过程</strong>是一组具有马尔可夫性质的随机变量序列 $s_{1}, \cdots, s_{t}$，其中下一个时刻的状态 $s_{t+1}$ 只取决于当前状态 $s_{t}$ 。</p>
+<p>我们设状态的历史为 $h_{t}=\left\{s_{1}, s_{2}, s_{3}, \ldots, s_{t}\right\}$ ( $h_{t}$ 包含了之前的所有状态)，则马尔可夫过程满足条件：</p>
+<script type="math/tex; mode=display">
+p\left(s_{t+1} \mid s_{t}\right)=p\left(s_{t+1} \mid h_{t}\right)</script><p>从当前 $s_{t}$ 转移到 $s_{t+1}$，它是直接就等于它之前所有的状态转移到 $s_{t+1}$ 。</p>
+<p>离散时间的马尔可夫过程也称为<strong>马尔可夫链（Markov chain）</strong></p>
+<p>我们可以用<strong>状态转移矩阵(State Transition Matrix)</strong> $P$ 来描述状态转移 $p\left(s_{t+1}=s^{\prime} \mid s_{t}=s\right)$，如下式所示。</p>
+<script type="math/tex; mode=display">
+P=\left[\begin{array}{cccc}
+P\left(s_{1} \mid s_{1}\right) & P\left(s_{2} \mid s_{1}\right) & \ldots & P\left(s_{N} \mid s_{1}\right) \\
+P\left(s_{1} \mid s_{2}\right) & P\left(s_{2} \mid s_{2}\right) & \ldots & P\left(s_{N} \mid s_{2}\right) \\
+\vdots & \vdots & \ddots & \vdots \\
+P\left(s_{1} \mid s_{N}\right) & P\left(s_{2} \mid s_{N}\right) & \ldots & P\left(s_{N} \mid s_{N}\right)
+\end{array}\right]</script><p>状态转移矩阵类似于一个条件概率 (conditional probability)，当我们知道当前我们在 $s_t$ 这个状态过后，到达下面所有状态的一个概念。所以它每一行其实描述了是从一个节点到达所有其它节点的概率。</p>
+<h3 id="马尔可夫过程的例子"><a href="#马尔可夫过程的例子" class="headerlink" title="马尔可夫过程的例子"></a>马尔可夫过程的例子</h3><p>给定了状态转移的马尔可夫链后，我们可以对这个链进行采样，这样就会得到一串的<strong>轨迹</strong>。</p>
+<p>假设还是从 $s_3$ 这个状态开始，可以得到三条轨迹：</p>
+<ul>
+<li>$s_3$，$s_4$，$s_5$，$s_6$ ，$s_6$</li>
+<li>$s_3$ ，$s_2$，$s_3$ ，$s_2$，$s_1$ </li>
+<li>$s_3$ ，$s_4$，$s_4$ ，$s_5$，$s_5$ </li>
+</ul>
+<p>通过对状态的采样，我们可以生成很多这样的轨迹。</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515150332137.png" class title="图片">
+<h2 id="马尔可夫奖励过程"><a href="#马尔可夫奖励过程" class="headerlink" title="马尔可夫奖励过程"></a>马尔可夫奖励过程</h2><p><strong>马尔可夫奖励过程(Markov Reward Process, MRP)</strong> 是马尔可夫链再加上了一个奖励函数。</p>
+<p>奖励函数 $R$ 是一个期望，就是说当你到达某一个状态的时候，可以获得多大的奖励。这里另外定义了一个折扣因子$\gamma$ 。如果状态数是有限的，$R$ 可以是一个向量。</p>
+<h3 id="回报与价值函数"><a href="#回报与价值函数" class="headerlink" title="回报与价值函数"></a>回报与价值函数</h3><p>这里我们进一步定义一些概念。</p>
+<ul>
+<li><p><strong>范围(horizon)</strong> 是指一个回合的长度（每个回合最大的时间步数），它是由有限个步数决定的。</p>
+</li>
+<li><p><strong>回报(Return)</strong> 是指把奖励进行折扣后所获得的收益。回报可以定义为奖励的逐步叠加，如下式所示：</p>
+</li>
+</ul>
+<script type="math/tex; mode=display">
+G_{t}=R_{t+1}+\gamma R_{t+2}+\gamma^{2} R_{t+3}+\gamma^{3} R_{t+4}+\ldots+\gamma^{T-t-1} R_{T}</script><p>这里有一个折扣因子，越往后得到的奖励，折扣得越多。</p>
+<ul>
+<li>当我们有了回报过后，就可以定义一个状态的价值了，就是<strong>状态价值函数(state value function)</strong>。对于马尔可夫奖励过程，状态价值函数被定义成是回报的期望，如下式所示：<script type="math/tex; mode=display">
+\begin{aligned}
+V_{t}(s) &=\mathbb{E}\left[G_{t} \mid s_{t}=s\right] \\
+&=\mathbb{E}\left[R_{t+1}+\gamma R_{t+2}+\gamma^{2} R_{t+3}+\ldots+\gamma^{T-t-1} R_{T} \mid s_{t}=s\right]
+\end{aligned}</script></li>
+</ul>
+<p>$G_t$ 是之前定义的<strong>折扣回报(discounted return)</strong>，我们这里取了一个期望，这个期望可以看成是对未来可能获得奖励的当前价值的表现，就是当我们进入某一个状态过后，现在有多大的价值。</p>
+<p><strong>为什么需要 discount factor</strong></p>
+<ul>
+<li>有些马尔可夫过程是带环的，它并没有终结，我们想避免无穷的奖励。</li>
+<li>我们并没有建立一个完美的模拟环境的模型，也就是说，我们对未来的评估不一定是准确的，我们不一定完全信任我们的模型，因为这种不确定性，所以我们对未来的预估增加一个折扣。</li>
+<li>如果这个奖励是有实际价值的，我们可能是更希望立刻就得到奖励，而不是后面再得到奖励。</li>
+<li>有些时候可以把这个系数设为 0，$\gamma=0$：我们就只关注了它当前的奖励。我们也可以把它设为 1，$\gamma=1$：对未来并没有折扣，未来获得的奖励跟当前获得的奖励是一样的。</li>
+</ul>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.11.png" class title="图片">
+<p>采样生成很多轨迹，把这些轨迹的回报都计算出来，然后将其取平均值作为我们进入$s_4$的价值。</p>
+<h3 id="贝尔曼方程"><a href="#贝尔曼方程" class="headerlink" title="贝尔曼方程"></a>贝尔曼方程</h3><p><strong>贝尔曼方程（Bellman Equation）</strong>，如下式所示：</p>
+<script type="math/tex; mode=display">
+V(s)=\underbrace{R(s)}_{\text {Immediate reward }}+\underbrace{\gamma \sum_{s^{\prime} \in S} P\left(s^{\prime} \mid s\right) V\left(s^{\prime}\right)}_{\text {Discounted sum of future reward }}</script><p>其中：</p>
+<ul>
+<li>$s’$ 可以看成未来的所有状态。</li>
+<li>转移 $P(s’|s)$  是指从当前状态转移到未来状态的概率。</li>
+<li>$V(s’)$ 代表的是未来某一个状态的价值。</li>
+<li>第二部分可以看成是未来奖励的折扣总和(Discounted sum of future reward)</li>
+</ul>
+<blockquote>
+<p>全期望公式也被称为叠期望公式(law of iterated expectations，LIE)。如果 $A_i$ 是样本空间的有限或可数的划分(partition)，则全期望公式可以写成如下形式：</p>
+<script type="math/tex; mode=display">
+\mathrm{E}(X)=\sum_{i} \mathrm{E}\left(X \mid A_{i}\right) \mathrm{P}\left(A_{i}\right)</script><p>如果 $X$ 和 $Y$ 都是离散型随机变量，则条件期望（Conditional Expectation）$E(X|Y=y)$的定义如下式所示：</p>
+<script type="math/tex; mode=display">
+\mathrm{E}(X \mid Y=y)=\sum_{x} x P(X=x \mid Y=y)</script></blockquote>
+<p>贝尔曼方程定义了状态之间的迭代关系：</p>
+<script type="math/tex; mode=display">
+V(s)=R(s)+\gamma \sum_{s^{\prime} \in S} P\left(s^{\prime} \mid s\right) V\left(s^{\prime}\right)</script><img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.13.png" class title="图片">
+<p>我们可以把贝尔曼方程写成一种矩阵的形式，如下式所示。</p>
+<script type="math/tex; mode=display">
+\left[\begin{array}{c}
+V\left(s_{1}\right) \\
+V\left(s_{2}\right) \\
+\vdots \\
+V\left(s_{N}\right)
+\end{array}\right]=\left[\begin{array}{c}
+R\left(s_{1}\right) \\
+R\left(s_{2}\right) \\
+\vdots \\
+R\left(s_{N}\right)
+\end{array}\right]+\gamma\left[\begin{array}{cccc}
+P\left(s_{1} \mid s_{1}\right) & P\left(s_{2} \mid s_{1}\right) & \ldots & P\left(s_{N} \mid s_{1}\right) \\
+P\left(s_{1} \mid s_{2}\right) & P\left(s_{2} \mid s_{2}\right) & \ldots & P\left(s_{N} \mid s_{2}\right) \\
+\vdots & \vdots & \ddots & \vdots \\
+P\left(s_{1} \mid s_{N}\right) & P\left(s_{2} \mid s_{N}\right) & \ldots & P\left(s_{N} \mid s_{N}\right)
+\end{array}\right]\left[\begin{array}{c}
+V\left(s_{1}\right) \\
+V\left(s_{2}\right) \\
+\vdots \\
+V\left(s_{N}\right)
+\end{array}\right]</script><p>当前的状态是一个向量  $[V(s_1),V(s_2),\cdots,V(s_N)]^T$。从每一行来看，向量$V$ 乘以状态转移矩阵中的某一行，再加上它当前可以得到的奖励，就会得到它当前的价值。</p>
+<p>当我们把贝尔曼方程写成矩阵形式后，可以直接求解：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+V &= R+ \gamma PV \\
+IV &= R+ \gamma PV \\
+(I-\gamma P)V &=R \\
+V&=(I-\gamma P)^{-1}R
+\end{aligned}</script><p>我们可以直接得到一个<strong>解析解(analytic solution)</strong>:</p>
+<script type="math/tex; mode=display">
+V=(I-\gamma P)^{-1} R</script><p>这个矩阵求逆的过程的复杂度是 $O(N^3)$。对于一个大矩阵的话求逆是非常困难的，<strong>所以这种通过解析解去求解的方法只适用于很小量的马尔可夫奖励过程。</strong></p>
+<h3 id="计算马尔可夫奖励过程价值的迭代方法"><a href="#计算马尔可夫奖励过程价值的迭代方法" class="headerlink" title="计算马尔可夫奖励过程价值的迭代方法"></a>计算马尔可夫奖励过程价值的迭代方法</h3><p>我们可以通过迭代的方法来解状态非常多的马尔可夫奖励过程(large MRPs)，比如说：</p>
+<ul>
+<li>动态规划的方法；</li>
+<li>蒙特卡罗的办法(通过采样的办法计算它)；</li>
+<li>时序差分学习(Temporal-Difference Learning)的办法，动态规划和蒙特卡罗的一个结合。</li>
+</ul>
+<p>首先我们用<strong>蒙特卡罗方法</strong>来计算价值函数。蒙特卡罗就是说当得到一个马尔可夫奖励过程后，我们可以从某一个状态开始，产生一个轨迹。产生了一个轨迹过后，就会得到一个奖励，那么就直接把折扣的奖励即回报 $g$ 算出来。算出来之后将它积累起来，得到回报 $G_t$。 当积累到一定的轨迹数量过后，直接用 $G_t$ 除以轨迹数量，就会得到某个状态的价值。</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.16.png" class title="图片">
+<p>我们也可以用<strong>动态规划方法</strong>，一直迭代贝尔曼方程，直到价值函数收敛，就可以得到某个状态的价值。我们通过<strong>自举(bootstrapping)</strong>的办法不停地迭代贝尔曼方程，当最后更新的状态与上一个状态变化并不大的时候，更新就可以停止，我们就可以输出最新的 $V’(s)$ 作为它当前的状态。所以这里就是把 贝尔曼方程变成一个贝尔曼更新(Bellman Update)，这样就可以得到它的一个价值。</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.17.png" class title="图片">
+<h2 id="马尔可夫决策过程-1"><a href="#马尔可夫决策过程-1" class="headerlink" title="马尔可夫决策过程"></a>马尔可夫决策过程</h2><p>相对于马尔可夫奖励过程，<strong>马尔可夫决策过程(Markov Decision Process)</strong>多了一个决策（即动作）:</p>
+<ul>
+<li>多了一个决策</li>
+<li>状态转移多了一个条件，变成了 $P\left(s_{t+1}=s^{\prime} \mid s_{t}=s, a_{t}=a\right)$。未来的状态不仅依赖于当前的状态，也依赖于在当前状态智能体采取的动作。</li>
+<li>对于奖励函数，它也多了一个条件，变成了 $R\left(s_{t}=s, a_{t}=a\right)=\mathbb{E}\left[r_{t} \mid s_{t}=s, a_{t}=a\right]$。当前的状态以及采取的动作会决定智能体在当前可能得到的奖励多少。</li>
+</ul>
+<h3 id="马尔可夫决策过程中的策略"><a href="#马尔可夫决策过程中的策略" class="headerlink" title="马尔可夫决策过程中的策略"></a>马尔可夫决策过程中的策略</h3><p>策略定义了在某一个状态应该采取什么样的动作。知道当前状态后，我们可以把当前状态带入策略函数来得到一个概率，即 </p>
+<script type="math/tex; mode=display">
+\pi(a \mid s)=P\left(a_{t}=a \mid s_{t}=s\right)</script><p>概率就代表了在所有可能的动作里面怎样采取行动。</p>
+<p>已知马尔可夫决策过程和策略 $\pi$ ，我们可以把马尔可夫决策过程转换成马尔可夫奖励过程。</p>
+<p>因为我们现在已知策略函数，也就是已知在每一个状态下，可能采取的动作的概率，所以我们就可以直接把动作进行加和，去掉 a，这样我们就可以得到对于马尔可夫奖励过程的转移，这里就没有动作，即</p>
+<script type="math/tex; mode=display">
+P_{\pi}\left(s^{\prime} \mid s\right)=\sum_{a \in A} \pi(a \mid s) P\left(s^{\prime} \mid s, a\right)</script><p>对于奖励函数，我们也可以把动作拿掉，这样就会得到一个类似于马尔可夫奖励过程的奖励函数，即</p>
+<script type="math/tex; mode=display">
+R_{\pi}(s)=\sum_{a \in A} \pi(a \mid s) R(s, a)</script><h3 id="马尔可夫决策过程和马尔可夫过程-马尔可夫奖励过程的区别"><a href="#马尔可夫决策过程和马尔可夫过程-马尔可夫奖励过程的区别" class="headerlink" title="马尔可夫决策过程和马尔可夫过程/马尔可夫奖励过程的区别"></a>马尔可夫决策过程和马尔可夫过程/马尔可夫奖励过程的区别</h3><ul>
+<li>马尔可夫过程/马尔可夫奖励过程的状态转移是直接决定的。比如当前状态是 s，那么就直接通过这个转移概率决定了下一个状态是什么。</li>
+<li>对于马尔可夫决策过程，它的中间多了一层动作 a ，所以在当前状态与未来状态转移过程中多了一层决策性。在马尔可夫决策过程中，动作是由智能体决定的，智能体会采取动作来决定未来的状态转移。</li>
+</ul>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515154004781.png" class title="图片">
+<h3 id="马尔可夫决策过程中的价值函数"><a href="#马尔可夫决策过程中的价值函数" class="headerlink" title="马尔可夫决策过程中的价值函数"></a>马尔可夫决策过程中的价值函数</h3><p>马尔可夫决策过程中的价值函数可定义为</p>
+<script type="math/tex; mode=display">
+V_{\pi}(s)=\mathbb{E}_{\pi}\left[G_{t} \mid s_{t}=s\right]</script><p>其中，期望基于我们采取的策略。当策略决定后，我们通过对策略进行采样来得到一个期望，计算出它的价值函数。</p>
+<p>这里我们引入了一个 <strong>Q 函数（Q-function）</strong>。Q 函数也被称为<strong>动作价值函数（action-value function）</strong>。Q 函数定义的是在某一个状态采取某一个动作，它有可能得到的回报的一个期望，即</p>
+<script type="math/tex; mode=display">
+Q_{\pi}(s, a)=\mathbb{E}_{\pi}\left[G_{t} \mid s_{t}=s, a_{t}=a\right]</script><p>这里期望其实也是基于策略函数的。所以我们需要对策略函数进行加和，然后得到它的价值。<br>对 Q 函数中的动作函数进行加和，就可以得到价值函数：</p>
+<script type="math/tex; mode=display">
+V_{\pi}(s)=\sum_{a \in A} \pi(a \mid s) Q_{\pi}(s, a)</script><p>Q 函数的贝尔曼方程：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+Q(s,a)&=\mathbb{E}\left[G_{t} \mid s_{t}=s,a_{t}=a\right]\\
+&=\mathbb{E}\left[r_{t+1}+\gamma r_{t+2}+\gamma^{2} r_{t+3}+\ldots \mid s_{t}=s,a_{t}=a\right]  \\
+&=\mathbb{E}\left[r_{t+1}|s_{t}=s,a_{t}=a\right] +\gamma \mathbb{E}\left[r_{t+2}+\gamma r_{t+3}+\gamma^{2} r_{t+4}+\ldots \mid s_{t}=s,a_{t}=a\right]\\
+&=R(s,a)+\gamma \mathbb{E}[G_{t+1}|s_{t}=s,a_{t}=a] \\
+&=R(s,a)+\gamma \mathbb{E}[V(s_{t+1})|s_{t}=s,a_{t}=a]\\
+&=R(s,a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s,a\right) V\left(s^{\prime}\right)
+\end{aligned}</script><h3 id="贝尔曼期望方程"><a href="#贝尔曼期望方程" class="headerlink" title="贝尔曼期望方程"></a>贝尔曼期望方程</h3><p>我们可以把状态-价值函数和 Q 函数拆解成两个部分：即时奖励(immediate reward) 和后续状态的折扣价值(discounted value of successor state)。</p>
+<p>通过对状态-价值函数进行一个分解，我们就可以得到一个类似于之前马尔可夫奖励过程的贝尔曼方程——<strong>贝尔曼期望方程(Bellman Expectation Equation)</strong>：</p>
+<script type="math/tex; mode=display">
+V_{\pi}(s)=E_{\pi}\left[r_{t+1}+\gamma V_{\pi}\left(s_{t+1}\right) \mid s_{t}=s\right]</script><p>对于 Q 函数，我们也可以做类似的分解，也可以得到 Q 函数的贝尔曼期望方程：</p>
+<script type="math/tex; mode=display">
+Q_{\pi}(s, a)=E_{\pi}\left[r_{t+1}+\gamma Q_{\pi}\left(s_{t+1}, a_{t+1}\right) \mid s_{t}=s, a_{t}=a\right]</script><p>贝尔曼期望方程定义了当前状态与未来状态之间的关联。</p>
+<script type="math/tex; mode=display">
+V_{\pi}(s)=\sum_{a \in A} \pi(a \mid s) Q_{\pi}(s, a) \tag{1}</script><script type="math/tex; mode=display">
+Q_{\pi}(s, a)=R(s,a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V_{\pi}\left(s^{\prime}\right) \tag{2}</script><p>等式 (1) 和等式 (2) 代表了价值函数与 Q 函数之间的关联。</p>
+<script type="math/tex; mode=display">
+V_{\pi}(s)=\sum_{a \in A} \pi(a \mid s)\left(R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V_{\pi}\left(s^{\prime}\right)\right) \tag{3}</script><p>等式 (3) 代表了当前状态的价值与未来状态价值之间的关联。</p>
+<script type="math/tex; mode=display">
+Q_{\pi}(s, a)=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) \sum_{a^{\prime} \in A} \pi\left(a^{\prime} \mid s^{\prime}\right) Q_{\pi}\left(s^{\prime}, a^{\prime}\right) \tag{4}</script><p>等式 (4) 代表了当前时刻的 Q 函数跟未来时刻的 Q 函数之间的一个关联。</p>
+<p>等式  (3) 和等式 (4)  是贝尔曼期望方程的另一种形式。</p>
+<h3 id="备份图"><a href="#备份图" class="headerlink" title="备份图"></a>备份图</h3><p><strong>备份(backup)</strong>类似于自举之间的迭代关系，对于某一个状态，它的当前价值是与它的未来价值线性相关的。</p>
+<p><strong>备份图(backup diagram)</strong>是强化学习中常使用的算法可视化工具</p>
+<ul>
+<li>开放的圆圈是状态(s)</li>
+<li>实心圆圈是行动(a)</li>
+<li>奖励（r）是在行动 a 之后获得的</li>
+<li>新的状态是（s’）</li>
+<li>新的行动是（a’）</li>
+</ul>
+<p>每一个空心圆圈代表一个状态，每一个实心圆圈代表一个状态-动作对。</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515160344147.png" class title="图片">
+<script type="math/tex; mode=display">
+V_{\pi}(s)=\sum_{a \in A} \pi(a \mid s)\left(R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V_{\pi}\left(s^{\prime}\right)\right) \tag{5}</script><p>如式 (5) 所示，我们这里有两层加和：</p>
+<ul>
+<li>第一层加和是对叶子节点加和，往上备份一层，我们就可以把未来的价值($s’$ 的价值) 备份到黑色的节点。</li>
+<li>第二层加和是对动作进行加和。得到黑色节点的价值后，再往上备份一层，就会推到根节点的价值，即当前状态的价值。</li>
+</ul>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515160358191.png" class title="图片">
+<p>上图是状态-价值函数的计算分解图，上图 B 计算公式为</p>
+<script type="math/tex; mode=display">
+V_{\pi}(s)=\sum_{a \in A} \pi(a \mid s) Q_{\pi}(s, a) \tag{i}</script><p>上图 B 给出了状态-价值函数与 Q 函数之间的关系。</p>
+<p>上图 C 计算 Q 函数为</p>
+<script type="math/tex; mode=display">
+Q_{\pi}(s,a)=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V_{\pi}\left(s^{\prime}\right) \tag{ii}</script><p>将式 (ii) 代入式 (i) 可得：</p>
+<script type="math/tex; mode=display">
+V_{\pi}(s)=\sum_{a \in A} \pi(a \mid s)\left(R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V_{\pi}\left(s^{\prime}\right)\right)</script><p>所以备份图定义了未来下一时刻的状态价值函数与上一时刻的状态价值函数之间的关联。</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515160408321.png" class title="图片">
+<p>对于 Q 函数，我们也可以进行这样的一个推导。现在的根节点是 Q 函数的一个节点。Q 函数对应于黑色的节点，下一时刻的 Q 函数是叶子节点，有四个黑色的叶子节点。</p>
+<script type="math/tex; mode=display">
+Q_{\pi}(s, a)=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) \sum_{a^{\prime} \in A} \pi\left(a^{\prime} \mid s^{\prime}\right) Q_{\pi}\left(s^{\prime}, a^{\prime}\right) \tag{6}</script><p>如式 (6) 所示，我们这里也有两个加和：</p>
+<ul>
+<li>第一层加和先把叶子节点从黑色节点推到空心圆圈结点，进了空心圆圈结点的状态。</li>
+<li>当到达某一个状态后，再对空心圆圈结点进行一个加和，这样就把空心圆圈结点重新推回到当前时刻的 Q 函数。</li>
+</ul>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515160418201.png" class title="图片">
+<p>在上图 C 中，</p>
+<script type="math/tex; mode=display">
+V_{\pi}\left(s^{\prime}\right)=\sum_{a^{\prime} \in A} \pi\left(a^{\prime} \mid s^{\prime}\right) Q_{\pi}\left(s^{\prime}, a^{\prime}\right) \tag{iii}</script><p>将式 (iii) 代入式 (ii) 可得到 Q 函数：</p>
+<script type="math/tex; mode=display">
+Q_{\pi}(s, a)=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) \sum_{a^{\prime} \in A} \pi\left(a^{\prime} \mid s^{\prime}\right) Q_{\pi}\left(s^{\prime}, a^{\prime}\right)</script><p>所以这个等式就决定了未来 Q 函数与当前 Q 函数之间的关联。</p>
+<h3 id="策略评估"><a href="#策略评估" class="headerlink" title="策略评估"></a>策略评估</h3><p>已知马尔可夫决策过程以及要采取的策略 $\pi$ ，计算价值函数 $V_{\pi}(s)$ 的过程就是<strong>策略评估(policy evaluation)</strong>。策略评估在有些地方也被称为<strong>(价值预测)[(value) prediction]</strong>，也就是预测我们当前采取的策略最终会产生多少价值。</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.29.png" class title="图片">
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/2.30.png" class title="图片">
+<h3 id="预测与控制"><a href="#预测与控制" class="headerlink" title="预测与控制"></a>预测与控制</h3><p><strong>预测问题：</strong></p>
+<ul>
+<li>输入：马尔可夫决策过程 $<S,A,P,R,\gamma>$ 和策略 $\pi$  或者马尔可夫奖励过程 $<S,P_{\pi},R_{\pi},\gamma>$。</S,P_{\pi},R_{\pi},\gamma></S,A,P,R,\gamma></li>
+<li>输出：价值函数 $V_{\pi}$。</li>
+<li>预测是指给定一个马尔可夫决策过程以及一个策略 $\pi$ ，计算它的价值函数，也就是计算每个状态的价值。</li>
+</ul>
+<p><strong>控制问题：</strong></p>
+<ul>
+<li>输入：马尔可夫决策过程  $<S,A,P,R,\gamma>$。</S,A,P,R,\gamma></li>
+<li>输出：最佳价值函数(optimal value function) $V^<em>$ 和最佳策略(optimal policy) $\pi^</em>$。</li>
+<li>控制是指我们去寻找一个最佳的策略，然后同时输出它的最佳价值函数以及最佳策略。</li>
+</ul>
+<p>在马尔可夫决策过程中，预测和控制都可以通过动态规划去解决。</p>
+<p>要强调的是，这两者的区别就在于，</p>
+<ul>
+<li>预测问题是<strong>给定一个策略</strong>，我们要确定它的价值函数是多少。</li>
+<li>而控制问题是在<strong>没有策略的前提下</strong>，我们要确定最优的价值函数以及对应的决策方案。</li>
+</ul>
+<h3 id="动态规划"><a href="#动态规划" class="headerlink" title="动态规划"></a>动态规划</h3><p><strong>动态规划（dynamic programming，DP）</strong>适合解决满足<strong>最优子结构（optimal substructure）</strong>和<strong>重叠子问题（overlapping subproblem）</strong>两个性质的问题。</p>
+<ul>
+<li>最优子结构意味着，问题可以拆分成一个个的小问题，通过解决这些小问题，我们能够组合小问题的答案，得到原问题的答案，即最优的解。</li>
+<li>重叠子问题意味着，子问题出现多次，并且子问题的解决方案能够被重复使用，我们可以保存子问题的首次计算结果，在再次需要时直接使用。</li>
+</ul>
+<p>动态规划应用于马尔可夫决策过程的规划问题而不是学习问题，我们必须对环境是完全已知的，才能做动态规划，也就是要知道状态转移概率和对应的奖励。</p>
+<h3 id="使用动态规划进行策略评估"><a href="#使用动态规划进行策略评估" class="headerlink" title="使用动态规划进行策略评估"></a>使用动态规划进行策略评估</h3><p>策略评估就是给定马尔可夫决策过程和策略，评估我们可以获得多少价值，即对于当前策略，我们可以得到多大的价值。</p>
+<p>我们可以直接把<strong>贝尔曼期望备份（Bellman expectation backup）</strong>，变成迭代的过程，反复迭代直到收敛。这个迭代过程可以看作<strong>同步备份（synchronous backup）</strong>的过程。</p>
+<blockquote>
+<p>同步备份是指每一次的迭代都会完全更新所有的状态，这对于程序资源的需求特别大。异步备份（asynchronous backup）的思想就是通过某种方式，使得每一次迭代不需要更新所有的状态，因为事实上，很多状态也不需要被更新。</p>
+</blockquote>
+<script type="math/tex; mode=display">
+V_{t+1}(s)=\sum_{a \in \mathcal{A}} \pi(a \mid s)\left(R(s, a)+\gamma \sum_{s^{\prime} \in \mathcal{S}} p\left(s^{\prime} \mid s, a\right) V_{t}\left(s^{\prime}\right)\right) \tag{7}</script><ul>
+<li>等式 (7) 说的是我们可以把贝尔曼期望备份转换成一个动态规划的迭代。</li>
+<li>当我们得到上一时刻的 $V_t$ 的时候，就可以通过递推的关系来推出下一时刻的值。</li>
+<li>反复迭代，最后它的值就是从 $V_1,V_2$ 到最后收敛之后的值 $V_{\pi }$。$V_{\pi }$ 就是当前给定的策略 $\pi $ 对应的价值函数。</li>
+</ul>
+<p><strong>策略评估的核心思想</strong>就是把如下式所示的贝尔曼期望备份反复迭代，然后就会得到一个收敛的价值函数的值。</p>
+<script type="math/tex; mode=display">
+V_{t+1}(s)=\sum_{a \in \mathcal{A}} \pi(a \mid s)\left(R(s, a)+\gamma \sum_{s^{\prime} \in \mathcal{S}} p\left(s^{\prime} \mid s, a\right)V_{t}\left(s^{\prime}\right)\right)</script><p>因为已经给定了策略函数，所以我们可以直接把它简化成一个马尔可夫奖励过程的表达形式，相当于我们把 $a$  去掉，即：</p>
+<script type="math/tex; mode=display">
+V_{t+1}(s)=R_{\pi}(s)+\gamma p_{\pi}\left(s^{\prime} \mid s\right) V_{t}\left(s^{\prime}\right)</script><p>这样迭代的式子就只有价值函数跟转移函数了。通过去迭代这个简化的式子，我们也可以得到每个状态的价值。</p>
+<h3 id="马尔可夫决策过程控制"><a href="#马尔可夫决策过程控制" class="headerlink" title="马尔可夫决策过程控制"></a>马尔可夫决策过程控制</h3><p>策略评估就是给定马尔可夫决策过程和策略，估算价值函数的值。<em>**</em></p>
+<p><strong>最佳价值函数(optimal Value Function)</strong> 的定义如下式所示：</p>
+<script type="math/tex; mode=display">
+V^{*}(s)=\max _{\pi} V_{\pi}(s)</script><p>最佳价值函数是指我们搜索一种策略 $\pi$ 让每个状态的价值最大。$V^*$ 就是到达每一个状态，它的值的最大化情况。</p>
+<p>在这种最大化情况中，我们得到的策略就是<strong>最佳策略(optimal policy)</strong>，如下式所示：</p>
+<script type="math/tex; mode=display">
+\pi^{*}(s)=\underset{\pi}{\arg \max }~ V_{\pi}(s)</script><p>最佳策略使得每个状态的价值函数都取得最大值。所以如果我们可以得到一个最佳价值函数，就可以认为某个马尔可夫决策过程的环境可解。在这种情况下，最佳价值函数是一致的，环境中可达到的上限的值是一致的，但这里可能有多个最佳策略，多个最佳策略可以取得相同的最佳价值。</p>
+<p>当取得最佳价值函数后，我们可以通过对 Q 函数进行最大化来得到最佳策略：</p>
+<script type="math/tex; mode=display">
+\pi^{*}(a \mid s)= \begin{cases}1, & a=\underset{a \in A}{\arg \max } Q^{*}(s, a) \\ 0, & \text { 其他 }\end{cases}</script><p>搜索最佳策略有两种常用的方法：策略迭代和价值迭代。寻找最佳策略的过程就是马尔可夫决策过程的控制过程。马尔可夫决策过程控制就是去寻找一个最佳策略使我们得到一个最大的价值函数值，即</p>
+<script type="math/tex; mode=display">
+\pi^{*}(s)=\underset{\pi}{\arg \max }~ V_{\pi}(s)</script><p>对于一个事先定好的马尔可夫决策过程，当智能体采取最佳策略的时候，最佳策略一般都是确定的，而且是稳定的（它不会随着时间的变化而变化）。但最佳策略不一定是唯一的，多种动作可能会取得相同的价值。</p>
+<p>我们可以通过策略迭代和价值迭代来解决马尔可夫决策过程的控制问题。</p>
+<h3 id="策略迭代"><a href="#策略迭代" class="headerlink" title="策略迭代"></a>策略迭代</h3><p>策略迭代由两个步骤组成：策略评估和策略改进。</p>
+<ul>
+<li><strong>第一个步骤是策略评估</strong>，当前我们在优化策略 $\pi$，在优化过程中得到一个最新的策略。我们先保证这个策略不变，然后估计它的价值。给定当前的策略函数来估计状态价值函数。</li>
+<li><strong>第二个步骤是策略改进</strong>，得到状态价值函数后，我们可以进一步推算出它的 Q 函数。得到 Q 函数过后，直接对 Q 函数进行最大化，通过对 Q 函数做一个贪心的搜索来进一步改进它的策略。</li>
+<li>这两个步骤就一直是在迭代进行，在初始化的时候，我们有一个初始化的价值函数 $V$ 和策略 $\pi$ ，然后在这两个步骤之间迭代。</li>
+</ul>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515163525951.png" class title="图片">
+<p>这里再来看一下第二个步骤：策略改进，看我们是如何改进它的这个策略。得到状态价值函数后，我们就可以通过奖励函数以及状态转移来计算 Q 函数，如下式所示：</p>
+<script type="math/tex; mode=display">
+Q_{\pi_{i}}(s, a)=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V_{\pi_{i}}\left(s^{\prime}\right)</script><p>对于每个状态，第二个步骤会得到它的新一轮的策略 ，就在每一个状态，我们去取使它得到最大值的动作，如下式所示：</p>
+<script type="math/tex; mode=display">
+\pi_{i+1}(s)=\underset{a}{\arg \max } ~Q_{\pi_{i}}(s, a)</script><p><strong>我们可以把 Q 函数看成一个 Q-table:</strong></p>
+<ul>
+<li>横轴是它的所有状态，</li>
+<li>纵轴是它的可能的 action。</li>
+</ul>
+<p>对于某个状态，我们会取每一列中最大的值，最大值对应的动作就是它现在应该采取的动作。所以 arg max 操作就说在每个状态里面采取一个动作，这个动作是能使这一列的 Q 函数最大化的动作。</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515163509903.png" class title="图片">
+<h4 id="贝尔曼最优方程"><a href="#贝尔曼最优方程" class="headerlink" title="贝尔曼最优方程"></a>贝尔曼最优方程</h4><p>当我们一直在采取 arg max 操作的时候，会得到一个单调的递增。通过采取贪心操作，即 arg max 操作，我们就会得到更好的或者不变的策略，而不会使价值函数变差。当改进停止后，我们就会得到一个最佳策略。</p>
+<p>当改进停止过后，我们取它最大化的这个动作，它直接就会变成它的价值函数，如下式所示：</p>
+<script type="math/tex; mode=display">
+Q_{\pi}\left(s, \pi^{\prime}(s)\right)=\max _{a \in \mathcal{A}} Q_{\pi}(s, a)=Q_{\pi}(s, \pi(s))=V_{\pi}(s)</script><p>所以我们有了一个新的等式：</p>
+<script type="math/tex; mode=display">
+V_{\pi}(s)=\max _{a \in \mathcal{A}} Q_{\pi}(s, a)</script><p>上式被称为<strong>贝尔曼最优方程（Bellman optimality equation）</strong>。</p>
+<p>贝尔曼最优方程表明：最佳策略下的一个状态的价值必须等于在这个状态下采取最好动作得到的回报的期望。 </p>
+<p>当马尔可夫决策过程满足贝尔曼最优方程的时候，整个马尔可夫决策过程已经到达最佳的状态。只有当整个状态已经收敛后，我们得到最佳价值函数后，贝尔曼最优方程才会满足。满足贝尔曼最优方程后，我们可以采用最大化操作，即</p>
+<script type="math/tex; mode=display">
+V^{*}(s)=\max _{a} Q^{*}(s, a)</script><p>当我们取让 Q 函数值最大化的动作，对应的值就是当前状态的最佳的价值函数的值。</p>
+<p>另外，我们给出第二个等式，即 Q 函数的贝尔曼方程：</p>
+<script type="math/tex; mode=display">
+Q^{*}(s, a)=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V^{*}\left(s^{\prime}\right)</script><p>我们可以把第一个等式插入到第二个等式里面去，如下式所示：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+Q^{*}(s, a)&=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) v^{*}\left(s^{\prime}\right) \\
+&=R(s,a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) \max _{a} Q^{*}(s', a')
+\end{aligned}</script><p>我们得到 Q 函数之间的转移。</p>
+<p>Q 学习是基于贝尔曼最优方程来进行的，当取 Q 函数值最大的状态的时候（ $\underset{a’}{\max} Q^{*}\left(s^{\prime}, a^{\prime}\right)$ ）得到：</p>
+<script type="math/tex; mode=display">
+Q^{*}(s, a)=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) \max _{a^{\prime}} Q^{*}\left(s^{\prime}, a^{\prime}\right)</script><p>我们还可以把第二个等式插入到第一个等式，如下式所示：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+V^{*}(s)&=\max _{a} Q^{*}(s, a) \\
+&=\max_{a} \mathbb{E}[G_t|s_t=s,a_t=a]\\  
+&=\max_{a}\mathbb{E}[R_{t+1}+\gamma G_{t+1}|s_t=s,a_t=a]\\
+&=\max_{a}\mathbb{E}[R_{t+1}+\gamma V^*(s_{t+1})|s_t=s,a_t=a]\\
+&=\max_{a}\mathbb{E}[R_{t+1}]+ \max_a \mathbb{E}[\gamma V^*(s_{t+1})|s_t=s,a_t=a]\\
+&=\max_{a} R(s,a) + \max_a\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V^{*}\left(s^{\prime}\right)\\
+&=\max_{a} \left(R(s,a) + \gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V^{*}\left(s^{\prime}\right)\right)
+\end{aligned}</script><p>我们就会得到状态价值函数的转移。</p>
+<h3 id="价值迭代"><a href="#价值迭代" class="headerlink" title="价值迭代"></a>价值迭代</h3><h4 id="最优性原理"><a href="#最优性原理" class="headerlink" title="最优性原理"></a>最优性原理</h4><p><strong>最优性原理定理（principle of Optimality Theorem）</strong>：一个策略 $\pi(s|a)$ 在状态 $s$ 达到了最优价值，也就是 $V_{\pi}(s) = V^{<em>}(s)$ 成立，当且仅当对于任何能够从 $s$ 到达的 $s’$，都已经达到了最优价值，也就是，对于所有的 $s’$，$V_{\pi}(s’) = V^{</em>}(s’)$ 恒成立。</p>
+<h4 id="确认性价值迭代"><a href="#确认性价值迭代" class="headerlink" title="确认性价值迭代"></a>确认性价值迭代</h4><p>如果我们知道子问题 $V^{<em>}(s’)$ 的最优解，就可以通过价值迭代来得到最优的 $V^{</em>}(s’)$ 的解。价值迭代就是把贝尔曼最优方程当成一个更新规则来进行，即：</p>
+<script type="math/tex; mode=display">
+V(s) \leftarrow \max _{a \in \mathcal{A}}\left(R(s, a)+\gamma \sum_{s^{\prime} \in \mathcal{S}} p\left(s^{\prime} \mid s, a\right) V\left(s^{\prime}\right)\right) \tag{8}</script><p>上述式子只有当整个马尔可夫决策过程已经到达最佳的状态时才满足。但这里可以把它转换成一个备份的等式。备份的等式就是说一个迭代的等式。我们不停地去迭代贝尔曼最优方程，价值函数就能逐渐趋向于最佳的价值函数，这是价值迭代算法的精髓。</p>
+<p>为了得到最佳的 $V^<em>$ ，对于每个状态的 $V^</em>$，我们直接通过贝尔曼最优方程进行迭代，迭代了很多次之后，价值函数就会收敛。这种价值迭代算法也被称为确认性价值迭代（deterministic value iteration）</p>
+<h4 id="价值迭代算法"><a href="#价值迭代算法" class="headerlink" title="价值迭代算法"></a>价值迭代算法</h4><p>价值迭代算法的过程如下。</p>
+<ol>
+<li><p>初始化: 令 $k=1$，对于所有状态 $s, V_{0}(s)=0$ 。</p>
+</li>
+<li><p>对于 $k=1: H$ ( $H$ 是迭代次数)</p>
+<ul>
+<li>对于所有状态 $s$</li>
+</ul>
+<script type="math/tex; mode=display">
+\begin{gathered}
+Q_{k+1}(s, a)=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V_{k}\left(s^{\prime}\right) \\
+V_{k+1}(s)=\max _{a} Q_{k+1}(s, a)
+\end{gathered}</script><ul>
+<li>$k \leftarrow k+1$ 。</li>
+</ul>
+</li>
+<li><p>在迭代后提取最优策略:</p>
+</li>
+</ol>
+<script type="math/tex; mode=display">
+\pi(s)=\underset{a}{\arg \max } R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V_{k+1}\left(s^{\prime}\right)</script><p>我们使用价值迭代算法是为了得到最佳的策略 $\pi$ 。我们可以使用式 (8) 进行迭代，迭代多次且收敛后得到的值就是最佳的价值。</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165646537.png" class title="图片">
+<h3 id="策略迭代与价值迭代的区别"><a href="#策略迭代与价值迭代的区别" class="headerlink" title="策略迭代与价值迭代的区别"></a>策略迭代与价值迭代的区别</h3><p>网格世界：初始化界面</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165718348.png" class title="图片">
+<p>第一次策略评估：</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165735790.png" class title="图片">
+<p>第一次策略更新：</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165801200.png" class title="图片">
+<p>第二次策略评估：</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165854228.png" class title="图片">
+<p>第二次策略更新：</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165907467.png" class title="图片">
+<p>第三次策略评估：</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515165958925.png" class title="图片">
+<p>如上图我们再次执行策略评估，格子的值又在不停地变化，变化之后又收敛了。如下图所示，我们再执行一次策略更新。现在格子的值又会有变化，每一个状态中格子的最佳策略也会产生一些改变。</p>
+<p>第三次策略更新：</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515170015744.png" class title="图片">
+<p>第四次策略更新：</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515170033128.png" class title="图片">
+<p>我们再执行一遍策略更新，格子的值没有发生变化，这说明整个马尔可夫决策过程已经收敛了。所以现在每个状态的值就是当前最佳的价值函数的值，当前状态对应的策略就是最佳的策略。</p>
+<p>切换成价值迭代：</p>
+<img src="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/image-20220515170049917.png" class title="图片">
+<p>我们再用价值迭代来解马尔可夫决策过程，点 Toggle value iteration。 </p>
+<ul>
+<li>当它的这个值确定下来过后，它会产生它的最佳状态，这个最佳状态提取的策略跟策略迭代得出来的最佳策略是一致的。</li>
+<li>在每个状态，我们跟着这个最佳策略走，就会到达可以得到最多奖励的一个状态。</li>
+</ul>
+<p>我们给出一个<a href="https://github.com/cuhkrlcourse/RLexample/tree/master/MDP">Demo</a>，这个 Demo 是为了解一个叫 <code>FrozenLake</code> 的例子，这个例子是 OpenAI Gym 里的一个环境，与 gridworld 很像，不过它每一个状态转移是一个概率。</p>
+<p>我们再来对比下策略迭代与价值迭代，这两个算法都可以解马尔可夫决策过程的控制问题。</p>
+<ul>
+<li>策略迭代分两步，首先进行策略评估，即对当前已经搜索到的策略函数进行一个估值。得到估值后，我们进行策略改进，即把 Q 函数算出来，进一步进行改进。不断重复这两步，直到策略收敛。</li>
+<li>价值迭代直接使用贝尔曼最优方程，从而寻找最佳的价值函数。找到最佳价值函数后，我们再提取最佳策略。</li>
+</ul>
+<h3 id="马尔可夫决策过程中的预测和控制总结"><a href="#马尔可夫决策过程中的预测和控制总结" class="headerlink" title="马尔可夫决策过程中的预测和控制总结"></a>马尔可夫决策过程中的预测和控制总结</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>贝尔曼方程</th>
+<th>算法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>预测</td>
+<td>贝尔曼方程</td>
+<td>迭代策略评估</td>
+</tr>
+<tr>
+<td>控制</td>
+<td>贝尔曼期望方程</td>
+<td>策略迭代</td>
+</tr>
+<tr>
+<td>控制</td>
+<td>贝尔曼最优方程</td>
+<td>价值迭代</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="精选习题解答"><a href="#精选习题解答" class="headerlink" title="精选习题解答"></a>精选习题解答</h2><ul>
+<li>如果数据流不具备马尔可夫性质怎么办？应该如何处理？</li>
+</ul>
+<p>如果不具备马尔可夫性质，即下一个状态与之前的状态也有关，若仅用当前的状态来求解决策过程，势必导致决策的泛化能力变差。为了解决这个问题，可以利用循环神经网络对历史信息建模，获得包含历史信息的状态表征，表征过程也可以使用注意力机制等手段，最后在表征状态空间求解马尔可夫决策过程问题。</p>
+<ul>
+<li>请分别写出基于状态值函数的贝尔曼方程以及基于动作值的贝尔曼方程.</li>
+</ul>
+<p>基于状态价值函数的贝尔曼方程: $V_{\pi}(s) = \sum_{a}{\pi(a|s)}\sum_{s’,r}{p(s’,r|s,a)[R(s,a)+\gamma V_{\pi}(s’)]}$</p>
+<p>基于动作价值函数的贝尔曼方程: $Q_{\pi}(s,a)=\sum_{s’,r}p(s’,r|s,a)[R(s’,a)+\gamma V_{\pi}(s’)]$</p>
+<ul>
+<li>请问最佳价值函数(optimal value function) $v^<em>$ 和最佳策略(optimal policy) $\pi^</em>$ 为什么等价呢？</li>
+</ul>
+<p>最佳价值函数的定义为： $V^<em> (s)=\max\limits_{\pi} V_{\pi}(s)$ ，即我们搜索一种策略 $\pi $ 来让每个状态的价值最大。$V^</em>$ 就是到达每一个状态的最大价值，同时我们得到的策略可以说是最佳策略，即 $ \pi^{*}(s)=\underset{\pi}{\arg \max }~ V_{\pi}(s) $。最佳策略使得每个状态的价值函数都取得最大值。所以如果我们可以得到一个最佳价值函数，就可以认为某一个马尔可夫决策过程的环境可解。在这种情况下，其最佳价值函数是一致的，即其达到的上限的值是一致的，但这里可能有多个最佳策略对应于相同的最佳价值。</p>
+<ul>
+<li>能不能手写一下第n步的值函数更新公式呀？另外，当n越来越大时，值函数的期望和方差分别变大还是变小呢？</li>
+</ul>
+<p>n 越大，方差越大，期望偏差越小。价值函数的更新公式如下：</p>
+<script type="math/tex; mode=display">
+Q\left(s, a\right) \leftarrow Q\left(s, a\right)+\alpha\left[\sum_{i=1}^{n} \gamma^{i-1} R_{t+i}+\gamma^{n} \max _{a}   Q\left(s',a\right)-Q\left(s, a\right)\right]</script>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/markdown/" rel="tag"># markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/14/%E7%BB%AA%E8%AE%BA/" rel="prev" title="绪论">
+      <i class="fa fa-chevron-left"></i> 绪论
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">马尔可夫决策过程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E8%BF%87%E7%A8%8B"><span class="nav-number">1.1.</span> <span class="nav-text">马尔可夫过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E6%80%A7%E8%B4%A8"><span class="nav-number">1.1.1.</span> <span class="nav-text">马尔可夫性质</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E8%BF%87%E7%A8%8B-%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E9%93%BE"><span class="nav-number">1.1.2.</span> <span class="nav-text">马尔可夫过程&#x2F;马尔可夫链</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E8%BF%87%E7%A8%8B%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="nav-number">1.1.3.</span> <span class="nav-text">马尔可夫过程的例子</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%A5%96%E5%8A%B1%E8%BF%87%E7%A8%8B"><span class="nav-number">1.2.</span> <span class="nav-text">马尔可夫奖励过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9E%E6%8A%A5%E4%B8%8E%E4%BB%B7%E5%80%BC%E5%87%BD%E6%95%B0"><span class="nav-number">1.2.1.</span> <span class="nav-text">回报与价值函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9D%E5%B0%94%E6%9B%BC%E6%96%B9%E7%A8%8B"><span class="nav-number">1.2.2.</span> <span class="nav-text">贝尔曼方程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A1%E7%AE%97%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%A5%96%E5%8A%B1%E8%BF%87%E7%A8%8B%E4%BB%B7%E5%80%BC%E7%9A%84%E8%BF%AD%E4%BB%A3%E6%96%B9%E6%B3%95"><span class="nav-number">1.2.3.</span> <span class="nav-text">计算马尔可夫奖励过程价值的迭代方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B-1"><span class="nav-number">1.3.</span> <span class="nav-text">马尔可夫决策过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B%E4%B8%AD%E7%9A%84%E7%AD%96%E7%95%A5"><span class="nav-number">1.3.1.</span> <span class="nav-text">马尔可夫决策过程中的策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B%E5%92%8C%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E8%BF%87%E7%A8%8B-%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%A5%96%E5%8A%B1%E8%BF%87%E7%A8%8B%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">1.3.2.</span> <span class="nav-text">马尔可夫决策过程和马尔可夫过程&#x2F;马尔可夫奖励过程的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B%E4%B8%AD%E7%9A%84%E4%BB%B7%E5%80%BC%E5%87%BD%E6%95%B0"><span class="nav-number">1.3.3.</span> <span class="nav-text">马尔可夫决策过程中的价值函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9D%E5%B0%94%E6%9B%BC%E6%9C%9F%E6%9C%9B%E6%96%B9%E7%A8%8B"><span class="nav-number">1.3.4.</span> <span class="nav-text">贝尔曼期望方程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%87%E4%BB%BD%E5%9B%BE"><span class="nav-number">1.3.5.</span> <span class="nav-text">备份图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AD%96%E7%95%A5%E8%AF%84%E4%BC%B0"><span class="nav-number">1.3.6.</span> <span class="nav-text">策略评估</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E6%B5%8B%E4%B8%8E%E6%8E%A7%E5%88%B6"><span class="nav-number">1.3.7.</span> <span class="nav-text">预测与控制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92"><span class="nav-number">1.3.8.</span> <span class="nav-text">动态规划</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E8%BF%9B%E8%A1%8C%E7%AD%96%E7%95%A5%E8%AF%84%E4%BC%B0"><span class="nav-number">1.3.9.</span> <span class="nav-text">使用动态规划进行策略评估</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B%E6%8E%A7%E5%88%B6"><span class="nav-number">1.3.10.</span> <span class="nav-text">马尔可夫决策过程控制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AD%96%E7%95%A5%E8%BF%AD%E4%BB%A3"><span class="nav-number">1.3.11.</span> <span class="nav-text">策略迭代</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B4%9D%E5%B0%94%E6%9B%BC%E6%9C%80%E4%BC%98%E6%96%B9%E7%A8%8B"><span class="nav-number">1.3.11.1.</span> <span class="nav-text">贝尔曼最优方程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%B7%E5%80%BC%E8%BF%AD%E4%BB%A3"><span class="nav-number">1.3.12.</span> <span class="nav-text">价值迭代</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%80%E4%BC%98%E6%80%A7%E5%8E%9F%E7%90%86"><span class="nav-number">1.3.12.1.</span> <span class="nav-text">最优性原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A1%AE%E8%AE%A4%E6%80%A7%E4%BB%B7%E5%80%BC%E8%BF%AD%E4%BB%A3"><span class="nav-number">1.3.12.2.</span> <span class="nav-text">确认性价值迭代</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%B7%E5%80%BC%E8%BF%AD%E4%BB%A3%E7%AE%97%E6%B3%95"><span class="nav-number">1.3.12.3.</span> <span class="nav-text">价值迭代算法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AD%96%E7%95%A5%E8%BF%AD%E4%BB%A3%E4%B8%8E%E4%BB%B7%E5%80%BC%E8%BF%AD%E4%BB%A3%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">1.3.13.</span> <span class="nav-text">策略迭代与价值迭代的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B%E4%B8%AD%E7%9A%84%E9%A2%84%E6%B5%8B%E5%92%8C%E6%8E%A7%E5%88%B6%E6%80%BB%E7%BB%93"><span class="nav-number">1.3.14.</span> <span class="nav-text">马尔可夫决策过程中的预测和控制总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B2%BE%E9%80%89%E4%B9%A0%E9%A2%98%E8%A7%A3%E7%AD%94"><span class="nav-number">1.4.</span> <span class="nav-text">精选习题解答</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/853784202@qq.com" title="E-Mail → 853784202@qq.com"><i class="lee-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+
+
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="lee"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Lee</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
