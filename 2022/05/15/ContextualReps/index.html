@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"github.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="CS224U 笔记第二部分 Supervised sentiment analysis-Contextual word representations">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ContextualReps">
+<meta property="og:url" content="https://github.com/CLearnerLee/LeeBlog/2022/05/15/ContextualReps/index.html">
+<meta property="og:site_name" content="AI 自学笔记">
+<meta property="og:description" content="CS224U 笔记第二部分 Supervised sentiment analysis-Contextual word representations">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515193336382.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515193411668.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515193742429.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515193842162.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515194744410.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515203406045.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515203505356.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515203555437.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515203624415.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515203656893.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515203723314.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515204000272.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515204942643.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515205132110.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515212018898.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515212132808.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515212302216.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515212700789.png">
+<meta property="og:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515212816423.png">
+<meta property="article:published_time" content="2022-05-15T13:32:43.000Z">
+<meta property="article:modified_time" content="2022-05-15T13:57:04.036Z">
+<meta property="article:author" content="Lee">
+<meta property="article:tag" content="markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2022/05/15/ContextualReps/image-20220515193336382.png">
+
+<link rel="canonical" href="https://github.com/CLearnerLee/LeeBlog/2022/05/15/ContextualReps/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>ContextualReps | AI 自学笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">AI 自学笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-标签">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags - markdown fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th - 我的第一篇博客 - CS224U 笔记 fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-归档">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/CLearnerLee/LeeBlog/2022/05/15/ContextualReps/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="AI 自学笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ContextualReps
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-15 21:32:43 / 修改时间：21:57:04" itemprop="dateCreated datePublished" datetime="2022-05-15T21:32:43+08:00">2022-05-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS224U-%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">CS224U 笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="lee-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">CS224U 笔记第二部分 Supervised sentiment analysis-Contextual word representations</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Contextual-word-representations"><a href="#Contextual-word-representations" class="headerlink" title="Contextual word representations"></a>Contextual word representations</h1><h1 id="Overview"><a href="#Overview" class="headerlink" title="Overview"></a>Overview</h1><h2 id="Associated-materials"><a href="#Associated-materials" class="headerlink" title="Associated materials"></a>Associated materials</h2><ul>
+<li><p>Transformers</p>
+<ol>
+<li><p>Vaswani et al. 2017</p>
+</li>
+<li><p>Alexander Rush: The Annotated Transformer <a target="_blank" rel="noopener" href="http://nlp.seas.harvard.edu/2018/04/03/attention.html">link</a></p>
+</li>
+</ol>
+</li>
+<li><p>Hugging Face transformers: <a href="https://github.com/huggingface/transformers">project site</a></p>
+</li>
+<li><p>BERT: Devlin et al. 2019; <a href="https://github.com/google-research/bert">project site</a></p>
+</li>
+<li><p>RoBERTa: Liu et al. 2019; <a href="https://github.com/pytorch/fairseq/tree/main/examples/roberta">project site</a></p>
+</li>
+<li><p>ELECTRA: Clark et al. 2019; <a href="https://github.com/google-research/electra">project site</a></p>
+</li>
+</ul>
+<h2 id="Model-structure-and-linguistic-structure"><a href="#Model-structure-and-linguistic-structure" class="headerlink" title="Model structure and linguistic structure"></a>Model structure and linguistic structure</h2><p>四种模型结构：</p>
+<img src="/2022/05/15/ContextualReps/image-20220515193336382.png" class title="图片">
+<h3 id="Guiding-idea-Attention"><a href="#Guiding-idea-Attention" class="headerlink" title="Guiding idea: Attention"></a>Guiding idea: Attention</h3><img src="/2022/05/15/ContextualReps/image-20220515193411668.png" class title="图片">
+<script type="math/tex; mode=display">
+\text { scores }& \tilde{\alpha}=\left[\begin{array}{lll}
+h_{C}^{\top} h_{1} & h_{C}^{\top} h_{2} & h_{C}^{\top} h_{3}
+\end{array}\right]\\
+\text{attention\ weights}& \alpha=\operatorname{softmax}(\tilde{\alpha}) \\
+\text{context}& K=\operatorname{mean}\left(\left[\alpha_{1} h_{1}, \alpha_{2} h_{2}, \alpha_{3} h_{3}\right]\right)\\
+\text{attention combo}& \tilde{h}=\tanh \left(\left[\kappa ; h_{C}\right] W_{K}\right)\\
+\text{classifier}& y=\operatorname{softmax}(\tilde{h} W+b)\\</script><h3 id="Guiding-idea-Positional-encoding"><a href="#Guiding-idea-Positional-encoding" class="headerlink" title="Guiding idea: Positional encoding"></a>Guiding idea: Positional encoding</h3><p>$p_1$: 表示单词 $\text{The}$ 处在第一个位置</p>
+<img src="/2022/05/15/ContextualReps/image-20220515193742429.png" class title="图片">
+<h2 id="Current-issues-and-efforts"><a href="#Current-issues-and-efforts" class="headerlink" title="Current issues and efforts"></a>Current issues and efforts</h2><img src="/2022/05/15/ContextualReps/image-20220515193842162.png" class title="图片">
+<h2 id="Some-other-Transformer-based-models"><a href="#Some-other-Transformer-based-models" class="headerlink" title="Some other Transformer-based models"></a>Some other Transformer-based models</h2><ul>
+<li><p>SBERT (<strong>S</strong>entence-BERT; Reimers and Gurevych 2019)</p>
+</li>
+<li><p><strong>G</strong>enerative <strong>P</strong>re-trained <strong>T</strong>ransformer</p>
+<ul>
+<li><p>GPT (Radford et al. 2018)</p>
+</li>
+<li><p>GPT-2 (Radford et al. 2019)</p>
+</li>
+<li><p>GPT-3 (Brown et al. 2020)</p>
+</li>
+</ul>
+</li>
+<li><p>XLNet (<strong>X</strong>tra <strong>L</strong>ong <strong>T</strong>ransfromer: Yang et al. 2019</p>
+</li>
+<li><p>T5 (<strong>T</strong>ext-<strong>T</strong>o-<strong>T</strong>ext <strong>T</strong>ransfer <strong>T</strong>ransformer; Raffel et al. 2019)</p>
+</li>
+<li><p>BART: Devlin et al. 2019</p>
+</li>
+</ul>
+<h1 id="Transformers"><a href="#Transformers" class="headerlink" title="Transformers"></a>Transformers</h1><h2 id="Core-model-structure"><a href="#Core-model-structure" class="headerlink" title="Core model structure"></a>Core model structure</h2><img src="/2022/05/15/ContextualReps/image-20220515194744410.png" class title="图片">
+<h2 id="Computing-the-attention-representations"><a href="#Computing-the-attention-representations" class="headerlink" title="Computing the attention representations"></a>Computing the attention representations</h2><p>Calculation as previously given: </p>
+<script type="math/tex; mode=display">
+c_{\text {attn }}=\operatorname{sum}\left(\left[\alpha_{1} a_{\text {input }}, \alpha_{2} b_{\text {input }}\right]\right)\\
+\alpha=\operatorname{softmax}(\tilde{\alpha})\\
+\tilde{\alpha}=\left[\frac{c_{\text {input }}{ }^{\top} a_{\text {input }}}{\sqrt{d_{k}}}, \frac{c_{\text {input }}{ }^{\top} b_{\text {input }}}{\sqrt{d_{k}}}\right]\\</script><p>Matrix format</p>
+<script type="math/tex; mode=display">
+\operatorname{softmax}\left(\frac{c_{\text {input }}\left[\begin{array}{l}
+a_{\text {input }} \\
+b_{\text {input }}
+\end{array}\right]^{\top}}{\sqrt{d_{k}}}\right)\left[\begin{array}{l}
+a_{\text {input }} \\
+b_{\text {input }}
+\end{array}\right]</script><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line">seq_length = <span class="number">3</span></span><br><span class="line">d_k = <span class="number">4</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># seq_length * d_k 矩阵</span></span><br><span class="line">inputs = np.random.uniform(size=(seq_length, d_k))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1 * d_k 矩阵</span></span><br><span class="line">a_input = inputs[<span class="number">0</span>]</span><br><span class="line">b_input = inputs[<span class="number">1</span>]</span><br><span class="line">c_input = inputs[<span class="number">2</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">softmax</span>(<span class="params">X</span>):</span><br><span class="line">    z = np.exp(X)</span><br><span class="line">    <span class="keyword">return</span> (z / z.<span class="built_in">sum</span>(axis=<span class="number">0</span>)).T</span><br><span class="line"></span><br><span class="line">c_alpha = softmax([</span><br><span class="line">    (c_input.dot(a_input) / np.sqrt(d_k)),</span><br><span class="line">    (c_input.dot(b_input) / np.sqrt(d_k))])</span><br><span class="line"></span><br><span class="line">c_attn = <span class="built_in">sum</span>([c_alpha[<span class="number">0</span>]*a_input, c_alpha[<span class="number">1</span>]*b_input])</span><br><span class="line"></span><br><span class="line">ab = inputs[:-<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 等价 c_attn</span></span><br><span class="line">softmax((c_input.dot(ab.T) / np.sqrt(d_k).dot(ab))</span><br><span class="line"></span><br><span class="line"><span class="comment"># if we allow every input to attend to itself:</span></span><br><span class="line">softmax((inputs.dot(inputs.T) / np.sqrt(d_k).dot(inputs))</span><br></pre></td></tr></table></figure>
+<h2 id="Multi-headed-attention"><a href="#Multi-headed-attention" class="headerlink" title="Multi-headed attention"></a>Multi-headed attention</h2><img src="/2022/05/15/ContextualReps/image-20220515203406045.png" class title="图片">
+<script type="math/tex; mode=display">
+\begin{aligned}
+c_{\text {attn }}^{3} &=\operatorname{sum}\left(\left[\alpha_{1}\left(a_{\text {input }} W_{3}^{V}\right), \alpha_{2}\left(b_{\text {input }} W_{3}^{V}\right]\right)\right.\\
+\alpha &=\operatorname{softmax}(\tilde{\alpha}) \\
+\tilde{\alpha} &=\left[\frac{\left(c_{\text {input }} W_{3}^{Q}\right)^{\top}\left(a_{\text {input }} W_{3}^{K}\right)}{\sqrt{d_{k}}}, \frac{\left(c_{\text {input }} W_{3}^{Q}\right)^{\top}\left(b_{\text {input }} W_{3}^{K}\right)}{\sqrt{d_{k}}}\right]
+\end{aligned}</script><h2 id="Repeated-transformer-blocks"><a href="#Repeated-transformer-blocks" class="headerlink" title="Repeated transformer blocks"></a>Repeated transformer blocks</h2><img src="/2022/05/15/ContextualReps/image-20220515203505356.png" class title="图片">
+<h2 id="The-architecture-diagram"><a href="#The-architecture-diagram" class="headerlink" title="The architecture diagram"></a>The architecture diagram</h2><img src="/2022/05/15/ContextualReps/image-20220515203555437.png" class title="图片">
+<h1 id="BERT"><a href="#BERT" class="headerlink" title="BERT"></a>BERT</h1><h2 id="Core-model-structure-1"><a href="#Core-model-structure-1" class="headerlink" title="Core model structure"></a>Core model structure</h2><img src="/2022/05/15/ContextualReps/image-20220515203624415.png" class title="图片">
+<h2 id="Masked-Language-Modeling-MLM"><a href="#Masked-Language-Modeling-MLM" class="headerlink" title="Masked Language Modeling (MLM)"></a>Masked Language Modeling (MLM)</h2><img src="/2022/05/15/ContextualReps/image-20220515203656893.png" class title="图片">
+<img src="/2022/05/15/ContextualReps/image-20220515203723314.png" class title="图片">
+<h3 id="MLM-loss-function"><a href="#MLM-loss-function" class="headerlink" title="MLM loss function"></a>MLM loss function</h3><p>For Transformer parameters $H_{\theta}$ and sequence $\mathbf{x}=\left[x_{1}, \ldots, x_{T}\right]$ with masked version $\hat{\mathbf{x}}$ :</p>
+<script type="math/tex; mode=display">
+\max _{\theta} \sum_{t=1}^{T} m_{t} \log \frac{\exp \left(e\left(x_{t}\right)^{\top} H_{\theta}(\hat{\mathbf{x}})_{t}\right)}{\sum_{x^{\prime} \in \mathcal{V}} \exp \left(e\left(x^{\prime}\right)^{\top} H_{\theta}(\hat{\mathbf{x}})_{t}\right)}</script><p>where $\mathcal{V}$ is the vocabulary, $x_{t}$ is the actual token at step $t$, $m_{t}=1$ if token $t$ was masked, else 0 , and $e(x)$ is the embedding for $x$.</p>
+<h2 id="Binary-next-sentence-prediction-pretraining"><a href="#Binary-next-sentence-prediction-pretraining" class="headerlink" title="Binary next sentence prediction pretraining"></a>Binary next sentence prediction pretraining</h2><p>Positive: Actual sentence sequences</p>
+<ul>
+<li><p>[CLS] the man went to [MASK] store [SEP]</p>
+</li>
+<li><p>he bought a gallon [MASK] milk [SEP]</p>
+</li>
+<li><p>Label: IsNext</p>
+</li>
+</ul>
+<p>Negative: Randomly chosen second sentence</p>
+<ul>
+<li><p>[CLS] the man went to [MASK] store [SEP]</p>
+</li>
+<li><p>penguin [MASK] are flight ##less birds [SEP]</p>
+</li>
+<li><p>Label: NotNext</p>
+</li>
+</ul>
+<h3 id="Transfer-learning-and-fine-tuning"><a href="#Transfer-learning-and-fine-tuning" class="headerlink" title="Transfer learning and fine-tuning"></a>Transfer learning and fine-tuning</h3><img src="/2022/05/15/ContextualReps/image-20220515204000272.png" class title="图片">
+<h2 id="Tokenization-and-the-BERT-embedding-space"><a href="#Tokenization-and-the-BERT-embedding-space" class="headerlink" title="Tokenization and the BERT embedding space"></a>Tokenization and the BERT embedding space</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> BertTokenizer</span><br><span class="line"></span><br><span class="line">tokenizer = BertTokenzier.from_pretrained(<span class="string">&#x27;bert-based-cased&#x27;</span>)</span><br><span class="line">tokenizer.tokenize(<span class="string">&quot;This isn&#x27;t too surprising.&quot;</span>)</span><br><span class="line"><span class="comment"># output: [&#x27;This&#x27;, &#x27;isn, &quot;&#x27;&quot;, &#x27;t&#x27;, &#x27;too&#x27;, &#x27;surprising&#x27;, &#x27;.&#x27;]</span></span><br></pre></td></tr></table></figure>
+<h2 id="Known-limitations-with-BERT"><a href="#Known-limitations-with-BERT" class="headerlink" title="Known limitations with BERT"></a>Known limitations with BERT</h2><ol>
+<li><p>Devlin et al. (2019:§5): admirably detailed but still partial ablation studies and optimization studies.</p>
+</li>
+<li><p>Devlin et al. (2019): “The fifirst [downside] is that we are creating a mismatch between pre-training and fine-tuning, since the [MASK] token is never seen during fine-tuning.”</p>
+</li>
+<li><p>Devlin et al. (2019): “The second downside of using an MLM is that only 15% of tokens are predicted in each batch”</p>
+</li>
+<li><p>Yang et al. (2019): “BERT assumes the predicted tokens are independent of each other given the unmasked tokens, which is oversimplified as high-order, long-range dependency is prevalent in natural language”</p>
+</li>
+</ol>
+<h1 id="RoBERTa"><a href="#RoBERTa" class="headerlink" title="RoBERTa"></a>RoBERTa</h1><h2 id="Addressing-the-known-limitations-with-BERT"><a href="#Addressing-the-known-limitations-with-BERT" class="headerlink" title="Addressing the known limitations with BERT"></a>Addressing the known limitations with BERT</h2><p>Devlin et al. (2019:§5): admirably detailed but still partial ablation studies and optimization studies.</p>
+<h2 id="Robustly-optimized-BERT-approach"><a href="#Robustly-optimized-BERT-approach" class="headerlink" title="Robustly optimized BERT approach"></a><strong>R</strong>obustly <strong>o</strong>ptimized <strong>BERT a</strong>pproach</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>BERT</th>
+<th>RoBERTa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Static masking/substitution</td>
+<td>Dynamic masking/substitution</td>
+</tr>
+<tr>
+<td>Inputs are two concatenated document segments</td>
+<td>Inputs are sentence sequences that may span document boundaries</td>
+</tr>
+<tr>
+<td>Next Sentence Prediction (NSP)</td>
+<td>No NSP</td>
+</tr>
+<tr>
+<td>Training batches of 256 examples</td>
+<td>Training batches of 2,000 examples</td>
+</tr>
+<tr>
+<td>Word-piece tokenization</td>
+<td>Character-level byte-pair encoding</td>
+</tr>
+<tr>
+<td>Pretraining on BooksCorpus and English Wikipedia</td>
+<td>Pretraining on BooksCorpus, CC-News, OpenWebText, and Stories</td>
+</tr>
+<tr>
+<td>Train for 1M steps</td>
+<td>Train for up to 500K steps</td>
+</tr>
+<tr>
+<td>Train on short sequences first</td>
+<td>Train only on full-length sequences</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h1 id="ELECTRA"><a href="#ELECTRA" class="headerlink" title="ELECTRA"></a>ELECTRA</h1><p>(<strong>E</strong>fficiently <strong>L</strong>earning an <strong>E</strong>ncoder that <strong>C</strong>lassifies <strong>T</strong>oken <strong>R</strong>eplacements <strong>A</strong>ccurately)</p>
+<h2 id="Addressing-the-known-limitations-with-BERT-1"><a href="#Addressing-the-known-limitations-with-BERT-1" class="headerlink" title="Addressing the known limitations with BERT"></a>Addressing the known limitations with BERT</h2><ol>
+<li><p>Devlin et al. (2019): “The first [downside] is that we are creating a mismatch between pre-training and fine-tuning, since the [MASK] token is never seen during fine-tuning.”</p>
+</li>
+<li><p>Devlin et al. (2019): “The second downside of using an MLM is that only 15% of tokens are predicted in each batch”</p>
+</li>
+</ol>
+<h2 id="Core-model-structure-2"><a href="#Core-model-structure-2" class="headerlink" title="Core model structure"></a>Core model structure</h2><img src="/2022/05/15/ContextualReps/image-20220515204942643.png" class title="图片">
+<h2 id="Generator-Discriminator-relationships"><a href="#Generator-Discriminator-relationships" class="headerlink" title="Generator/Discriminator relationships"></a>Generator/Discriminator relationships</h2><p>Where Generator and Discriminator are the same size, they can share Transformer parameters, and more sharing is better. However, the best results come from having a Generator that is small compared to the Discriminator:</p>
+<img src="/2022/05/15/ContextualReps/image-20220515205132110.png" class title="图片">
+<h1 id="Practical-fine-tuning"><a href="#Practical-fine-tuning" class="headerlink" title="Practical fine-tuning"></a>Practical fine-tuning</h1><p>We’ll use the <a href="sst_01_overview.ipynb">Stanford Sentiment Treebank</a> for illustrations, and we’ll try out a few different deep learning models.</p>
+<h2 id="Hugging-Face-BERT-models-and-tokenizers"><a href="#Hugging-Face-BERT-models-and-tokenizers" class="headerlink" title="Hugging Face BERT models and tokenizers"></a>Hugging Face BERT models and tokenizers</h2><p>We’ll illustrate with the BERT-base cased model:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">weights_name = <span class="string">&#x27;bert-base-cased&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>There are lots other options for pretrained weights. See <a target="_blank" rel="noopener" href="https://huggingface.co/models">this Hugging Face directory</a>.</p>
+<p>Next, we specify a tokenizer and a model that match both each other and our choice of pretrained weights:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> BertModel, BertTokenizer</span><br><span class="line"></span><br><span class="line">bert_tokenizer = BertTokenizer.from_pretrained(weights_name)</span><br><span class="line">bert_model = BertModel.from_pretrained(weights_name)</span><br></pre></td></tr></table></figure>
+<p>For modeling (as opposed to creating static representations), we will mostly process examples in batches – generally very small ones, as these models consume a lot of memory. Here’s a small batch of texts to use as the starting point for illustrations:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">example_texts = [</span><br><span class="line">    <span class="string">&quot;Encode sentence 1. [SEP] And sentence 2!&quot;</span>,</span><br><span class="line">    <span class="string">&quot;Bert knows Snuffleupagus&quot;</span>]</span><br></pre></td></tr></table></figure>
+<p>We will often need to pad (and perhaps truncate) token lists so that we can work with fixed-dimensional tensors: The <code>batch_encode_plus</code> has a lot of options for doing this:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">example_ids = bert_tokenizer.batch_encode_plus(</span><br><span class="line">    example_texts,</span><br><span class="line">    add_special_tokens=<span class="literal">True</span>,</span><br><span class="line">    return_attention_mask=<span class="literal">True</span>,</span><br><span class="line">    padding=<span class="string">&#x27;longest&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(example_ids.keys())</span><br><span class="line"><span class="comment"># output: dict_keys([&#x27;input_ids&#x27;, &#x27;token_type_ids&#x27;, &#x27;attention_mask&#x27;])</span></span><br></pre></td></tr></table></figure>
+<p>The <code>token_type_ids</code> is used for multi-text inputs like NLI. The <code>&#39;input_ids&#39;</code> field gives the indices for each of the two examples:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">example_ids[<span class="string">&#x27;input_ids&#x27;</span>]</span><br><span class="line"><span class="comment"># [[101, 13832, 13775, 5650, 122, 119, 102, 1262, 5650, 123, 106, 102],</span></span><br><span class="line"><span class="comment"># [101, 15035, 3520, 156, 14787, 13327, 4455, 28026, 1116, 102, 0, 0]]</span></span><br></pre></td></tr></table></figure>
+<p>Notice that the final two tokens of the second example are pad tokens.</p>
+<p>For fine-tuning, we want to avoid attending to padded tokens. The <code>&#39;attention_mask&#39;</code> captures the needed mask, which we’ll be able to feed directly to the pretrained BERT model:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">example_ids[<span class="string">&#x27;attention_mask&#x27;</span>]</span><br><span class="line"><span class="comment"># [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0]]</span></span><br></pre></td></tr></table></figure>
+<p>Finally, we can run these indices and masks through the pretrained model:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"></span><br><span class="line">X_example = torch.tensor(example_ids[<span class="string">&#x27;input_ids&#x27;</span>])</span><br><span class="line">X_example_mask = torch.tensor(example_ids[<span class="string">&#x27;attention_mask&#x27;</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># with 语句适用于对资源进行访问的场合，确保不管使用过程中是否发生异常都会执行必要的“清理”操作，释放资源，比如文件使用后自动关闭／线程中锁的自动获取和释放等。</span></span><br><span class="line"><span class="comment"># with torch.no_grad()中的数据不需要计算梯度，也不会进行反向传播</span></span><br><span class="line"><span class="keyword">with</span> torch.no_grad():</span><br><span class="line">    reps = bert_model(X_example, attention_mask=X_example_mask)</span><br></pre></td></tr></table></figure>
+<p>Hugging Face BERT models create a special <code>pooler_output</code> representation that is the final representation above the [CLS] extended with a single layer of parameters:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">reps.pooler_output.shape</span><br><span class="line"><span class="comment"># torch.Size([2, 768])</span></span><br></pre></td></tr></table></figure>
+<p>We have two examples, each representented by a single vector of dimension 768, which is $d_{model}$ for BERT base using the notation from <a target="_blank" rel="noopener" href="https://arxiv.org/abs/1706.03762">the original Transformers paper</a>. This is an easy basis for fine-tuning, as we will see.</p>
+<p>We can also access the final output for each state:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">reps.last_hidden_state.shape</span><br><span class="line"><span class="comment"># torch.Size([2, 12, 768])</span></span><br></pre></td></tr></table></figure>
+<p>Here, we have 2 examples, each padded to the length of the longer one  (12), and each of those representations has dimension 768. These  representations can be used for sequence modeling, or pooled somehow for simple classifiers.</p>
+<h2 id="BERT-featurization-with-Hugging-Face"><a href="#BERT-featurization-with-Hugging-Face" class="headerlink" title="BERT featurization with Hugging Face"></a>BERT featurization with Hugging Face</h2><p>To start, we’ll use the Hugging Face interfaces just to featurize  examples to create inputs to a separate model. In this setting, the BERT parameters are frozen.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">bert_phi</span>(<span class="params">text</span>):</span><br><span class="line">    input_ids = bert_tokenizer.encode(text, add_special_tokens=<span class="literal">True</span>)</span><br><span class="line">    X = torch.tensor([input_ids])</span><br><span class="line">    <span class="keyword">with</span> torch.no_grad():</span><br><span class="line">        reps = bert_model(X)</span><br><span class="line">        <span class="keyword">return</span> reps.last_hidden_state.squeeze(<span class="number">0</span>).numpy()</span><br></pre></td></tr></table></figure>
+<h3 id="Simple-feed-forward-experiment"><a href="#Simple-feed-forward-experiment" class="headerlink" title="Simple feed-forward experiment"></a>Simple feed-forward experiment</h3><p>For a simple feed-forward experiment, we can get the representation of the <code>[CLS]</code> tokens and use them as the inputs to a shallow neural network:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">bert_classifier_phi</span>(<span class="params">text</span>):</span><br><span class="line">    reps = bert_phi(text)</span><br><span class="line">    <span class="comment">#return reps.mean(axis=0)  # Another good, easy option.</span></span><br><span class="line">    <span class="keyword">return</span> reps[<span class="number">0</span>]</span><br></pre></td></tr></table></figure>
+<p>Next we read in the SST train and dev splits:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line">SST_HOME = os.path.join(<span class="string">&quot;data&quot;</span>, <span class="string">&quot;sentiment&quot;</span>)</span><br><span class="line"></span><br><span class="line">train = train_reader(SST_HOME)</span><br><span class="line">dev = dev_reader(SST_HOME)</span><br></pre></td></tr></table></figure>
+<p>Split the input/output pairs out into separate lists:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">X_str_train = train.sentence.values</span><br><span class="line">y_train = train.label.values</span><br><span class="line"></span><br><span class="line">X_str_dev = dev.sentence.values</span><br><span class="line">y_dev = dev.label.values</span><br></pre></td></tr></table></figure>
+<p>In the next step, we featurize all of the examples. These steps are likely to be the slowest in these experiments:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">%time X_train = [bert_classifier_phi(text) <span class="keyword">for</span> text <span class="keyword">in</span> X_str_train]</span><br><span class="line"><span class="comment"># CPU times: user 32min 44s, sys: 52.8 s, total: 33min 37s</span></span><br><span class="line"><span class="comment"># Wall time: 8min 24s</span></span><br><span class="line"></span><br><span class="line">%time X_dev = [bert_classifier_phi(text) <span class="keyword">for</span> text <span class="keyword">in</span> X_str_dev]</span><br><span class="line"><span class="comment"># CPU times: user 4min 14s, sys: 7.2 s, total: 4min 22s</span></span><br><span class="line"><span class="comment"># Wall time: 1min 5s</span></span><br></pre></td></tr></table></figure>
+<p>Now that all the examples are featurized, we can fit a model and evaluate it:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">import</span> torch.utils.data</span><br><span class="line"><span class="keyword">from</span> torch_model_base <span class="keyword">import</span> TorchModelBase</span><br><span class="line"><span class="keyword">import</span> utils</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TorchShallowNeuralClassifier</span>(<span class="title class_ inherited__">TorchModelBase</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self,</span></span><br><span class="line"><span class="params">            hidden_dim=<span class="number">50</span>,</span></span><br><span class="line"><span class="params">            hidden_activation=nn.Tanh(<span class="params"></span>),</span></span><br><span class="line"><span class="params">            **base_kwargs</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        A model</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        h = f(xW_xh + b_h)</span></span><br><span class="line"><span class="string">        y = softmax(hW_hy + b_y)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        with a cross-entropy loss and f determined by `hidden_activation`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Parameters</span></span><br><span class="line"><span class="string">        ----------</span></span><br><span class="line"><span class="string">        hidden_dim : int</span></span><br><span class="line"><span class="string">            Dimensionality of the hidden layer.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        hidden_activation : nn.Module</span></span><br><span class="line"><span class="string">            The non-activation function used by the network for the</span></span><br><span class="line"><span class="string">            hidden layer.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        **base_kwargs</span></span><br><span class="line"><span class="string">            For details, see `torch_model_base.py`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Attributes</span></span><br><span class="line"><span class="string">        ----------</span></span><br><span class="line"><span class="string">        loss: nn.CrossEntropyLoss(reduction=&quot;mean&quot;)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        self.params: list</span></span><br><span class="line"><span class="string">            Extends TorchModelBase.params with names for all of the</span></span><br><span class="line"><span class="string">            arguments for this class to support tuning of these values</span></span><br><span class="line"><span class="string">            using `sklearn.model_selection` tools.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        self.hidden_dim = hidden_dim</span><br><span class="line">        self.hidden_activation = hidden_activation</span><br><span class="line">        <span class="built_in">super</span>().__init__(**base_kwargs)</span><br><span class="line">        self.loss = nn.CrossEntropyLoss(reduction=<span class="string">&quot;mean&quot;</span>)</span><br><span class="line">        self.params += [<span class="string">&#x27;hidden_dim&#x27;</span>, <span class="string">&#x27;hidden_activation&#x27;</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">build_graph</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        Define the model&#x27;s computation graph.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Returns</span></span><br><span class="line"><span class="string">        -------</span></span><br><span class="line"><span class="string">        nn.Module</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> nn.Sequential(</span><br><span class="line">            nn.Linear(self.input_dim, self.hidden_dim),</span><br><span class="line">            self.hidden_activation,</span><br><span class="line">            nn.Linear(self.hidden_dim, self.n_classes_))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">build_dataset</span>(<span class="params">self, X, y=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        Define datasets for the model.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Parameters</span></span><br><span class="line"><span class="string">        ----------</span></span><br><span class="line"><span class="string">        X : iterable of length `n_examples`</span></span><br><span class="line"><span class="string">           Each element must have the same length.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        y: None or iterable of length `n_examples`</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Attributes</span></span><br><span class="line"><span class="string">        ----------</span></span><br><span class="line"><span class="string">        input_dim : int</span></span><br><span class="line"><span class="string">            Set based on `X.shape[1]` after `X` has been converted to</span></span><br><span class="line"><span class="string">            `np.array`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Returns</span></span><br><span class="line"><span class="string">        -------</span></span><br><span class="line"><span class="string">        torch.utils.data.TensorDataset` Where `y=None`, the dataset will</span></span><br><span class="line"><span class="string">        yield single tensors `X`. Where `y` is specified, it will yield</span></span><br><span class="line"><span class="string">        `(X, y)` pairs.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        X = np.array(X)</span><br><span class="line">        self.input_dim = X.shape[<span class="number">1</span>]</span><br><span class="line">        X = torch.FloatTensor(X)</span><br><span class="line">        <span class="keyword">if</span> y <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            dataset = torch.utils.data.TensorDataset(X)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.classes_ = <span class="built_in">sorted</span>(<span class="built_in">set</span>(y))</span><br><span class="line">            self.n_classes_ = <span class="built_in">len</span>(self.classes_)</span><br><span class="line">            class2index = <span class="built_in">dict</span>(<span class="built_in">zip</span>(self.classes_, <span class="built_in">range</span>(self.n_classes_)))</span><br><span class="line">            y = [class2index[label] <span class="keyword">for</span> label <span class="keyword">in</span> y]</span><br><span class="line">            y = torch.tensor(y)</span><br><span class="line">            dataset = torch.utils.data.TensorDataset(X, y)</span><br><span class="line">        <span class="keyword">return</span> dataset</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">score</span>(<span class="params">self, X, y, device=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        Uses macro-F1 as the score function. Note: this departs from</span></span><br><span class="line"><span class="string">        `sklearn`, where classifiers use accuracy as their scoring</span></span><br><span class="line"><span class="string">        function. Using macro-F1 is more consistent with our course.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        This function can be used to evaluate models, but its primary</span></span><br><span class="line"><span class="string">        use is in cross-validation and hyperparameter tuning.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Parameters</span></span><br><span class="line"><span class="string">        ----------</span></span><br><span class="line"><span class="string">        X: np.array, shape `(n_examples, n_features)`</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        y: iterable, shape `len(n_examples)`</span></span><br><span class="line"><span class="string">            These can be the raw labels. They will converted internally</span></span><br><span class="line"><span class="string">            as needed. See `build_dataset`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        device: str or None</span></span><br><span class="line"><span class="string">            Allows the user to temporarily change the device used</span></span><br><span class="line"><span class="string">            during prediction. This is useful if predictions require a</span></span><br><span class="line"><span class="string">            lot of memory and so are better done on the CPU. After</span></span><br><span class="line"><span class="string">            prediction is done, the model is returned to `self.device`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Returns</span></span><br><span class="line"><span class="string">        -------</span></span><br><span class="line"><span class="string">        float</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        preds = self.predict(X, device=device)</span><br><span class="line">        <span class="keyword">return</span> utils.safe_macro_f1(y, preds)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">predict_proba</span>(<span class="params">self, X, device=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        Predicted probabilities for the examples in `X`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Parameters</span></span><br><span class="line"><span class="string">        ----------</span></span><br><span class="line"><span class="string">        X : np.array, shape `(n_examples, n_features)`</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        device: str or None</span></span><br><span class="line"><span class="string">            Allows the user to temporarily change the device used</span></span><br><span class="line"><span class="string">            during prediction. This is useful if predictions require a</span></span><br><span class="line"><span class="string">            lot of memory and so are better done on the CPU. After</span></span><br><span class="line"><span class="string">            prediction is done, the model is returned to `self.device`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Returns</span></span><br><span class="line"><span class="string">        -------</span></span><br><span class="line"><span class="string">        np.array, shape `(len(X), self.n_classes_)`</span></span><br><span class="line"><span class="string">            Each row of this matrix will sum to 1.0.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        preds = self._predict(X, device=device)</span><br><span class="line">        probs = torch.softmax(preds, dim=<span class="number">1</span>).cpu().numpy()</span><br><span class="line">        <span class="keyword">return</span> probs</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">predict</span>(<span class="params">self, X, device=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        Predicted labels for the examples in `X`. These are converted</span></span><br><span class="line"><span class="string">        from the integers that PyTorch needs back to their original</span></span><br><span class="line"><span class="string">        values in `self.classes_`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Parameters</span></span><br><span class="line"><span class="string">        ----------</span></span><br><span class="line"><span class="string">        X : np.array, shape `(n_examples, n_features)`</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        device: str or None</span></span><br><span class="line"><span class="string">            Allows the user to temporarily change the device used</span></span><br><span class="line"><span class="string">            during prediction. This is useful if predictions require a</span></span><br><span class="line"><span class="string">            lot of memory and so are better done on the CPU. After</span></span><br><span class="line"><span class="string">            prediction is done, the model is returned to `self.device`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        Returns</span></span><br><span class="line"><span class="string">        -------</span></span><br><span class="line"><span class="string">        list, length len(X)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        probs = self.predict_proba(X, device=device)</span><br><span class="line">        <span class="keyword">return</span> [self.classes_[i] <span class="keyword">for</span> i <span class="keyword">in</span> probs.argmax(axis=<span class="number">1</span>)]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">simple_example</span>():</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Assess on the digits dataset.&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits</span><br><span class="line">    <span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split</span><br><span class="line">    <span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report, accuracy_score</span><br><span class="line"></span><br><span class="line">    utils.fix_random_seeds()</span><br><span class="line"></span><br><span class="line">    digits = load_digits()</span><br><span class="line">    X = digits.data</span><br><span class="line">    y = digits.target</span><br><span class="line"></span><br><span class="line">    X_train, X_test, y_train, y_test = train_test_split(</span><br><span class="line">        X, y, test_size=<span class="number">0.33</span>, random_state=<span class="number">42</span>)</span><br><span class="line"></span><br><span class="line">    mod = TorchShallowNeuralClassifier()</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(mod)</span><br><span class="line"></span><br><span class="line">    mod.fit(X_train, y_train)</span><br><span class="line">    preds = mod.predict(X_test)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;\nClassification report:&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(classification_report(y_test, preds))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> accuracy_score(y_test, preds)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    simple_example()</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">model = TorchShallowNeuralClassifier(</span><br><span class="line">    early_stopping=<span class="literal">True</span>,</span><br><span class="line">    hidden_dim=<span class="number">300</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">%time _ = model.fit(X_train, y_train)</span><br><span class="line"><span class="comment"># Stopping after epoch 45. Validation score did not improve by tol=1e-05 for more than 10 epochs. Final error is 5.156181752681732</span></span><br><span class="line"><span class="comment"># CPU times: user 21.3 s, sys: 2.56 s, total: 23.9 s</span></span><br><span class="line"><span class="comment"># Wall time: 8.85 s</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report</span><br><span class="line"></span><br><span class="line">preds = model.predict(X_dev)</span><br><span class="line"><span class="built_in">print</span>(classification_report(y_dev, preds, digits=<span class="number">3</span>))</span><br></pre></td></tr></table></figure>
+<img src="/2022/05/15/ContextualReps/image-20220515212018898.png" class title="图片">
+<h3 id="A-feed-forward-experiment-with-the-sst-module"><a href="#A-feed-forward-experiment-with-the-sst-module" class="headerlink" title="A feed-forward experiment with the sst module"></a>A feed-forward experiment with the sst module</h3><p>It is straightforward to conduct experiments like the above using <code>sst.experiment</code>, which will enable you to do a wider range of experiments without writing or copy-pasting a lot of code. </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">fit_shallow_network</span>(<span class="params">X, y</span>):</span><br><span class="line">    mod = TorchShallowNeuralClassifier(</span><br><span class="line">        hidden_dim=<span class="number">300</span>,</span><br><span class="line">        early_stopping=<span class="literal">True</span>)</span><br><span class="line">    mod.fit(X, y)</span><br><span class="line">    <span class="keyword">return</span> mod</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">%%time</span><br><span class="line">_ = sst.experiment(</span><br><span class="line">    sst.train_reader(SST_HOME),</span><br><span class="line">    bert_classifier_phi,</span><br><span class="line">    fit_shallow_network,</span><br><span class="line">    assess_dataframes=sst.dev_reader(SST_HOME),</span><br><span class="line">    vectorize=<span class="literal">False</span>)  <span class="comment"># Pass in the BERT reps directly!</span></span><br></pre></td></tr></table></figure>
+<img src="/2022/05/15/ContextualReps/image-20220515212132808.png" class title="图片">
+<h3 id="An-RNN-experiment-with-the-sst-module¶"><a href="#An-RNN-experiment-with-the-sst-module¶" class="headerlink" title="An RNN experiment with the sst module¶"></a>An RNN experiment with the sst module<a target="_blank" rel="noopener" href="http://localhost:8888/lab/tree/cs224u-master/finetuning.ipynb#An-RNN-experiment-with-the-sst-module">¶</a></h3><p>We can also use BERT representations as the input to an RNN. There is just one key change from how we used these models before:</p>
+<ul>
+<li>Previously, we would feed in lists of tokens, and they would be  converted to indices into a fixed embedding space. This presumes that  all words have the same representation no matter what their context is. </li>
+<li>With BERT, we skip the embedding entirely and just feed in lists of BERT vectors, which means that the same word can be represented in  different ways.</li>
+</ul>
+<p><code>TorchRNNClassifier</code> supports this via <code>use_embedding=False</code>. In turn, you needn’t supply a vocabulary:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">fit_rnn</span>(<span class="params">X, y</span>):</span><br><span class="line">    mod = TorchRNNClassifier(</span><br><span class="line">        vocab=[],</span><br><span class="line">        early_stopping=<span class="literal">True</span>,</span><br><span class="line">        use_embedding=<span class="literal">False</span>)  <span class="comment"># Pass in the BERT hidden states directly!</span></span><br><span class="line">    mod.fit(X, y)</span><br><span class="line">    <span class="keyword">return</span> mod</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">%%time</span><br><span class="line">_ = sst.experiment(</span><br><span class="line">    sst.train_reader(SST_HOME),</span><br><span class="line">    bert_phi,</span><br><span class="line">    fit_rnn,</span><br><span class="line">    assess_dataframes=sst.dev_reader(SST_HOME),</span><br><span class="line">    vectorize=<span class="literal">False</span>)  <span class="comment"># Pass in the BERT hidden states directly!</span></span><br></pre></td></tr></table></figure>
+<img src="/2022/05/15/ContextualReps/image-20220515212302216.png" class title="图片">
+<h2 id="BERT-fine-tuning-with-Hugging-Face"><a href="#BERT-fine-tuning-with-Hugging-Face" class="headerlink" title="BERT fine-tuning with Hugging Face"></a>BERT fine-tuning with Hugging Face</h2><p>The above experiments are quite successful – BERT gives us a reliable boost compared to other methods we’ve explored for the SST task.  However, we might expect to do even better if we fine-tune the BERT  parameters as part of fitting our SST classifier. To do that, we need to incorporate the Hugging Face BERT model into our classifier. This too  is quite straightforward.</p>
+<h3 id="HfBertClassifier"><a href="#HfBertClassifier" class="headerlink" title="HfBertClassifier"></a>HfBertClassifier</h3><p>The most important step is to create an <code>nn.Module</code>  subclass that has, for its parameters, both the BERT model and  parameters for our own classifier. Here we define a very simple  fine-tuning set-up in which some layers built on top of the output  corresponding to <code>[CLS]</code> are used as the basis for the SST classifier:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">HfBertClassifierModel</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, n_classes, weights_name=<span class="string">&#x27;bert-base-cased&#x27;</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        self.n_classes = n_classes</span><br><span class="line">        self.weights_name = weights_name</span><br><span class="line">        self.bert = BertModel.from_pretrained(self.weights_name)</span><br><span class="line">        self.bert.train()</span><br><span class="line">        self.hidden_dim = self.bert.embeddings.word_embeddings.embedding_dim</span><br><span class="line">        <span class="comment"># The only new parameters -- the classifier:</span></span><br><span class="line">        self.classifier_layer = nn.Linear(</span><br><span class="line">            self.hidden_dim, self.n_classes)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, indices, mask</span>):</span><br><span class="line">        reps = self.bert(</span><br><span class="line">            indices, attention_mask=mask)</span><br><span class="line">        <span class="keyword">return</span> self.classifier_layer(reps.pooler_output)</span><br></pre></td></tr></table></figure>
+<p>As you can see, <code>self.bert</code> does the heavy-lifting: it reads in all the pretrained BERT parameters, and I’ve specified <code>self.bert.train()</code> just to make sure that these parameters can be updated during our training process. </p>
+<p>In <code>forward</code>, <code>self.bert</code> is used to process inputs, and then <code>pooler_output</code> is fed into <code>self.classifier_layer</code>. Hugging Face has already added a layer on top of the actual output for <code>[CLS]</code>, so we can specify the model as</p>
+<script type="math/tex; mode=display">
+\begin{align}
+[h_{1}, \ldots, h_{n}] &= \text{BERT}([x_{1}, \ldots, x_{n}]) \\
+h &= \tanh(h_{1}W_{hh} + b_{h}) \\
+y &= \textbf{softmax}(hW_{hy} + b_{y})
+\end{align}</script><p>for a tokenized input sequence $[x_{1}, \ldots, x_{n}]$. </p>
+<p>The Hugging Face documentation somewhat amusingly says, of <code>pooler_output</code>,</p>
+<blockquote>
+<p>This output is usually _not_ a good summary of the semantic content of the input, you’re often better with averaging or pooling the sequence of hidden-states for the whole input sequence.</p>
+</blockquote>
+<p>which is entirely reasonable, but it will require more resources, so we’ll do the simpler thing here.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">HfBertClassifier</span>(<span class="title class_ inherited__">TorchShallowNeuralClassifier</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, weights_name, *args, **kwargs</span>):</span><br><span class="line">        self.weights_name = weights_name</span><br><span class="line">        self.tokenizer = BertTokenizer.from_pretrained(self.weights_name)</span><br><span class="line">        <span class="built_in">super</span>().__init__(*args, **kwargs)</span><br><span class="line">        self.params += [<span class="string">&#x27;weights_name&#x27;</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">build_graph</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> HfBertClassifierModel(self.n_classes_, self.weights_name)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">build_dataset</span>(<span class="params">self, X, y=<span class="literal">None</span></span>):</span><br><span class="line">        data = self.tokenizer.batch_encode_plus(</span><br><span class="line">            X,</span><br><span class="line">            max_length=<span class="literal">None</span>,</span><br><span class="line">            add_special_tokens=<span class="literal">True</span>,</span><br><span class="line">            padding=<span class="string">&#x27;longest&#x27;</span>,</span><br><span class="line">            return_attention_mask=<span class="literal">True</span>)</span><br><span class="line">        indices = torch.tensor(data[<span class="string">&#x27;input_ids&#x27;</span>])</span><br><span class="line">        mask = torch.tensor(data[<span class="string">&#x27;attention_mask&#x27;</span>])</span><br><span class="line">        <span class="keyword">if</span> y <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            dataset = torch.utils.data.TensorDataset(indices, mask)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.classes_ = <span class="built_in">sorted</span>(<span class="built_in">set</span>(y))</span><br><span class="line">            self.n_classes_ = <span class="built_in">len</span>(self.classes_)</span><br><span class="line">            class2index = <span class="built_in">dict</span>(<span class="built_in">zip</span>(self.classes_, <span class="built_in">range</span>(self.n_classes_)))</span><br><span class="line">            y = [class2index[label] <span class="keyword">for</span> label <span class="keyword">in</span> y]</span><br><span class="line">            y = torch.tensor(y)</span><br><span class="line">            dataset = torch.utils.data.TensorDataset(indices, mask, y)</span><br><span class="line">        <span class="keyword">return</span> dataset</span><br></pre></td></tr></table></figure>
+<h3 id="HfBertClassifier-experiment"><a href="#HfBertClassifier-experiment" class="headerlink" title="HfBertClassifier experiment"></a>HfBertClassifier experiment</h3><p>That’s it! Let’s see how we do on the SST binary, root-only problem.  Because fine-tuning is expensive, we’ll conduct a modest hyperparameter  search and run the model for just one epoch per setting evaluation, as  we did when assessing NLI models.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">bert_fine_tune_phi</span>(<span class="params">text</span>):</span><br><span class="line">    <span class="keyword">return</span> text</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">fit_hf_bert_classifier_with_hyperparameter_search</span>(<span class="params">X, y</span>):</span><br><span class="line">    basemod = HfBertClassifier(</span><br><span class="line">        weights_name=<span class="string">&#x27;bert-base-cased&#x27;</span>,</span><br><span class="line">        batch_size=<span class="number">8</span>,  <span class="comment"># Small batches to avoid memory overload.</span></span><br><span class="line">        max_iter=<span class="number">1</span>,  <span class="comment"># We&#x27;ll search based on 1 iteration for efficiency.</span></span><br><span class="line">        n_iter_no_change=<span class="number">5</span>,   <span class="comment"># Early-stopping params are for the</span></span><br><span class="line">        early_stopping=<span class="literal">True</span>)  <span class="comment"># final evaluation.</span></span><br><span class="line"></span><br><span class="line">    param_grid = &#123;</span><br><span class="line">        <span class="string">&#x27;gradient_accumulation_steps&#x27;</span>: [<span class="number">1</span>, <span class="number">4</span>, <span class="number">8</span>],</span><br><span class="line">        <span class="string">&#x27;eta&#x27;</span>: [<span class="number">0.00005</span>, <span class="number">0.0001</span>, <span class="number">0.001</span>],</span><br><span class="line">        <span class="string">&#x27;hidden_dim&#x27;</span>: [<span class="number">100</span>, <span class="number">200</span>, <span class="number">300</span>]&#125;</span><br><span class="line"></span><br><span class="line">    bestmod = utils.fit_classifier_with_hyperparameter_search(</span><br><span class="line">        X, y, basemod, cv=<span class="number">3</span>, param_grid=param_grid)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bestmod</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">%%time</span><br><span class="line">bert_classifier_xval = sst.experiment(</span><br><span class="line">    sst.train_reader(SST_HOME),</span><br><span class="line">    bert_fine_tune_phi,</span><br><span class="line">    fit_hf_bert_classifier_with_hyperparameter_search,</span><br><span class="line">    assess_dataframes=sst.dev_reader(SST_HOME),</span><br><span class="line">    vectorize=<span class="literal">False</span>)  <span class="comment"># Pass in the BERT hidden state directly!</span></span><br></pre></td></tr></table></figure>
+<img src="/2022/05/15/ContextualReps/image-20220515212700789.png" class title="图片">
+<p>And now on to the final test-set evaluation, using the best model from above:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">optimized_bert_classifier = bert_classifier_xval[<span class="string">&#x27;model&#x27;</span>]</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Remove the rest of the experiment results to clear out some memory:</span></span><br><span class="line"><span class="keyword">del</span> bert_classifier_xval</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">fit_optimized_hf_bert_classifier</span>(<span class="params">X, y</span>):</span><br><span class="line">    optimized_bert_classifier.max_iter = <span class="number">1000</span></span><br><span class="line">    optimized_bert_classifier.fit(X, y)</span><br><span class="line">    <span class="keyword">return</span> optimized_bert_classifier</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">test_df = sst.sentiment_reader(</span><br><span class="line">    os.path.join(SST_HOME, <span class="string">&quot;sst3-test-labeled.csv&quot;</span>))</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">%%time</span><br><span class="line">_ = sst.experiment(</span><br><span class="line">    sst.train_reader(SST_HOME),</span><br><span class="line">    bert_fine_tune_phi,</span><br><span class="line">    fit_optimized_hf_bert_classifier,</span><br><span class="line">    assess_dataframes=test_df,</span><br><span class="line">    vectorize=<span class="literal">False</span>)  <span class="comment"># Pass in the BERT hidden state directly!</span></span><br></pre></td></tr></table></figure>
+<img src="/2022/05/15/ContextualReps/image-20220515212816423.png" class title="图片">
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/markdown/" rel="tag"># markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/15/%E9%A9%AC%E5%B0%94%E5%8F%AF%E5%A4%AB%E5%86%B3%E7%AD%96%E8%BF%87%E7%A8%8B/" rel="prev" title="马尔可夫决策过程">
+      <i class="fa fa-chevron-left"></i> 马尔可夫决策过程
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Contextual-word-representations"><span class="nav-number">1.</span> <span class="nav-text">Contextual word representations</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Overview"><span class="nav-number">2.</span> <span class="nav-text">Overview</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Associated-materials"><span class="nav-number">2.1.</span> <span class="nav-text">Associated materials</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Model-structure-and-linguistic-structure"><span class="nav-number">2.2.</span> <span class="nav-text">Model structure and linguistic structure</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Guiding-idea-Attention"><span class="nav-number">2.2.1.</span> <span class="nav-text">Guiding idea: Attention</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Guiding-idea-Positional-encoding"><span class="nav-number">2.2.2.</span> <span class="nav-text">Guiding idea: Positional encoding</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Current-issues-and-efforts"><span class="nav-number">2.3.</span> <span class="nav-text">Current issues and efforts</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Some-other-Transformer-based-models"><span class="nav-number">2.4.</span> <span class="nav-text">Some other Transformer-based models</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Transformers"><span class="nav-number">3.</span> <span class="nav-text">Transformers</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Core-model-structure"><span class="nav-number">3.1.</span> <span class="nav-text">Core model structure</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Computing-the-attention-representations"><span class="nav-number">3.2.</span> <span class="nav-text">Computing the attention representations</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Multi-headed-attention"><span class="nav-number">3.3.</span> <span class="nav-text">Multi-headed attention</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Repeated-transformer-blocks"><span class="nav-number">3.4.</span> <span class="nav-text">Repeated transformer blocks</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-architecture-diagram"><span class="nav-number">3.5.</span> <span class="nav-text">The architecture diagram</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BERT"><span class="nav-number">4.</span> <span class="nav-text">BERT</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Core-model-structure-1"><span class="nav-number">4.1.</span> <span class="nav-text">Core model structure</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Masked-Language-Modeling-MLM"><span class="nav-number">4.2.</span> <span class="nav-text">Masked Language Modeling (MLM)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MLM-loss-function"><span class="nav-number">4.2.1.</span> <span class="nav-text">MLM loss function</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Binary-next-sentence-prediction-pretraining"><span class="nav-number">4.3.</span> <span class="nav-text">Binary next sentence prediction pretraining</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Transfer-learning-and-fine-tuning"><span class="nav-number">4.3.1.</span> <span class="nav-text">Transfer learning and fine-tuning</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tokenization-and-the-BERT-embedding-space"><span class="nav-number">4.4.</span> <span class="nav-text">Tokenization and the BERT embedding space</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Known-limitations-with-BERT"><span class="nav-number">4.5.</span> <span class="nav-text">Known limitations with BERT</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RoBERTa"><span class="nav-number">5.</span> <span class="nav-text">RoBERTa</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Addressing-the-known-limitations-with-BERT"><span class="nav-number">5.1.</span> <span class="nav-text">Addressing the known limitations with BERT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Robustly-optimized-BERT-approach"><span class="nav-number">5.2.</span> <span class="nav-text">Robustly optimized BERT approach</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ELECTRA"><span class="nav-number">6.</span> <span class="nav-text">ELECTRA</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Addressing-the-known-limitations-with-BERT-1"><span class="nav-number">6.1.</span> <span class="nav-text">Addressing the known limitations with BERT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Core-model-structure-2"><span class="nav-number">6.2.</span> <span class="nav-text">Core model structure</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Generator-Discriminator-relationships"><span class="nav-number">6.3.</span> <span class="nav-text">Generator&#x2F;Discriminator relationships</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Practical-fine-tuning"><span class="nav-number">7.</span> <span class="nav-text">Practical fine-tuning</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Hugging-Face-BERT-models-and-tokenizers"><span class="nav-number">7.1.</span> <span class="nav-text">Hugging Face BERT models and tokenizers</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BERT-featurization-with-Hugging-Face"><span class="nav-number">7.2.</span> <span class="nav-text">BERT featurization with Hugging Face</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Simple-feed-forward-experiment"><span class="nav-number">7.2.1.</span> <span class="nav-text">Simple feed-forward experiment</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A-feed-forward-experiment-with-the-sst-module"><span class="nav-number">7.2.2.</span> <span class="nav-text">A feed-forward experiment with the sst module</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#An-RNN-experiment-with-the-sst-module%C2%B6"><span class="nav-number">7.2.3.</span> <span class="nav-text">An RNN experiment with the sst module</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BERT-fine-tuning-with-Hugging-Face"><span class="nav-number">7.3.</span> <span class="nav-text">BERT fine-tuning with Hugging Face</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HfBertClassifier"><span class="nav-number">7.3.1.</span> <span class="nav-text">HfBertClassifier</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HfBertClassifier-experiment"><span class="nav-number">7.3.2.</span> <span class="nav-text">HfBertClassifier experiment</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/853784202@qq.com" title="E-Mail → 853784202@qq.com"><i class="lee-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+    <span id="busuanzi_container_site_pv">总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+    <span class="post-meta-divider">|</span>
+    <span id="busuanzi_container_site_uv">总访客<span id="busuanzi_value_site_uv"></span>人</span>
+    <span class="post-meta-divider">|</span>
+
+
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="lee"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Lee</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="lee-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+          load: ['[tex]/mhchem'],
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+          packages: {'[+]': ['mhchem']},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
